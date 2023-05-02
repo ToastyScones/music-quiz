@@ -70,21 +70,12 @@
     background-color: #2aa198;
   }
 
-  #pauseQuizForVidButton {
-    background-color: #dc322f;
+  #fridayButton {
+    background-color: #6c71c4;
   }
 
-  #videoCountdown {
-    position: absolute;
-    display: inline-block;
-    top: 190px;
-    left: 320px;
-    right: 0;
-    bottom: 0;
-    font-size: 45px;
-    color: white;
-    transform: translate(-50%, -50%);
-    visibility: hidden;
+  #pauseQuizForVidButton {
+    background-color: #dc322f;
   }
 
   #player {
@@ -100,7 +91,7 @@
     background-color: #c9c8b6;
   }
 
-  #countdown {
+  #quizStatusDisplay {
     font-size: 30px;
     color: #d33682;
     width: 100%;
@@ -121,12 +112,11 @@
 <body>
   <img id="fooni" src="can.gif">
   <div class="playerParent">
-    <div id="videoCountdown">HELLO</div>
     <div id="player"></div>
   </div>
   <br>
   <div class="status">
-    <div id="countdown">Load a YT playlist and press Play to start the quiz!</div>
+    <div id="quizStatusDisplay">Load a YT playlist and press Play to start the quiz!</div>
   </div>
   <br>
   Video controls:
@@ -154,6 +144,7 @@
   <input type="button" class="button" id="canButton" value="can" onclick="loadCan()"><br>
   <input type="button" class="button" id="uselessButt" value="banan" onclick="loadBanan()"><br>
   <input type="button" class="button" id="preggersButton" value="PREGGERS" onclick="loadPreggers()"><br>
+  <input type="button" class="button" id="fridayButton" value="friday night" onclick="loadFridayNight()"><br>
 
   <script>
     var fadeOutMilliseconds = 2000;
@@ -223,12 +214,12 @@
       didVideoError = true;
 
       deblurVideo();
-      document.getElementById("countdown").innerHTML = '(ERROR: Video could not be played. Event data code: ' + event.data + ')';
+      document.getElementById("quizStatusDisplay").innerHTML = '(ERROR: Video could not be played. Event data code: ' + event.data + ')';
 
       this.playerNextVideoTimeoutId = setTimeout(
         function () {
           blurVideo();
-          document.getElementById("countdown").innerHTML = "(Starting next video)";
+          document.getElementById("quizStatusDisplay").innerHTML = "(Starting next video)";
           didVideoError = false;
           nextVideo();
         },
@@ -247,7 +238,6 @@
       isPaused = false;
 
       setGuessTimeRemainingMessage(guessTimeLimitSeconds);
-      //document.getElementById("videoCountdown").style.visibility = "visible";
 
       this.guessTimeRemainingTimeoutId = setTimeout(setGuessAsFinished, guessTimeLimitMilliseconds, vidTimeLeftSeconds);
       if (!isEndOfPlaylist()) {
@@ -263,17 +253,19 @@
       isPaused = true;
 
       clearAllTimeoutsAndIntervals();
-      document.getElementById("videoCountdown").style.visibility = "hidden";
-      document.getElementById("countdown").innerHTML = "(Video is paused)";
+      document.getElementById("quizStatusDisplay").innerHTML = "(Video is paused)";
     }
 
     function setVideoEndedState() {
       isQuizPaused = true;
       isQuizForPlaylistDone = true;
 
+      deblurVideo();
       clearAllTimeoutsAndIntervals();
-      document.getElementById("videoCountdown").style.visibility = "hidden";
-      document.getElementById("countdown").innerHTML = 'End of playlist <img src="umaruCry.webp" width="50" height="50">';
+      document.getElementById("quizStatusDisplay").innerHTML = 'Time\'s up! Answer was: <br><b>' 
+          + getVideoTitle() 
+          + '</b><br>' 
+          + 'End of playlist <img src="umaruCry.webp" width="50" height="50">';
     }
 
     function setVideoUnstartedState() {
@@ -284,14 +276,12 @@
       isQuizPaused = false;
       blurVideo();
       clearAllTimeoutsAndIntervals();
-      document.getElementById("videoCountdown").style.visibility = "hidden";
-      document.getElementById("countdown").innerHTML = "(Starting video)";
+      document.getElementById("quizStatusDisplay").innerHTML = "(Starting video)";
     }
 
     function setPlaylist() {
       clearAllTimeoutsAndIntervals();
-      document.getElementById("videoCountdown").style.visibility = "hidden";
-      document.getElementById("countdown").innerHTML = "Press Play to start the quiz!";
+      document.getElementById("quizStatusDisplay").innerHTML = "Press Play to start the quiz!";
 
       var playlistId = document.getElementById("playlistIdText").value;
       setNewYtPlayer(playlistId);
@@ -310,23 +300,23 @@
     }
 
     function previousVideo() {
-      isPaused = false;
-      isQuizPaused = false;
-      isQuizForVideoDone = false;
-      isQuizForPlaylistDone = false;
-
-      clearAllTimeoutsAndIntervals();
+      clearStateForNextVideo();
       player.previousVideo();
     }
 
     function nextVideo() {
+      clearStateForNextVideo();
+      player.nextVideo();
+    }
+
+    function clearStateForNextVideo() {
       isPaused = false;
       isQuizPaused = false;
       isQuizForVideoDone = false;
       isQuizForPlaylistDone = false;
 
+      blurVideo();
       clearAllTimeoutsAndIntervals();
-      player.nextVideo();
     }
 
     function nextVideoAfterQuiz() {
@@ -337,10 +327,11 @@
         return;
       }
 
-      //fade out music
+      // fade out music
+      // should be 2 seconds when fadeOutMilliseconds= 2000
       var lastVolume = player.getVolume();
       var fadeOutInterval = fadeOutMilliseconds / lastVolume;
-      // should be 2 seconds from max volume
+
       this.volumeFadeOutIntervalId = setInterval(
         function () {
           player.setVolume(player.getVolume() - 1);
@@ -349,22 +340,23 @@
       );
 
       // play next video
+      // execute timeout after fadeout has finished
       this.playerNextVideoTimeoutId = setTimeout(
         function () {
           clearAllTimeoutsAndIntervals();
           blurVideo();
-          document.getElementById("countdown").innerHTML = "(Starting next video)";
+          document.getElementById("quizStatusDisplay").innerHTML = "(Starting next video)";
           clearInterval(this.volumeFadeOutIntervalId);
           nextVideo();
           player.setVolume(lastVolume);
         },
-        2000
+        fadeOutMilliseconds
       );
     }
 
     function pauseQuiz() {
       isQuizPaused = true;
-      document.getElementById("countdown").innerHTML = '(Quiz is paused until next video)<br>Title: <b>' + getVideoTitle() + '</b><br>';
+      document.getElementById("quizStatusDisplay").innerHTML = '(Quiz is paused until next video)<br>Title: <b>' + getVideoTitle() + '</b><br>';
       deblurVideo();
       clearAllTimeoutsAndIntervals();
     }
@@ -374,38 +366,6 @@
         return "1 second"
       }
       return seconds + " seconds"
-    }
-
-    function loadCan() {
-      document.getElementById("fooni").src = "can.gif";
-    }
-
-    function loadBanan() {
-      document.getElementById("fooni").src = "banan.webp";
-    }
-
-    function loadPreggers() {
-      document.getElementById("fooni").src = "PREGGERS.webp";
-    }
-
-    function getVideoTitle() {
-      return player.getVideoData().title;
-    }
-
-    function deblurVideo() {
-      document.getElementById("player").style.filter = "blur(0px)";
-    }
-
-    function blurVideo() {
-      document.getElementById("player").style.filter = "blur(50px)";
-    }
-
-    function setGameSeconds() {
-      guessTimeLimitSeconds = document.getElementById('guessTimeLimitSeconds').value;
-    }
-
-    function setVidSeconds() {
-      vidTimeLeftSeconds = document.getElementById('vidTimeLeftSeconds').value;
     }
 
     function setTimeLimitSeconds() {
@@ -422,12 +382,12 @@
       isQuizForVideoDone = true;
       clearTimeout(this.guessTimeRemainingTimeoutId);
 
-      document.getElementById("player").style.filter = "blur(0px)";
+      deblurVideo();
       var message = 'Time\'s up! Answer was: <br><b>' + getVideoTitle() + '</b><br>';
 
       if (isEndOfPlaylist()) {
         isQuizForPlaylistDone = true;
-        document.getElementById("countdown").innerHTML = message + 'End of playlist <img src="umaruCry.webp" width="50" height="50">';
+        document.getElementById("quizStatusDisplay").innerHTML = message + 'End of playlist <img src="umaruCry.webp" width="50" height="50">';
       } else {
         setDisplayIntervalSeconds(message, 'Next video in', vidTimeLeftSeconds);
       }
@@ -457,8 +417,50 @@
     }
 
     function setSecondsRemaningMessage(message, timeLeftMessage, secondsRemaining) {
-      document.getElementById("videoCountdown").innerHTML = secondsRemaining;
-      document.getElementById("countdown").innerHTML = message + '<br>' + timeLeftMessage + ' ' + getSecondsMessage(secondsRemaining);
+      document.getElementById("quizStatusDisplay").innerHTML = message + '<br>' + timeLeftMessage + ' ' + getSecondsMessage(secondsRemaining);
+    }
+
+    function isEndOfPlaylist() {
+      var lastIndex = player.getPlaylist().length - 1;
+      var currentIndex = player.getPlaylistIndex();
+
+      return currentIndex === lastIndex;
+    }
+
+    function loadCan() {
+      document.getElementById("fooni").src = "can.gif";
+    }
+
+    function loadBanan() {
+      document.getElementById("fooni").src = "banan.webp";
+    }
+
+    function loadPreggers() {
+      document.getElementById("fooni").src = "PREGGERS.webp";
+    }
+    
+    function loadFridayNight() {
+      document.getElementById("fooni").src = "friday-night.webp";
+    }
+
+    function getVideoTitle() {
+      return player.getVideoData().title;
+    }
+
+    function deblurVideo() {
+      document.getElementById("player").style.filter = "blur(0px)";
+    }
+
+    function blurVideo() {
+      document.getElementById("player").style.filter = "blur(50px)";
+    }
+
+    function setGameSeconds() {
+      guessTimeLimitSeconds = document.getElementById('guessTimeLimitSeconds').value;
+    }
+
+    function setVidSeconds() {
+      vidTimeLeftSeconds = document.getElementById('vidTimeLeftSeconds').value;
     }
 
     function clearAllTimeoutsAndIntervals() {
@@ -469,13 +471,6 @@
 
       if (this.volumeFadeOutIntervalId) { clearInterval(this.volumeFadeOutIntervalId); }
       if (this.downloadTimerId) { clearInterval(this.downloadTimerId); }
-    }
-
-    function isEndOfPlaylist() {
-      var lastIndex = player.getPlaylist().length - 1;
-      var currentIndex = player.getPlaylistIndex();
-
-      return currentIndex === lastIndex;
     }
   </script>
 </body>
