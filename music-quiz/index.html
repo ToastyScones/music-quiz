@@ -93,7 +93,7 @@
 
   .status {
     position: relative;
-    height: 150px;
+    min-height: 150px;
     left: -10px;
     background-color: #ffefcc;
   }
@@ -241,16 +241,41 @@
       didVideoError = true;
 
       deblurVideo();
-      setQuizStatusDisplay('(ERROR: Video could not be played. Event data code: ' + event.data + ')');
+
+      var errorMessage = getFriendlyYoutubeAPIError(event.data);
+      if (isEndOfPlaylist()) {
+        errorMessage += '<br>' + getEndOfPlaylistMessage();
+      }
+      setQuizStatusDisplay(errorMessage);
 
       this.playerNextVideoTimeoutId = setTimeout(
         function () {
-          blurVideo();
           didVideoError = false;
+          if (isEndOfPlaylist()) {
+            return;
+          }
+          blurVideo();
           nextVideo();
         },
         5000
       );
+    }
+
+    function getFriendlyYoutubeAPIError(eventDataCode) {
+      var baseMessage = 'Error: Video could not be played. Code: ' + eventDataCode + '<br>Message: <b>'
+      switch (Number(eventDataCode)) {
+        case 2:
+          return baseMessage + 'The request contains an invalid video ID value.' + '</b>';
+        case 5:
+          return baseMessage + 'The requested content cannot be played in an HTML5 player.' + '</b>';
+        case 100:
+          return baseMessage + 'The video requested was not found or is private.' + '</b>';
+        case 101:
+        case 150:
+          return baseMessage + 'YT playlist is invalid or the owner of the requested video does not allow it to be played in embedded players' + '</b>';
+        default:
+          return baseMessage + 'Unknown error (spooky)' + '</b>';
+      }
     }
 
     function setVideoPlayingState() {
@@ -284,14 +309,13 @@
 
     function setVideoEndedState() {
       isQuizPaused = true;
-      isQuizForPlaylistDone = true;
 
-      deblurVideo();
-      clearMessagesAndFutures();
-      setQuizStatusDisplay('Time\'s up! Answer was: <br><b>'
-        + getVideoTitle()
-        + '</b><br>'
-        + 'End of playlist <img src="umaruCry.webp" width="50" height="50">');
+      if (isEndOfPlaylist()) {
+        isQuizForPlaylistDone = true;
+        return;
+      }
+
+      clearStateForNextVideo();
     }
 
     function setVideoUnstartedState() {
@@ -300,8 +324,7 @@
       }
       isQuizForPlaylistDone = false;
       isQuizPaused = false;
-      blurVideo();
-      clearMessagesAndFutures();
+      clearStateForNextVideo();
       setQuizStatusDisplay('(Starting next video)');
     }
 
@@ -309,7 +332,7 @@
       var playlistId = document.getElementById('playlistIdText').value;
 
       if (!playlistId) {
-        document.getElementById('errorMessage').innerHTML = 'ERROR: Playlist ID is invalid';
+        document.getElementById('errorMessage').innerHTML = 'Error: Playlist ID is invalid';
         return;
       }
 
@@ -337,6 +360,9 @@
     }
 
     function nextVideo() {
+      if (isEndOfPlaylist()) {
+        return;
+      }
       clearStateForNextVideo();
       player.nextVideo();
     }
@@ -423,7 +449,8 @@
 
       if (isEndOfPlaylist()) {
         isQuizForPlaylistDone = true;
-        setQuizStatusDisplay(message + 'End of playlist <img src="umaruCry.webp" width="50" height="50">');
+        clearCountdownTimer();
+        setQuizStatusDisplay(message + getEndOfPlaylistMessage());
       } else {
         setQuizStatusDisplay(message);
         setDisplayIntervalSeconds('Next video in', vidTimeLeftSeconds);
@@ -459,6 +486,9 @@
     }
 
     function isEndOfPlaylist() {
+      if (!(player.getPlaylist())) {
+        return true;
+      }
       var lastIndex = player.getPlaylist().length - 1;
       var currentIndex = player.getPlaylistIndex();
 
@@ -494,12 +524,12 @@
     }
 
     function setGameSeconds() {
-      guessTimeLimitSeconds = document.getElementById('guessTimeLimitSeconds').value;
+      guessTimeLimitSeconds = Number(document.getElementById('guessTimeLimitSeconds').value);
       document.getElementById('quizCountdownCurrentValue').innerHTML = 'Current value: <b>' + guessTimeLimitSeconds + "</b>";
     }
 
     function setVidSeconds() {
-      vidTimeLeftSeconds = document.getElementById('vidTimeLeftSeconds').value;
+      vidTimeLeftSeconds = Number(document.getElementById('vidTimeLeftSeconds').value);
       document.getElementById('nextVideoCountdownCurrentValue').innerHTML = 'Current value: <b>' + vidTimeLeftSeconds + "</b>";
     }
 
@@ -513,6 +543,10 @@
 
     function clearError() {
       document.getElementById('errorMessage').innerHTML = "";
+    }
+
+    function getEndOfPlaylistMessage() {
+      return 'End of playlist <img src="umaruCry.webp" width="50" height="50">';
     }
 
     function clearCountdownTimer() {
