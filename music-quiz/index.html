@@ -1,66 +1,481 @@
 <!DOCTYPE html>
 <html>
 
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+</head>
+
+
+<style>
+  html * {
+    font-family: Nunito, sans-serif;
+    background-color: #ffefcc;
+    color: #586e75;
+  }
+
+  .playerParent {
+    position: relative;
+  }
+
+  .button {
+    border: none;
+    color: white;
+    padding: 8px 13px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    background-color: #268bd2;
+    border-radius: 0px;
+  }
+
+  .button:hover {
+    filter: brightness(85%);
+  }
+
+  .button:active {
+    background: #002b36;
+    filter: brightness(40%);
+    outline: none;
+  }
+
+  #setPlaylistButton,
+  #setGuessTimeLimitSecondsButton,
+  #setVidTimeLeftButton {
+    padding: 2px 10px;
+    background-color: #859900;
+  }
+
+  #setPlaylistButton {
+    background-color: #2aa198;
+  }
+
+  #playVideoButton {
+    background-color: #859900;
+  }
+
+  #pauseVideoButton {
+    background-color: #b58900;
+  }
+
+  #uselessButt {
+    background-color: #b58900;
+  }
+
+  #canButton {
+    background-color: #cb4b16;
+  }
+
+  #preggersButton {
+    background-color: #2aa198;
+  }
+
+  #pauseQuizForVidButton {
+    background-color: #dc322f;
+  }
+
+  #videoCountdown {
+    position: absolute;
+    display: inline-block;
+    top: 190px;
+    left: 320px;
+    right: 0;
+    bottom: 0;
+    font-size: 45px;
+    color: white;
+    transform: translate(-50%, -50%);
+    visibility: hidden;
+  }
+
+  #player {
+    top: 0;
+    right: 0;
+    /*-webkit-filter: blur(35px);*/
+    filter: blur(50px);
+  }
+
+  .status {
+    position: relative;
+    height: 150px;
+    background-color: #c9c8b6;
+  }
+
+  #countdown {
+    font-size: 30px;
+    color: #d33682;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  #fooni {
+    position: fixed;
+    right: 0px;
+    bottom: 0px;
+  }
+</style>
+
+
 <body>
-  <iframe src="https://cross-origin.com/myvideo.html" allow="autoplay"></iframe>
-  <!-- 1. The <iframe> (and video player) will replace this <div> tag. -->
-  <div id="player"></div>
+  <img id="fooni" src="can.gif">
+  <div class="playerParent">
+    <div id="videoCountdown">HELLO</div>
+    <div id="player"></div>
+  </div>
+  <br>
+  <div class="status">
+    <div id="countdown">Load a YT playlist and press Play to start the quiz!</div>
+  </div>
+  <br>
+  Video controls:
+  <br>
+  <input type="button" class="button" id="previousVideoButton" value="Previous video" onclick="previousVideo()">
+  <input type="button" class="button" id="playVideoButton" value="Play" onclick="playVideo()">
+  <input type="button" class="button" id="pauseVideoButton" value="Pause" onclick="pauseVideo()">
+  <input type="button" class="button" id="nextVideoButton" value="Next video" onclick="nextVideo()">
+  <br><br>
+  This will end the quiz <b>(and reveal the answer!)</b> until the next video loads:
+  <br>
+  <input type="button" class="button" id="pauseQuizForVidButton" value="End quiz for this video"
+    onclick="pauseQuiz()">
+  <br><br>
+  Quiz countdown (seconds): <input type="number" id="guessTimeLimitSeconds" name="guessTimeLimitSeconds" value="30">
+  <input type="button" class="button" id="setGuessTimeLimitSecondsButton" value="Set" onclick="setGameSeconds()">
+  <br>
+  Post-quiz countdown for next video (seconds): <input type="number" id="vidTimeLeftSeconds" name="vidTimeLeftSeconds"
+    value="15">
+  <input type="button" class="button" id="setVidTimeLeftButton" value="Set" onclick="setVidSeconds()">
+  <br>
+  YT Playlist ID: <input type="text" id="playlistIdText" value="PL5fOd3WJHcsMocmKF-L5vszbjkYHZByWc" size="50">
+  <input type="button" class="button" id="setPlaylistButton" value="Load playlist" onclick="setPlaylist()">
+  <br><br>
+  <input type="button" class="button" id="canButton" value="can" onclick="loadCan()"><br>
+  <input type="button" class="button" id="uselessButt" value="banan" onclick="loadBanan()"><br>
+  <input type="button" class="button" id="preggersButton" value="PREGGERS" onclick="loadPreggers()"><br>
 
   <script>
-    // 2. This code loads the IFrame Player API code asynchronously.
+    var fadeOutMilliseconds = 2000;
+    var guessTimeLimitSeconds;
+    var vidTimeLeftSeconds;
+    var isPaused = false;
+    var isQuizPaused = false;
+    var isQuizForVideoDone = false;
+    var isQuizForPlaylistDone = false;
+    var lastVolume = undefined;
+    var didVideoError = false;
+
     var tag = document.createElement('script');
 
     tag.src = "https://www.youtube.com/iframe_api";
     var firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-    // 3. This function creates an <iframe> (and YouTube player)
-    //    after the API code downloads.
     var player;
-    function onYouTubeIframeAPIReady() {
+    function setNewYtPlayer(playlistId) {
+      if (player) {
+        player.stopVideo();
+        player.destroy();
+        player = null;
+      }
+
       player = new YT.Player('player', {
         height: '390',
         width: '640',
-        //videoId: 'M7lc1UVf-VE',
         playerVars: {
           'listType': 'playlist',
-          'list': 'PLmra5-9c6QitTCQcJ0uqibBj6MLJCEa3q',
-          'autoplay': 1, // Auto-play the video on load
-          'playsinline': 1,
+          'list': playlistId,
+          'autoplay': 0, // Auto-play the video on load
+          'playsinline': 0,
           'controls': 1, // Show pause/play buttons in player
           'showinfo': 1, // Hide the video title
           'modestbranding': 0, // Hide the Youtube Logo'
           'cc_load_policy': 0, // Hide closed captions
-          'iv_load_policy': 3, // Hide the Video Annotations
-          'playsinline': 1
-          //'start': 0,
-          //'end': 5
-          //autohide: 0,
+          'iv_load_policy': 3 // Hide the Video Annotations
         },
         events: {
           'onReady': onPlayerReady,
-          'onStateChange': onPlayerStateChange
+          'onStateChange': onPlayerStateChange,
+          'onError': onError
         }
       });
     }
 
-    // 4. The API will call this function when the video player is ready.
     function onPlayerReady(event) {
-      event.target.playVideo();
+      //event.target.playVideo();
     }
 
-    // 5. The API calls this function when the player's state changes.
-    //    The function indicates that when playing a video (state=1),
-    //    the player should play for six seconds and then stop.
-    var done = false;
     function onPlayerStateChange(event) {
-      if (event.data == YT.PlayerState.PLAYING && !done) {
-        //setTimeout(stopVideo, 6000);
-        //done = true;
+      if (event.data === YT.PlayerState.PLAYING) {
+        setVideoPlayingState();
+      } else if (event.data === YT.PlayerState.PAUSED) {
+        setPausedVideoState();
+      } else if (event.data === YT.PlayerState.ENDED) {
+        setVideoEndedState();
+      } else if (event.data === -1) {
+        setVideoUnstartedState();
+      }
+      //console.log('event.data ' + event.data);
+    }
+
+    function onError(event) {
+      didVideoError = true;
+
+      deblurVideo();
+      document.getElementById("countdown").innerHTML = '(ERROR: Video could not be played. Event data code: ' + event.data + ')';
+
+      this.playerNextVideoTimeoutId = setTimeout(
+        function () {
+          blurVideo();
+          document.getElementById("countdown").innerHTML = "(Starting next video)";
+          didVideoError = false;
+          nextVideo();
+        },
+        5000
+      );
+    }
+
+    function setVideoPlayingState() {
+      if (isQuizPaused || isQuizForVideoDone || isQuizForPlaylistDone) {
+        return;
+      }
+      setTimeLimitSeconds();
+      var guessTimeLimitMilliseconds = guessTimeLimitSeconds * 1000
+      var vidTimeLimitMilliseconds = vidTimeLeftSeconds * 1000
+
+      isPaused = false;
+
+      setGuessTimeRemainingMessage(guessTimeLimitSeconds);
+      //document.getElementById("videoCountdown").style.visibility = "visible";
+
+      this.guessTimeRemainingTimeoutId = setTimeout(setGuessAsFinished, guessTimeLimitMilliseconds, vidTimeLeftSeconds);
+      if (!isEndOfPlaylist()) {
+        this.ytNextVidTimeoutId = setTimeout(nextVideoAfterQuiz, guessTimeLimitMilliseconds + vidTimeLimitMilliseconds - fadeOutMilliseconds);
       }
     }
+
+    function setPausedVideoState() {
+      if (isQuizPaused || isQuizForVideoDone || isQuizForPlaylistDone) {
+        return;
+      }
+
+      isPaused = true;
+
+      clearAllTimeoutsAndIntervals();
+      document.getElementById("videoCountdown").style.visibility = "hidden";
+      document.getElementById("countdown").innerHTML = "(Video is paused)";
+    }
+
+    function setVideoEndedState() {
+      isQuizPaused = true;
+      isQuizForPlaylistDone = true;
+
+      clearAllTimeoutsAndIntervals();
+      document.getElementById("videoCountdown").style.visibility = "hidden";
+      document.getElementById("countdown").innerHTML = 'End of playlist <img src="umaruCry.webp" width="50" height="50">';
+    }
+
+    function setVideoUnstartedState() {
+      if(didVideoError) {
+        return;
+      }
+      isQuizForPlaylistDone = false;
+      isQuizPaused = false;
+      blurVideo();
+      clearAllTimeoutsAndIntervals();
+      document.getElementById("videoCountdown").style.visibility = "hidden";
+      document.getElementById("countdown").innerHTML = "(Starting video)";
+    }
+
+    function setPlaylist() {
+      clearAllTimeoutsAndIntervals();
+      document.getElementById("videoCountdown").style.visibility = "hidden";
+      document.getElementById("countdown").innerHTML = "Press Play to start the quiz!";
+
+      var playlistId = document.getElementById("playlistIdText").value;
+      setNewYtPlayer(playlistId);
+    }
+
+    function playVideo() {
+      player.playVideo();
+    }
+
+    function pauseVideo() {
+      player.pauseVideo();
+    }
+
     function stopVideo() {
       player.stopVideo();
+    }
+
+    function previousVideo() {
+      isPaused = false;
+      isQuizPaused = false;
+      isQuizForVideoDone = false;
+      isQuizForPlaylistDone = false;
+
+      clearAllTimeoutsAndIntervals();
+      player.previousVideo();
+    }
+
+    function nextVideo() {
+      isPaused = false;
+      isQuizPaused = false;
+      isQuizForVideoDone = false;
+      isQuizForPlaylistDone = false;
+
+      clearAllTimeoutsAndIntervals();
+      player.nextVideo();
+    }
+
+    function nextVideoAfterQuiz() {
+      isQuizPaused = false;
+      isQuizForVideoDone = false;
+
+      if (isEndOfPlaylist()) {
+        return;
+      }
+
+      //fade out music
+      var lastVolume = player.getVolume();
+      var fadeOutInterval = fadeOutMilliseconds / lastVolume;
+      // should be 2 seconds from max volume
+      this.volumeFadeOutIntervalId = setInterval(
+        function () {
+          player.setVolume(player.getVolume() - 1);
+        },
+        fadeOutInterval
+      );
+
+      // play next video
+      this.playerNextVideoTimeoutId = setTimeout(
+        function () {
+          clearAllTimeoutsAndIntervals();
+          blurVideo();
+          document.getElementById("countdown").innerHTML = "(Starting next video)";
+          clearInterval(this.volumeFadeOutIntervalId);
+          nextVideo();
+          player.setVolume(lastVolume);
+        },
+        2000
+      );
+    }
+
+    function pauseQuiz() {
+      isQuizPaused = true;
+      document.getElementById("countdown").innerHTML = '(Quiz is paused until next video)<br>Title: <b>' + getVideoTitle() + '</b><br>';
+      deblurVideo();
+      clearAllTimeoutsAndIntervals();
+    }
+
+    function getSecondsMessage(seconds) {
+      if (seconds === 1) {
+        return "1 second"
+      }
+      return seconds + " seconds"
+    }
+
+    function loadCan() {
+      document.getElementById("fooni").src = "can.gif";
+    }
+
+    function loadBanan() {
+      document.getElementById("fooni").src = "banan.webp";
+    }
+
+    function loadPreggers() {
+      document.getElementById("fooni").src = "PREGGERS.webp";
+    }
+
+    function getVideoTitle() {
+      return player.getVideoData().title;
+    }
+
+    function deblurVideo() {
+      document.getElementById("player").style.filter = "blur(0px)";
+    }
+
+    function blurVideo() {
+      document.getElementById("player").style.filter = "blur(50px)";
+    }
+
+    function setGameSeconds() {
+      guessTimeLimitSeconds = document.getElementById('guessTimeLimitSeconds').value;
+    }
+
+    function setVidSeconds() {
+      vidTimeLeftSeconds = document.getElementById('vidTimeLeftSeconds').value;
+    }
+
+    function setTimeLimitSeconds() {
+      if (isPaused) {
+        return;
+      }
+      // Doesn't work because these two vars never get updated
+      // Might be easier to just use one global secondsRemaining field
+      guessTimeLimitSeconds = document.getElementById('guessTimeLimitSeconds').value;
+      vidTimeLeftSeconds = document.getElementById('vidTimeLeftSeconds').value;
+    }
+
+    function setGuessAsFinished(vidTimeLeftSeconds) {
+      isQuizForVideoDone = true;
+      clearTimeout(this.guessTimeRemainingTimeoutId);
+
+      document.getElementById("player").style.filter = "blur(0px)";
+      var message = 'Time\'s up! Answer was: <br><b>' + getVideoTitle() + '</b><br>';
+
+      if (isEndOfPlaylist()) {
+        isQuizForPlaylistDone = true;
+        document.getElementById("countdown").innerHTML = message + 'End of playlist <img src="umaruCry.webp" width="50" height="50">';
+      } else {
+        setDisplayIntervalSeconds(message, 'Next video in', vidTimeLeftSeconds);
+      }
+    }
+
+    function setGuessTimeRemainingMessage(secondsRemaining) {
+      setDisplayIntervalSeconds('Time to guess!', 'Time left:', secondsRemaining)
+    }
+
+    function setDisplayIntervalSeconds(message, timeLeftMessage, secondsRemaining) {
+      setSecondsRemaningMessage(message, timeLeftMessage, secondsRemaining);
+
+      secondsRemaining = secondsRemaining - 1;
+      clearInterval(this.downloadTimerId);
+      this.downloadTimerId = setInterval(
+        function () {
+          if (secondsRemaining <= 0) {
+            clearInterval(this.downloadTimerId);
+          } else {
+            setSecondsRemaningMessage(message, timeLeftMessage, secondsRemaining);
+          }
+          message = message;
+          secondsRemaining -= 1;
+        },
+        1000
+      );
+    }
+
+    function setSecondsRemaningMessage(message, timeLeftMessage, secondsRemaining) {
+      document.getElementById("videoCountdown").innerHTML = secondsRemaining;
+      document.getElementById("countdown").innerHTML = message + '<br>' + timeLeftMessage + ' ' + getSecondsMessage(secondsRemaining);
+    }
+
+    function clearAllTimeoutsAndIntervals() {
+      if (this.ytNextVidTimeoutId) { clearTimeout(this.ytNextVidTimeoutId); }
+      if (this.guessTimeRemainingTimeoutId) { clearTimeout(this.guessTimeRemainingTimeoutId); }
+      if (this.vidTimeRemainingTimeoutId) { clearTimeout(this.vidTimeRemainingTimeoutId); }
+      if (this.playerNextVideoTimeoutId) { clearTimeout(this.playerNextVideoTimeoutId); }
+
+      if (this.volumeFadeOutIntervalId) { clearInterval(this.volumeFadeOutIntervalId); }
+      if (this.downloadTimerId) { clearInterval(this.downloadTimerId); }
+    }
+
+    function isEndOfPlaylist() {
+      var lastIndex = player.getPlaylist().length - 1;
+      var currentIndex = player.getPlaylistIndex();
+
+      return currentIndex === lastIndex;
     }
   </script>
 </body>
