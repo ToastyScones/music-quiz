@@ -46,6 +46,10 @@
     background-color: #859900;
   }
 
+  input[type='number'] {
+    width: 60px;
+  }
+
   #setPlaylistButton {
     background-color: #2aa198;
   }
@@ -115,12 +119,12 @@
     position: fixed;
     right: 0px;
     bottom: 0px;
+    background-color: transparent;
   }
 
   .settingsDisplay {
     display: inline-block;
   }
-
 </style>
 
 <body>
@@ -148,7 +152,7 @@
   <br><br>
 
   Quiz countdown (seconds): <input type="number" id="guessTimeLimitSeconds" name="guessTimeLimitSeconds" value="30">
-  <input type="button" class="button" id="setGuessTimeLimitSecondsButton" value="Set" onclick="setGameSeconds()"> 
+  <input type="button" class="button" id="setGuessTimeLimitSecondsButton" value="Set" onclick="setGameSeconds()">
   <div id="quizCountdownCurrentValue" class="settingsDisplay"></div>
 
   <br>
@@ -313,7 +317,7 @@
       clearMessagesAndFutures();
       setQuizStatusDisplay('Press Play to start the quiz!');
 
-      
+
       setNewYtPlayer(playlistId);
     }
 
