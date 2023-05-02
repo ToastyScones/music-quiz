@@ -81,6 +81,8 @@
   #player {
     top: 0;
     right: 0;
+    margin: 0;
+    padding: 0;
     /*-webkit-filter: blur(35px);*/
     filter: blur(50px);
   }
@@ -88,18 +90,25 @@
   .status {
     position: relative;
     height: 150px;
-    background-color: #c9c8b6;
+    left: -10px;
+    background-color: #ffefcc;
   }
 
   #quizStatusDisplay,
-  #quizTitleDisplay {
+  #quizCountdownDisplay {
     font-size: 30px;
+    transform: translate(10px, 0px);
     color: #d33682;
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
+  }
+
+  #errorMessage {
+    font-size: 14px;
+    transform: translate(10px, 0px);
+  }
+
+  #errorMessage {
+    font-weight: bold;
+    color: #dc322f;
   }
 
   #fooni {
@@ -107,8 +116,12 @@
     right: 0px;
     bottom: 0px;
   }
-</style>
 
+  .settingsDisplay {
+    display: inline-block;
+  }
+
+</style>
 
 <body>
   <img id='fooni' src="can.gif">
@@ -117,6 +130,7 @@
   </div>
   <br>
   <div class="status">
+    <div id="errorMessage"></div>
     <div id="quizStatusDisplay">Load a YT playlist and press Play to start the quiz!</div>
     <div id="quizCountdownDisplay"></div>
   </div>
@@ -132,12 +146,18 @@
   <br>
   <input type="button" class="button" id="pauseQuizForVidButton" value="End quiz for this video" onclick="pauseQuiz()">
   <br><br>
+
   Quiz countdown (seconds): <input type="number" id="guessTimeLimitSeconds" name="guessTimeLimitSeconds" value="30">
-  <input type="button" class="button" id="setGuessTimeLimitSecondsButton" value="Set" onclick="setGameSeconds()">
+  <input type="button" class="button" id="setGuessTimeLimitSecondsButton" value="Set" onclick="setGameSeconds()"> 
+  <div id="quizCountdownCurrentValue" class="settingsDisplay"></div>
+
   <br>
+
   Post-quiz countdown for next video (seconds): <input type="number" id="vidTimeLeftSeconds" name="vidTimeLeftSeconds"
     value="15">
   <input type="button" class="button" id="setVidTimeLeftButton" value="Set" onclick="setVidSeconds()">
+  <div id="nextVideoCountdownCurrentValue" class="settingsDisplay"></div>
+
   <br>
   YT Playlist ID: <input type="text" id="playlistIdText"
     placeholder="the value after 'list=' (e.g.PLmra5-9c6QitTCQcJ0uqibBj6MLJCEa3q)" size="53">
@@ -149,6 +169,7 @@
   <input type="button" class="button" id="fridayButton" value="friday night" onclick="loadFridayNight()"><br>
 
   <script>
+    var player;
     var fadeOutMilliseconds = 2000;
     var guessTimeLimitSeconds;
     var vidTimeLeftSeconds;
@@ -160,12 +181,12 @@
     var didVideoError = false;
 
     var tag = document.createElement('script');
-
     tag.src = 'https://www.youtube.com/iframe_api';
     var firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-    var player;
+    initialize();
+
     function setNewYtPlayer(playlistId) {
       if (player) {
         player.stopVideo();
@@ -254,7 +275,7 @@
 
       isPaused = true;
 
-      clearAllTimeoutsAndIntervals();
+      clearMessagesAndFutures();
       setQuizStatusDisplay('(Video is paused)');
     }
 
@@ -263,7 +284,7 @@
       isQuizForPlaylistDone = true;
 
       deblurVideo();
-      clearAllTimeoutsAndIntervals();
+      clearMessagesAndFutures();
       setQuizStatusDisplay('Time\'s up! Answer was: <br><b>'
         + getVideoTitle()
         + '</b><br>'
@@ -277,15 +298,22 @@
       isQuizForPlaylistDone = false;
       isQuizPaused = false;
       blurVideo();
-      clearAllTimeoutsAndIntervals();
-      setQuizStatusDisplay('(Starting video)');
+      clearMessagesAndFutures();
+      setQuizStatusDisplay('(Starting next video)');
     }
 
     function setPlaylist() {
-      clearAllTimeoutsAndIntervals();
+      var playlistId = document.getElementById('playlistIdText').value;
+
+      if (!playlistId) {
+        document.getElementById('errorMessage').innerHTML = 'ERROR: Playlist needs to be loaded first';
+        return;
+      }
+
+      clearMessagesAndFutures();
       setQuizStatusDisplay('Press Play to start the quiz!');
 
-      var playlistId = document.getElementById('playlistIdText').value;
+      
       setNewYtPlayer(playlistId);
     }
 
@@ -318,7 +346,7 @@
       isQuizForPlaylistDone = false;
 
       blurVideo();
-      clearAllTimeoutsAndIntervals();
+      clearMessagesAndFutures();
     }
 
     function nextVideoAfterQuiz() {
@@ -345,7 +373,7 @@
       // execute timeout after fadeout has finished
       this.playerNextVideoTimeoutId = setTimeout(
         function () {
-          clearAllTimeoutsAndIntervals();
+          clearMessagesAndFutures();
           blurVideo();
           setQuizStatusDisplay('(Starting next video)');
           clearInterval(this.volumeFadeOutIntervalId);
@@ -360,7 +388,7 @@
       isQuizPaused = true;
       setQuizStatusDisplay('(Quiz is paused until next video)<br>Title: <b>' + getVideoTitle() + '</b><br>');
       deblurVideo();
-      clearAllTimeoutsAndIntervals();
+      clearMessagesAndFutures();
     }
 
     function getSecondsMessage(seconds) {
@@ -372,12 +400,16 @@
 
     function setTimeLimitSeconds() {
       if (isPaused) {
+        // Pause resume doesn't work because these two vars never get updated as
+        //  the video counts down.
+        // Might be easier to just use one global secondsRemaining field
         return;
       }
-      // Doesn't work because these two vars never get updated
-      // Might be easier to just use one global secondsRemaining field
-      guessTimeLimitSeconds = document.getElementById('guessTimeLimitSeconds').value;
-      vidTimeLeftSeconds = document.getElementById('vidTimeLeftSeconds').value;
+      //guessTimeLimitSeconds = document.getElementById('guessTimeLimitSeconds').value;
+      //vidTimeLeftSeconds = document.getElementById('vidTimeLeftSeconds').value;
+
+      setGameSeconds();
+      setVidSeconds();
     }
 
     function setGuessAsFinished(vidTimeLeftSeconds) {
@@ -391,25 +423,27 @@
         isQuizForPlaylistDone = true;
         setQuizStatusDisplay(message + 'End of playlist <img src="umaruCry.webp" width="50" height="50">');
       } else {
-        setDisplayIntervalSeconds(message, 'Next video in', vidTimeLeftSeconds);
+        setQuizStatusDisplay(message);
+        setDisplayIntervalSeconds('Next video in', vidTimeLeftSeconds);
       }
     }
 
     function setGuessTimeRemainingMessage(secondsRemaining) {
-      setDisplayIntervalSeconds('Time to guess!', 'Time left:', secondsRemaining)
+      setQuizStatusDisplay('Time to guess!');
+      setDisplayIntervalSeconds('Time left:', secondsRemaining);
     }
 
-    function setDisplayIntervalSeconds(message, timeLeftMessage, secondsRemaining) {
-      setSecondsRemaningMessage(message, timeLeftMessage, secondsRemaining);
+    function setDisplayIntervalSeconds(message, secondsRemaining) {
+      setSecondsRemaningMessage(message, secondsRemaining);
 
       secondsRemaining = secondsRemaining - 1;
-      clearInterval(this.downloadTimerId);
-      this.downloadTimerId = setInterval(
+      clearInterval(this.countdownTimerId);
+      this.countdownTimerId = setInterval(
         function () {
           if (secondsRemaining <= 0) {
-            clearInterval(this.downloadTimerId);
+            clearInterval(this.countdownTimerId);
           } else {
-            setSecondsRemaningMessage(message, timeLeftMessage, secondsRemaining);
+            setSecondsRemaningMessage(message, secondsRemaining);
           }
           message = message;
           secondsRemaining -= 1;
@@ -418,8 +452,8 @@
       );
     }
 
-    function setSecondsRemaningMessage(message, timeLeftMessage, secondsRemaining) {
-      setQuizStatusDisplay(message + '<br>' + timeLeftMessage + ' ' + getSecondsMessage(secondsRemaining));
+    function setSecondsRemaningMessage(message, secondsRemaining) {
+      setQuizCountdownDisplay('<br>' + message + ' ' + getSecondsMessage(secondsRemaining));
     }
 
     function isEndOfPlaylist() {
@@ -459,24 +493,47 @@
 
     function setGameSeconds() {
       guessTimeLimitSeconds = document.getElementById('guessTimeLimitSeconds').value;
+      document.getElementById('quizCountdownCurrentValue').innerHTML = 'Current value: <b>' + guessTimeLimitSeconds + "</b>";
     }
 
     function setVidSeconds() {
       vidTimeLeftSeconds = document.getElementById('vidTimeLeftSeconds').value;
+      document.getElementById('nextVideoCountdownCurrentValue').innerHTML = 'Current value: <b>' + vidTimeLeftSeconds + "</b>";
     }
 
     function setQuizStatusDisplay(message) {
       document.getElementById('quizStatusDisplay').innerHTML = message;
     }
 
-    function clearAllTimeoutsAndIntervals() {
+    function setQuizCountdownDisplay(message) {
+      document.getElementById('quizCountdownDisplay').innerHTML = message;
+    }
+
+    function clearError() {
+      document.getElementById('errorMessage').innerHTML = "";
+    }
+
+    function clearCountdownTimer() {
+      if (this.countdownTimerId) { clearInterval(this.countdownTimerId); }
+      setQuizCountdownDisplay('');
+    }
+
+    function clearMessagesAndFutures() {
+      clearError();
+
       if (this.ytNextVidTimeoutId) { clearTimeout(this.ytNextVidTimeoutId); }
       if (this.guessTimeRemainingTimeoutId) { clearTimeout(this.guessTimeRemainingTimeoutId); }
       if (this.vidTimeRemainingTimeoutId) { clearTimeout(this.vidTimeRemainingTimeoutId); }
       if (this.playerNextVideoTimeoutId) { clearTimeout(this.playerNextVideoTimeoutId); }
 
       if (this.volumeFadeOutIntervalId) { clearInterval(this.volumeFadeOutIntervalId); }
-      if (this.downloadTimerId) { clearInterval(this.downloadTimerId); }
+
+      clearCountdownTimer();
+    }
+
+    function initialize() {
+      setGameSeconds();
+      setVidSeconds();
     }
   </script>
 </body>
