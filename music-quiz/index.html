@@ -146,6 +146,16 @@
   .settingsDisplay {
     display: inline-block;
   }
+
+  #ytVolume {
+    transform: translate(0px, 2px);
+    height: 14px;
+  }
+
+  #volumeText,
+  #ytVolume {
+    display: none;
+  }
 </style>
 
 <body>
@@ -165,17 +175,20 @@
   <input type="button" class="button" id="playVideoButton" value="Play" onclick="playVideo()">
   <input type="button" class="button" id="pauseVideoButton" value="Pause" onclick="pauseVideo()">
   <input type="button" class="button" id="nextVideoButton" value="Next video" onclick="nextVideo()">
+  <p id="volumeText">Volume: </p><input type="range" min="1" max="100" value="50" class="slider" id="ytVolume">
   <br>
   YT Playlist ID: <input type="text" id="playlistIdText"
     placeholder="the value after 'list=' (e.g.PLmra5-9c6QitTCQcJ0uqibBj6MLJCEa3q)" size="53">
   <input type="button" class="button" id="setPlaylistButton" value="Load playlist" onclick="setPlaylist()">
   <h1>Settings</h1>
-  Quiz countdown (seconds): <input type="number" id="guessTimeLimitSeconds" name="guessTimeLimitSeconds" value="30" min="1">
+  Quiz countdown (seconds): <input type="number" id="guessTimeLimitSeconds" name="guessTimeLimitSeconds" value="30"
+    min="1">
   <input type="button" class="button" id="setGuessTimeLimitSecondsButton" value="Set" onclick="setGameSeconds()">
   <div id="quizCountdownCurrentValue" class="settingsDisplay"></div>
 
   <br>
-  Post-quiz countdown for next video (seconds): <input type="number" id="vidTimeLeftSeconds" name="vidTimeLeftSeconds" value="15" min="1">
+  Post-quiz countdown for next video (seconds): <input type="number" id="vidTimeLeftSeconds" name="vidTimeLeftSeconds"
+    value="15" min="1">
   <input type="button" class="button" id="setVidTimeLeftButton" value="Set" onclick="setVidSeconds()">
   <div id="nextVideoCountdownCurrentValue" class="settingsDisplay"></div>
 
@@ -209,6 +222,7 @@
     var didVideoError = false;
     var lastGuessTimeLimitSeconds;
     var lastVidTimeLeftSeconds;
+    var didVideoJustChange = false;
 
     var tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
@@ -235,7 +249,7 @@
           'disablekb': 1,
           'autoplay': 0, // Auto-play the video on load
           'playsinline': 0,
-          'controls': 1, // Show pause/play buttons in player
+          'controls': 0, // Show pause/play buttons in player
           'showinfo': 1, // Hide the video title
           'modestbranding': 0, // Hide the Youtube Logo'
           'cc_load_policy': 0, // Hide closed captions
@@ -250,8 +264,20 @@
     }
 
     function onPlayerReady(event) {
-      lastVolume = player.getVolume();
-      //event.target.playVideo();
+      if (lastVolume) {
+        player.setVolume(lastVolume);
+      } else {
+        lastVolume = player.getVolume();
+      }
+
+      document.getElementById('ytVolume').value = lastVolume;
+      document.getElementById('volumeText').style.display = "inline";
+      document.getElementById('ytVolume').style.display = "inline";
+
+      this.ytVolumeSlider.oninput = function () {
+        player.setVolume(this.value);
+        lastVolume = this.value;
+      }
     }
 
     function onPlayerStateChange(event) {
@@ -309,6 +335,7 @@
     }
 
     function setVideoPlayingState() {
+      didVideoJustChange = false;
       if (isQuizManuallyStopped || isQuizForPlaylistDone) {
         return;
       }
@@ -358,6 +385,11 @@
 
     function setPausedVideoState() {
       if (isQuizManuallyStopped || isQuizForPlaylistDone) {
+        return;
+      }
+
+      if (didVideoJustChange) {
+        didVideoJustChange = false;
         return;
       }
 
@@ -417,6 +449,7 @@
     }
 
     function previousVideo() {
+      didVideoJustChange = true;
       clearStateForNextVideo();
       player.previousVideo();
     }
@@ -425,6 +458,7 @@
       if (isEndOfPlaylist()) {
         return;
       }
+      didVideoJustChange = true;
       clearStateForNextVideo();
       player.nextVideo();
     }
@@ -500,7 +534,6 @@
         setQuizStatusDisplay(message + getEndOfPlaylistMessage());
       } else {
         setQuizStatusDisplay(message);
-        console.log('secondsRemaining' + secondsRemaining)
         setVidTimeRemainingMessage(secondsRemaining);
       }
     }
@@ -627,6 +660,7 @@
     }
 
     function initialize() {
+      this.ytVolumeSlider = document.getElementById("ytVolume");
       setGameSeconds();
       setVidSeconds();
     }
