@@ -141,7 +141,7 @@
     bottom: 0px;
     background-color: transparent;
     overflow: hidden;
-    z-index:99;
+    z-index: 99;
   }
 
   .settingsDisplay {
@@ -167,11 +167,10 @@
   <br>
   <div id="mainView">
     <div id="errorMessage"></div>
-    <div id="quizStatusDisplay">Load a YT playlist and press Play to start the quiz!</div>
+    <div id="quizStatusDisplay">Load a YouTube playlist and press Play to start the quiz!</div>
     <div id="quizCountdownDisplay"></div>
   </div>
   <br>
-
 
   <h1 id="controlTitle">Video Controls</h1>
   <input type="button" class="button" id="previousVideoButton" value="Previous video" onclick="previousVideo()">
@@ -180,16 +179,15 @@
   <input type="button" class="button" id="nextVideoButton" value="Next video" onclick="nextVideo()">
   <p id="volumeText">Volume: </p><input type="range" min="1" max="100" value="50" class="slider" id="ytVolume">
   <br>
-  YT Playlist ID: <input type="text" id="playlistIdText"
-    placeholder="the value after 'list=' (e.g.PLmra5-9c6QitTCQcJ0uqibBj6MLJCEa3q)" size="53">
+  <label>YT Playlist ID:</label>
+  <input type="text" id="playlistIdText" placeholder="the value after 'list=' (e.g.PLmra5-9c6QitTCQcJ0uqibBj6MLJCEa3q)"
+    size="53">
   <input type="button" class="button" id="setPlaylistButton" value="Load playlist" onclick="setPlaylist()">
-
-  
   <br>
-  <h1>End Quiz for Current Video</h1>
-  The following will stop any timer <b>and reveal the answer</b> until the next video loads.
-  <br>
-  Use if you want to listen to the rest of the current video before the next one starts.
+  <label>Shuffle Playlist:</label>
+  <input type="checkbox" id="myCheck" onclick="configurePlayerShuffle()">
+  <br><br>
+  <label>The following will remove any timer <b>and reveal the answer</b> until the next video loads:</label>
   <br>
   <input type="button" class="button" id="endQuizForVidButton" value="End quiz for current video"
     onclick="endQuizForVideo()">
@@ -251,13 +249,14 @@
           'listType': 'playlist',
           'list': playlistId,
           'disablekb': 1,
-          'autoplay': 0, // Auto-play the video on load
+          'autoplay': 0,
           'playsinline': 0,
+          'loop': 0,
           'controls': 0, // Show pause/play buttons in player
           'showinfo': 1, // Hide the video title
-          'modestbranding': 0, // Hide the Youtube Logo'
+          'modestbranding': 1, // Hide the Youtube Logo'
           'cc_load_policy': 0, // Hide closed captions
-          'iv_load_policy': 3 // Hide the Video Annotations
+          'iv_load_policy': 1 // Hide the Video Annotations
         },
         events: {
           'onReady': onPlayerReady,
@@ -282,6 +281,8 @@
         player.setVolume(this.value);
         lastVolume = this.value;
       }
+
+      configurePlayerShuffle();
     }
 
     function onPlayerStateChange(event) {
@@ -444,10 +445,12 @@
     }
 
     function playVideo() {
+      if (!player) { return; }
       player.playVideo();
     }
 
     function pauseVideo() {
+      if (!player) { return; }
       player.pauseVideo();
     }
 
@@ -456,12 +459,14 @@
     }
 
     function previousVideo() {
+      if (!player) { return; }
       didVideoJustChange = true;
       clearStateForNextVideo();
       player.previousVideo();
     }
 
     function nextVideo() {
+      if (!player) { return; }
       if (isEndOfPlaylist()) {
         return;
       }
@@ -516,6 +521,7 @@
     }
 
     function endQuizForVideo() {
+      if (!player) { return; }
       isQuizManuallyStopped = true;
       setQuizStatusDisplay('(Quiz is paused until next video)<br>Title: <b>' + getVideoTitle() + '</b><br>');
       deblurVideo();
@@ -670,6 +676,16 @@
       this.ytVolumeSlider = document.getElementById("ytVolume");
       setGameSeconds();
       setVidSeconds();
+    }
+
+    function configurePlayerShuffle() {
+      if (!player) { return; }
+
+      player.setShuffle(getSetShuffleBool());
+    }
+
+    function getSetShuffleBool() {
+      return document.getElementById("myCheck");
     }
 
     function getSecondsMessage(seconds) {
