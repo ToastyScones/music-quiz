@@ -44,6 +44,10 @@
     outline: none;
   }
 
+  input:focus::placeholder {
+    color: transparent;
+  }
+
   h1 {
     font-size: 20px;
     padding-top: 14px;
@@ -130,7 +134,7 @@
 
   #errorMessage {
     font-size: 14px;
-    transform: translate(10px, 0px);
+    transform: translate(0px, 0px);
     font-weight: bold;
     color: #dc322f;
   }
@@ -166,7 +170,6 @@
   </div>
   <br>
   <div id="mainView">
-    <div id="errorMessage"></div>
     <div id="quizStatusDisplay">Load a YouTube playlist and press Play to start the quiz!</div>
     <div id="quizCountdownDisplay"></div>
   </div>
@@ -179,10 +182,10 @@
   <input type="button" class="button" id="nextVideoButton" value="Next video" onclick="nextVideo()">
   <p id="volumeText">Volume: </p><input type="range" min="1" max="100" value="50" class="slider" id="ytVolume">
   <br>
-  <label>YT Playlist ID:</label>
-  <input type="text" id="playlistIdText" placeholder="the value after 'list=' (e.g.PLmra5-9c6QitTCQcJ0uqibBj6MLJCEa3q)"
-    size="53">
+  <label>YT Playlist URL or ID:</label>
+  <input type="text" id="playlistIdText" placeholder="(e.g. PLmra5-9c6QitTCQcJ0uqibBj6MLJCEa3q)" size="53">
   <input type="button" class="button" id="setPlaylistButton" value="Load playlist" onclick="setPlaylist()">
+  <label id="errorMessage"></label>
   <br>
   <label>Shuffle Playlist:</label>
   <input type="checkbox" id="myCheck" onclick="configurePlayerShuffle()">
@@ -431,12 +434,35 @@
     }
 
     function setPlaylist() {
-      var playlistId = document.getElementById('playlistIdText').value;
+      var ytPlaylistIdOrUrl = document.getElementById('playlistIdText').value;
 
-      if (!playlistId) {
-        document.getElementById('errorMessage').innerHTML = 'Error: Playlist ID is invalid';
+      if (!ytPlaylistIdOrUrl) {
+        setLoadPlaylistError('Value cannot be empty');
         return;
       }
+
+      try {
+        let url = new URL(ytPlaylistIdOrUrl);
+        let urlHostname = url.hostname.toLowerCase();
+
+        // crappy way of checking for a YT url
+        if (!urlHostname.includes('youtube') && !urlHostname.includes('youtu.be')) {
+          setLoadPlaylistError('Invalid YouTube URL');
+          return;
+        }
+
+        let params = url.searchParams;
+        var playlistId = params.get("list");
+
+        if (!playlistId) {
+          setLoadPlaylistError('Invalid YouTube playlist URL (needs a list= query param)');
+          return;
+        }
+      } catch (_) {
+        playlistId = ytPlaylistIdOrUrl;
+      }
+
+      clearError();
 
       clearStateForNextVideo();
       setQuizStatusDisplay('Press Play to start the quiz!');
@@ -642,6 +668,10 @@
 
     function setQuizCountdownDisplay(message) {
       document.getElementById('quizCountdownDisplay').innerHTML = message;
+    }
+
+    function setLoadPlaylistError(message) {
+      document.getElementById('errorMessage').innerHTML = message;
     }
 
     function clearError() {
