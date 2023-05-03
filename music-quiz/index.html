@@ -171,6 +171,8 @@
     <div id="quizCountdownDisplay"></div>
   </div>
   <br>
+
+
   <h1 id="controlTitle">Video Controls</h1>
   <input type="button" class="button" id="previousVideoButton" value="Previous video" onclick="previousVideo()">
   <input type="button" class="button" id="playVideoButton" value="Play" onclick="playVideo()">
@@ -181,18 +183,8 @@
   YT Playlist ID: <input type="text" id="playlistIdText"
     placeholder="the value after 'list=' (e.g.PLmra5-9c6QitTCQcJ0uqibBj6MLJCEa3q)" size="53">
   <input type="button" class="button" id="setPlaylistButton" value="Load playlist" onclick="setPlaylist()">
-  <h1>Settings</h1>
-  Quiz countdown (seconds): <input type="number" id="guessTimeLimitSeconds" name="guessTimeLimitSeconds" value="30"
-    min="1">
-  <input type="button" class="button" id="setGuessTimeLimitSecondsButton" value="Set" onclick="setGameSeconds()">
-  <div id="quizCountdownCurrentValue" class="settingsDisplay"></div>
 
-  <br>
-  Post-quiz countdown for next video (seconds): <input type="number" id="vidTimeLeftSeconds" name="vidTimeLeftSeconds"
-    value="15" min="1">
-  <input type="button" class="button" id="setVidTimeLeftButton" value="Set" onclick="setVidSeconds()">
-  <div id="nextVideoCountdownCurrentValue" class="settingsDisplay"></div>
-
+  
   <br>
   <h1>End Quiz for Current Video</h1>
   The following will stop any timer <b>and reveal the answer</b> until the next video loads.
@@ -201,6 +193,17 @@
   <br>
   <input type="button" class="button" id="endQuizForVidButton" value="End quiz for current video"
     onclick="endQuizForVideo()">
+
+  <h1>Settings</h1>
+  Quiz countdown (seconds): <input type="number" id="guessTimeLimitSeconds" name="guessTimeLimitSeconds" value="30"
+    min="1">
+  <input type="button" class="button" id="setGuessTimeLimitSecondsButton" value="Set" onclick="setGameSeconds()">
+  <div id="quizCountdownCurrentValue" class="settingsDisplay"></div>
+  <br>
+  Post-quiz countdown for next video (seconds): <input type="number" id="vidTimeLeftSeconds" name="vidTimeLeftSeconds"
+    value="15" min="1">
+  <input type="button" class="button" id="setVidTimeLeftButton" value="Set" onclick="setVidSeconds()">
+  <div id="nextVideoCountdownCurrentValue" class="settingsDisplay"></div>
   <br><br><br>
   <input type="button" class="button" id="canButton" value="can" onclick="loadCan()"><br>
   <input type="button" class="button" id="uselessButt" value="banan" onclick="loadBanan()"><br>
