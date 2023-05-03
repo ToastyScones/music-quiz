@@ -345,10 +345,13 @@
         //resumed from saved values
         var guessTimeLimitMilliseconds = guessTimeLimitSeconds * 1000;
         var vidTimeLimitMilliseconds = vidTimeLeftSeconds * 1000;
-
       } else {
         var guessTimeLimitMilliseconds = lastGuessTimeLimitSeconds * 1000;
-        var vidTimeLimitMilliseconds = lastVidTimeLeftSeconds * 1000;
+        if (lastVidTimeLeftSeconds) {
+          var vidTimeLimitMilliseconds = lastVidTimeLeftSeconds * 1000;
+        } else {
+          var vidTimeLimitMilliseconds = vidTimeLeftSeconds * 1000;
+        }
       }
 
       isPaused = false;
