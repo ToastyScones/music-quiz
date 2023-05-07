@@ -274,6 +274,11 @@
     }
 
     function onPlayerReady(event) {
+      if (doesVideoNeedSeekTo()) {
+        hasSeekToBeenApplied = true;
+        seekTo(vidTimestamps[player.getPlaylistIndex()]);
+      }
+
       if (lastVolume) {
         player.setVolume(lastVolume);
       } else {
@@ -302,7 +307,7 @@
       } else if (event.data === -1) {
         setVideoUnstartedState();
       }
-      //printEventData(event.data);
+      printEventData(event.data);
     }
 
     function onError(event) {
@@ -553,7 +558,6 @@
 
       blurVideo();
       clearMessagesAndFutures();
-      //vidTimestamps = {};
     }
 
     function nextVideoAfterQuiz(milliSecondsRemaining) {
