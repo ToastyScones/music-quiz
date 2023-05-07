@@ -33,8 +33,10 @@ function printEventData(eventData) {
     console.log('YT.PlayerState.PAUSED');
   } else if (eventData === YT.PlayerState.ENDED) {
     console.log('YT.PlayerState.ENDED');
-  } else if (event.data === -1) {
-    console.log('UNSTARTED');
+  } else if (eventData === YT.PlayerState.BUFFERING) {
+    console.log('YT.PlayerState.BUFFERING');
+  }else if (eventData === -1) {
+    console.log('UNSTARTED (-1)');
   } else {
     console.log('UNKNOWN: ' + eventData);
   }

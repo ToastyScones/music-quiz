@@ -107,7 +107,7 @@ input[type='number'] {
   margin: 0;
   padding: 0;
   /*-webkit-filter: blur(35px);*/
-  filter: blur(70px);
+  filter: blur(70px) sepia(60%);
 }
 
 #mainView {

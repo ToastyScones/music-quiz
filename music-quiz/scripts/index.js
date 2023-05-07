@@ -1,5 +1,5 @@
 var player;
-var fadeOutMilliseconds = 2000;
+var fadeOutMs = 2000;
 var guessTimeLimitSeconds;
 var vidTimeLeftSeconds;
 var isPaused = false;
@@ -13,6 +13,7 @@ var lastVidTimeLeftSeconds;
 var didVideoJustChange = false;
 var vidTimestamps = {};
 var hasSeekToBeenApplied = false;
+var needLastVolumeApplied = false;
 
 function setNewYtPlayer(playlistId) {
   if (player) {
@@ -47,22 +48,21 @@ function setNewYtPlayer(playlistId) {
   });
 }
 
+function setVolumeStateForNextVideo() {
+  if (!player || needLastVolumeApplied) { return; }
+
+  player.setVolume(0);
+  needLastVolumeApplied = true;
+}
+
 function onPlayerReady(event) {
-  if (doesVideoNeedSeekTo()) {
-    hasSeekToBeenApplied = true;
-    seekTo(vidTimestamps[player.getPlaylistIndex()]);
-  }
-
-  if (lastVolume) {
-    player.setVolume(lastVolume);
-  } else {
-    lastVolume = player.getVolume();
-  }
-
   document.getElementById('ytVolume').value = lastVolume;
   document.getElementById('volumeText').style.display = "inline";
   document.getElementById('ytVolume').style.display = "inline";
 
+  lastVolume = player.getVolume();
+
+  this.ytVolumeSlider.value = lastVolume;
   this.ytVolumeSlider.oninput = function () {
     player.setVolume(this.value);
     lastVolume = this.value;
@@ -95,7 +95,7 @@ function onError(event) {
   }
   setQuizStatusDisplay(errorMessage);
 
-  this.playerNextVideoTimeoutId = setTimeout(
+  this.onErrorNextVideoTimeoutId = setTimeout(
     function () {
       didVideoError = false;
       if (isEndOfPlaylist()) {
@@ -117,6 +117,13 @@ function setVideoPlayingState() {
     return;
   }
 
+  if (needLastVolumeApplied) {
+    player.setVolume(lastVolume);
+    needLastVolumeApplied = false;
+  } else {
+    lastVolume = player.getVolume();
+  }
+
   didVideoJustChange = false;
   if (isQuizManuallyStopped || isQuizForPlaylistDone) {
     return;
@@ -126,26 +133,22 @@ function setVideoPlayingState() {
 
   if (!isPaused) {
     //resumed from saved values
-    var guessTimeLimitMilliseconds = guessTimeLimitSeconds * 1000;
-    var vidTimeLimitMilliseconds = vidTimeLeftSeconds * 1000;
+    var guessTimeLimitMs = guessTimeLimitSeconds * 1000;
+    var vidTimeLimitMs = vidTimeLeftSeconds * 1000;
   } else {
-    var guessTimeLimitMilliseconds = lastGuessTimeLimitSeconds * 1000;
-    if (lastVidTimeLeftSeconds) {
-      var vidTimeLimitMilliseconds = lastVidTimeLeftSeconds * 1000;
-    } else {
-      var vidTimeLimitMilliseconds = vidTimeLeftSeconds * 1000;
-    }
+    var guessTimeLimitMs = lastGuessTimeLimitSeconds * 1000;
+    var vidTimeLimitMs = (lastVidTimeLeftSeconds ?? vidTimeLeftSeconds) * 1000;
   }
 
   isPaused = false;
 
   if (!isQuizForVideoDone) {
-    setGuessTimeRemainingMessage(guessTimeLimitMilliseconds / 1000);
+    setGuessTimeRemainingMessage(guessTimeLimitMs / 1000);
 
     this.guessTimeRemainingTimeoutId = setTimeout(
       setGuessAsFinished,
-      guessTimeLimitMilliseconds,
-      vidTimeLimitMilliseconds / 1000
+      guessTimeLimitMs,
+      vidTimeLimitMs / 1000
     );
   } else {
     var message = 'Time\'s up! Answer was: <br><b>' + getVideoTitle() + '</b><br>';
@@ -156,15 +159,18 @@ function setVideoPlayingState() {
       setQuizStatusDisplay(message + '<br>' + getEndOfPlaylistMessage());
     } else {
       setQuizStatusDisplay(message);
-      setVidTimeRemainingMessage(vidTimeLimitMilliseconds / 1000);
+      setVidTimeRemainingMessage(vidTimeLimitMs / 1000);
     }
   }
 
   if (!isEndOfPlaylist()) {
+    let ytNextVidTimeoutMs = guessTimeLimitMs + vidTimeLimitMs - fadeOutMs;
+    if (ytNextVidTimeoutMs <= 0) {
+      ytNextVidTimeoutMs = vidTimeLimitMs;
+    }
+
     this.ytNextVidTimeoutId = setTimeout(
-      nextVideoAfterQuiz,
-      guessTimeLimitMilliseconds + vidTimeLimitMilliseconds - fadeOutMilliseconds,
-      vidTimeLimitMilliseconds
+      nextVideoAfterQuiz, ytNextVidTimeoutMs, vidTimeLimitMs
     );
   }
 }
@@ -256,8 +262,9 @@ function setPlaylist() {
   }
 
   clearError();
-
   clearStateForNextVideo();
+  needLastVolumeApplied = false;
+
   setQuizStatusDisplay('Press Play to start the quiz!');
 
   setNewYtPlayer(playlistId);
@@ -313,43 +320,54 @@ function clearStateForNextVideo() {
   isQuizForPlaylistDone = false;
   hasSeekToBeenApplied = false;
 
+  lastVidTimeLeftSeconds = undefined;
+
   blurVideo();
   clearMessagesAndFutures();
+  setVolumeStateForNextVideo();
 }
 
+// This function gets called in the last couple seconds as the 
+//  music fades out and the next video is queued to play.
 function nextVideoAfterQuiz(milliSecondsRemaining) {
   isQuizManuallyStopped = false;
-  isQuizForVideoDone = false;
 
   if (isEndOfPlaylist()) {
+    // Don't call nextVideo if at the end of the playlist
     return;
   }
 
-  // fade out music
-  // should be 2 seconds when fadeOutMilliseconds= 2000
-  var lastVolume = player.getVolume();
-  var nextVideoTimeoutSeconds = milliSecondsRemaining < fadeOutMilliseconds ? milliSecondsRemaining : fadeOutMilliseconds;
-  var fadeOutInterval = nextVideoTimeoutSeconds / lastVolume;
+  // Fade out music as video ends
+  lastVolume = player.getVolume();
+  var tenPercentVol = Math.trunc(lastVolume * .1);
+  if (tenPercentVol === 0) {
+    tenPercentVol = 1;
+  }
 
+  reduceVolumeForFadeOut(tenPercentVol)
   this.volumeFadeOutIntervalId = setInterval(
-    function () {
-      player.setVolume(player.getVolume() - 1);
-    },
-    fadeOutInterval
+    reduceVolumeForFadeOut, (fadeOutMs / 10), tenPercentVol
   );
 
-  // play next video
-  // execute timeout after fadeout has finished
-  this.playerNextVideoTimeoutId = setTimeout(
+  // Next video timeout.
+  //  While this is queued, music should start to fade out
+  //  from the interval above.
+  var nextVideoTimeoutMs = milliSecondsRemaining < fadeOutMs ?
+    milliSecondsRemaining : fadeOutMs;
+
+  this.nextVideoTimeoutId = setTimeout(
     function () {
       setQuizStatusDisplay('(Starting next video)');
       clearInterval(this.volumeFadeOutIntervalId);
       clearStateForNextVideo();
       nextVideo();
-      player.setVolume(lastVolume);
     },
-    nextVideoTimeoutSeconds
+    nextVideoTimeoutMs
   );
+}
+
+function reduceVolumeForFadeOut(volume) {
+  player.setVolume(player.getVolume() - volume);
 }
 
 function endQuizForVideo() {
@@ -389,11 +407,11 @@ function setGuessTimeRemainingMessage(secondsRemaining) {
   setSecondsRemaningMessage(message, secondsRemaining);
 
   secondsRemaining = secondsRemaining - 1;
-  clearInterval(this.countdownTimerId);
-  this.countdownTimerId = setInterval(
+  clearInterval(this.guessCountdownTimerId);
+  this.guessCountdownTimerId = setInterval(
     function () {
-      if (secondsRemaining <= 0) {
-        clearInterval(this.countdownTimerId);
+      if (secondsRemaining < 0) {
+        clearInterval(this.guessCountdownTimerId);
       } else {
         setSecondsRemaningMessage(message, secondsRemaining);
       }
@@ -412,7 +430,7 @@ function setVidTimeRemainingMessage(secondsRemaining) {
   clearInterval(this.vidCountdownTimerId);
   this.vidCountdownTimerId = setInterval(
     function () {
-      if (secondsRemaining <= 0) {
+      if (secondsRemaining < 0) {
         clearInterval(this.vidCountdownTimerId);
       } else {
         setSecondsRemaningMessage(message, secondsRemaining);
@@ -443,11 +461,11 @@ function getVideoTitle() {
 }
 
 function deblurVideo() {
-  document.getElementById('player').style.filter = "blur(0px)";
+  document.getElementById('player').style.filter = "blur(0px) sepia(0%)";
 }
 
 function blurVideo() {
-  document.getElementById('player').style.filter = "blur(70px)";
+  document.getElementById('player').style.filter = "blur(70px) sepia(60%)";
 }
 
 function setGameSeconds() {
@@ -495,10 +513,11 @@ function clearMessagesAndFutures() {
   if (this.ytNextVidTimeoutId) { clearTimeout(this.ytNextVidTimeoutId); }
   if (this.guessTimeRemainingTimeoutId) { clearTimeout(this.guessTimeRemainingTimeoutId); }
   if (this.vidTimeRemainingTimeoutId) { clearTimeout(this.vidTimeRemainingTimeoutId); }
-  if (this.playerNextVideoTimeoutId) { clearTimeout(this.playerNextVideoTimeoutId); }
-  if (this.countdownTimerId) { clearTimeout(this.countdownTimerId); }
-  if (this.vidCountdownTimerId) { clearTimeout(this.vidCountdownTimerId); }
+  if (this.nextVideoTimeoutId) { clearTimeout(this.nextVideoTimeoutId); }
+  if (this.onErrorNextVideoTimeoutId) { clearTimeout(this.onErrorNextVideoTimeoutId); }
 
+  if (this.guessCountdownTimerId) { clearInterval(this.guessCountdownTimerId); }
+  if (this.vidCountdownTimerId) { clearInterval(this.vidCountdownTimerId); }
   if (this.volumeFadeOutIntervalId) { clearInterval(this.volumeFadeOutIntervalId); }
 
   clearCountdownTimer();
