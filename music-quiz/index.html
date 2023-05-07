@@ -190,8 +190,8 @@
   <br>
   <label>Shuffle Playlist (kind of buggy):</label>
   <input type="checkbox" id="myCheck" onclick="configurePlayerShuffle()">
-  <br>-->
-  <br>
+  -->
+  <br><br>
   <label>The following will remove any timer <b>and reveal the answer</b> until the next video loads:</label>
   <br>
   <input type="button" class="button" id="endQuizForVidButton" value="End quiz for current video"
@@ -302,7 +302,7 @@
       } else if (event.data === -1) {
         setVideoUnstartedState();
       }
-      printEventData(event.data);
+      //printEventData(event.data);
     }
 
     function onError(event) {
@@ -473,8 +473,6 @@
           return;
         }
 
-        console.log('hi');
-
         params.forEach((value, key) => {
           if (key.startsWith('t')) {
             try {
@@ -482,15 +480,12 @@
               var vidTimestampValue = Number(value);
 
               if (isNaN(vidTimestampKey) || isNaN(vidTimestampValue)) {
-                console.log(vidTimestampKey)
-                console.log(vidTimestampValue)
                 let error = key + '=' + value + ' was invalid'
-                //setLoadPlaylistError(error);
                 throw error;
               }
               vidTimestamps[vidTimestampKey] = vidTimestampValue;
             } catch (_) {
-              console.log(_);
+              //console.log(_);
             }
           }
         });
