@@ -1,5 +1,5 @@
 function getEndOfPlaylistMessage() {
-  return 'End of playlist <img src="img/umaruCry.webp" width="50" height="50">';
+  return 'End of playlist <img src="images/umaruCry.webp" width="50" height="50">';
 }
 
 function getSecondsMessage(seconds) {
