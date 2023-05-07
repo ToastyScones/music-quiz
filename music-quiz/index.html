@@ -1,1 +1,808 @@
-Hello World
+<!DOCTYPE html>
+<html>
+
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+</head>
+
+
+<style>
+  html * {
+    font-family: Nunito, sans-serif;
+    background-color: #ffefcc;
+    color: #586e75;
+  }
+
+  br {
+    overflow: hidden;
+  }
+
+  .playerParent {
+    position: relative;
+  }
+
+  .button {
+    border: none;
+    color: white;
+    padding: 8px 13px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    background-color: #268bd2;
+    border-radius: 0px;
+    overflow: hidden;
+  }
+
+  .button:hover {
+    filter: brightness(85%);
+  }
+
+  .button:active {
+    background: #002b36;
+    filter: brightness(40%);
+    outline: none;
+  }
+
+  input:focus::placeholder {
+    color: transparent;
+  }
+
+  h1 {
+    font-size: 20px;
+    padding-top: 14px;
+    overflow: hidden;
+  }
+
+  #controlTitle {
+    padding-top: 0px;
+  }
+
+  #playlistIdText {
+    margin-top: 10px;
+  }
+
+  #setPlaylistButton,
+  #setGuessTimeLimitSecondsButton,
+  #setVidTimeLeftButton {
+    padding: 2px 10px;
+    background-color: #859900;
+  }
+
+  input[type='number'] {
+    width: 60px;
+  }
+
+  #setPlaylistButton {
+    background-color: #2aa198;
+  }
+
+  #playVideoButton {
+    background-color: #859900;
+  }
+
+  #pauseVideoButton {
+    background-color: #b58900;
+  }
+
+  #uselessButt {
+    background-color: #b58900;
+  }
+
+  #canButton {
+    background-color: #cb4b16;
+  }
+
+  #preggersButton {
+    background-color: #859900;
+  }
+
+  #fridayButton {
+    background-color: #6c71c4;
+  }
+
+  #intoTheAyayaButton {
+    background-color: #2aa198;
+  }
+
+  #endQuizForVidButton {
+    margin-top: 6px;
+    background-color: #dc322f;
+  }
+
+  #player {
+    top: 0;
+    right: 0;
+    margin: 0;
+    padding: 0;
+    /*-webkit-filter: blur(35px);*/
+    filter: blur(70px);
+  }
+
+  #mainView {
+    position: relative;
+    left: -10px;
+    background-color: #ffefcc;
+  }
+
+  #quizStatusDisplay,
+  #quizCountdownDisplay {
+    font-size: 30px;
+    transform: translate(10px, 0px);
+    color: #d33682;
+  }
+
+  #errorMessage {
+    font-size: 14px;
+    transform: translate(0px, 0px);
+    font-weight: bold;
+    color: #dc322f;
+  }
+
+  #fooni {
+    position: fixed;
+    right: 0px;
+    bottom: 0px;
+    background-color: transparent;
+    overflow: hidden;
+    z-index: 99;
+  }
+
+  .settingsDisplay {
+    display: inline-block;
+  }
+
+  #ytVolume {
+    transform: translate(0px, 2px);
+    height: 14px;
+  }
+
+  #volumeText,
+  #ytVolume {
+    display: none;
+  }
+</style>
+
+<body>
+  <img id='fooni' src="img/friday-night.webp">
+  <div class="playerParent">
+    <div id="player"></div>
+  </div>
+  <br>
+  <div id="mainView">
+    <div id="quizStatusDisplay">Load a YouTube playlist and press Play to start the quiz!</div>
+    <div id="quizCountdownDisplay"></div>
+  </div>
+  <br>
+
+  <h1 id="controlTitle">Video Controls</h1>
+  <input type="button" class="button" id="previousVideoButton" value="Previous video" onclick="previousVideo()">
+  <input type="button" class="button" id="playVideoButton" value="Play" onclick="playVideo()">
+  <input type="button" class="button" id="pauseVideoButton" value="Pause" onclick="pauseVideo()">
+  <input type="button" class="button" id="nextVideoButton" value="Next video" onclick="nextVideo()">
+  <p id="volumeText">Volume: </p><input type="range" min="1" max="100" value="50" class="slider" id="ytVolume">
+  <br>
+  <label>YT Playlist URL or ID:</label>
+  <input type="text" id="playlistIdText" placeholder="(e.g. PLmra5-9c6QitTCQcJ0uqibBj6MLJCEa3q)" size="53">
+  <input type="button" class="button" id="setPlaylistButton" value="Load playlist" onclick="setPlaylist()">
+  <label id="errorMessage"></label>
+  <!--
+  <br>
+  <label>Shuffle Playlist (kind of buggy):</label>
+  <input type="checkbox" id="myCheck" onclick="configurePlayerShuffle()">
+  -->
+  <br><br>
+  <label>The following will remove any timer <b>and reveal the answer</b> until the next video loads:</label>
+  <br>
+  <input type="button" class="button" id="endQuizForVidButton" value="End quiz for current video"
+    onclick="endQuizForVideo()">
+
+  <h1>Settings</h1>
+  Quiz countdown (seconds): <input type="number" id="guessTimeLimitSeconds" name="guessTimeLimitSeconds" value="30"
+    min="1">
+  <input type="button" class="button" id="setGuessTimeLimitSecondsButton" value="Set" onclick="setGameSeconds()">
+  <div id="quizCountdownCurrentValue" class="settingsDisplay"></div>
+  <br>
+  Post-quiz countdown for next video (seconds): <input type="number" id="vidTimeLeftSeconds" name="vidTimeLeftSeconds"
+    value="15" min="1">
+  <input type="button" class="button" id="setVidTimeLeftButton" value="Set" onclick="setVidSeconds()">
+  <div id="nextVideoCountdownCurrentValue" class="settingsDisplay"></div>
+  <br><br><br>
+  <input type="button" class="button" id="fridayButton" value="FRIDAY NIGHT" onclick="loadFridayNight()"><br>
+  <input type="button" class="button" id="canButton" value="can" onclick="loadCan()"><br>
+  <input type="button" class="button" id="uselessButt" value="Banana, Ready-to-Eat" onclick="loadBanan()"><br>
+  <input type="button" class="button" id="preggersButton" value="PREGGERS" onclick="loadPreggers()"><br>
+  <input type="button" class="button" id="intoTheAyayaButton"
+    value="IntotheAyayalandtheWeebsarmymarchComradesstandsidebysidetostoptheNormanschargeandNammers"
+    onclick="loadIntoTheAyayaLand()"><br>
+
+  <script>
+    var player;
+    var fadeOutMilliseconds = 2000;
+    var guessTimeLimitSeconds;
+    var vidTimeLeftSeconds;
+    var isPaused = false;
+    var isQuizManuallyStopped = false;
+    var isQuizForVideoDone = false;
+    var isQuizForPlaylistDone = false;
+    var lastVolume = undefined;
+    var didVideoError = false;
+    var lastGuessTimeLimitSeconds;
+    var lastVidTimeLeftSeconds;
+    var didVideoJustChange = false;
+    var vidTimestamps = {};
+    var hasSeekToBeenApplied = false;
+
+    var tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    initialize();
+
+    function setNewYtPlayer(playlistId) {
+      if (player) {
+        player.stopVideo();
+        player.destroy();
+        player = null;
+      }
+
+      document.getElementById('mainView').style.minHeight = "150px";
+
+      player = new YT.Player('player', {
+        height: '390',
+        width: '640',
+        playerVars: {
+          'listType': 'playlist',
+          'list': playlistId,
+          'disablekb': 1,
+          'autoplay': 0,
+          'playsinline': 0,
+          'loop': 0,
+          'controls': 0, // Show pause/play buttons in player
+          'showinfo': 1, // Hide the video title
+          'modestbranding': 1, // Hide the Youtube Logo'
+          'cc_load_policy': 0, // Hide closed captions
+          'iv_load_policy': 1 // Hide the Video Annotations
+        },
+        events: {
+          'onReady': onPlayerReady,
+          'onStateChange': onPlayerStateChange,
+          'onError': onError
+        }
+      });
+    }
+
+    function onPlayerReady(event) {
+      if (doesVideoNeedSeekTo()) {
+        hasSeekToBeenApplied = true;
+        seekTo(vidTimestamps[player.getPlaylistIndex()]);
+      }
+
+      if (lastVolume) {
+        player.setVolume(lastVolume);
+      } else {
+        lastVolume = player.getVolume();
+      }
+
+      document.getElementById('ytVolume').value = lastVolume;
+      document.getElementById('volumeText').style.display = "inline";
+      document.getElementById('ytVolume').style.display = "inline";
+
+      this.ytVolumeSlider.oninput = function () {
+        player.setVolume(this.value);
+        lastVolume = this.value;
+      }
+
+      configurePlayerShuffle();
+    }
+
+    function onPlayerStateChange(event) {
+      if (event.data === YT.PlayerState.PLAYING) {
+        setVideoPlayingState();
+      } else if (event.data === YT.PlayerState.PAUSED) {
+        setPausedVideoState();
+      } else if (event.data === YT.PlayerState.ENDED) {
+        setVideoEndedState();
+      } else if (event.data === -1) {
+        setVideoUnstartedState();
+      }
+      //printEventData(event.data);
+    }
+
+    function onError(event) {
+      didVideoError = true;
+
+      deblurVideo();
+
+      var errorMessage = getFriendlyYoutubeAPIError(event.data);
+      if (isEndOfPlaylist()) {
+        errorMessage += '<br>' + getEndOfPlaylistMessage();
+      }
+      setQuizStatusDisplay(errorMessage);
+
+      this.playerNextVideoTimeoutId = setTimeout(
+        function () {
+          didVideoError = false;
+          if (isEndOfPlaylist()) {
+            return;
+          }
+          blurVideo();
+          nextVideo();
+        },
+        5000
+      );
+    }
+
+    function getFriendlyYoutubeAPIError(eventDataCode) {
+      var baseMessage = 'Error: Video could not be played. Code: ' + eventDataCode + '<br>Message: <b>'
+      switch (Number(eventDataCode)) {
+        case 2:
+          return baseMessage + 'The request contains an invalid video ID value.' + '</b>';
+        case 5:
+          return baseMessage + 'The requested content cannot be played in an HTML5 player.' + '</b>';
+        case 100:
+          return baseMessage + 'The video requested was not found or is private.' + '</b>';
+        case 101:
+        case 150:
+          return baseMessage + 'YT playlist ID is invalid or the owner of the requested video does not allow it to be played in embedded players' + '</b>';
+        default:
+          return baseMessage + 'Unknown error (spooky)' + '</b>';
+      }
+    }
+
+    function setVideoPlayingState() {
+      if (!player) { return; }
+
+      if (doesVideoNeedSeekTo()) {
+        hasSeekToBeenApplied = true;
+        seekTo(vidTimestamps[player.getPlaylistIndex()]);
+        return;
+      }
+
+      didVideoJustChange = false;
+      if (isQuizManuallyStopped || isQuizForPlaylistDone) {
+        return;
+      }
+
+      setTimeLimitSeconds();
+
+      if (!isPaused) {
+        //resumed from saved values
+        var guessTimeLimitMilliseconds = guessTimeLimitSeconds * 1000;
+        var vidTimeLimitMilliseconds = vidTimeLeftSeconds * 1000;
+      } else {
+        var guessTimeLimitMilliseconds = lastGuessTimeLimitSeconds * 1000;
+        if (lastVidTimeLeftSeconds) {
+          var vidTimeLimitMilliseconds = lastVidTimeLeftSeconds * 1000;
+        } else {
+          var vidTimeLimitMilliseconds = vidTimeLeftSeconds * 1000;
+        }
+      }
+
+      isPaused = false;
+
+      if (!isQuizForVideoDone) {
+        setGuessTimeRemainingMessage(guessTimeLimitMilliseconds / 1000);
+
+        this.guessTimeRemainingTimeoutId = setTimeout(
+          setGuessAsFinished,
+          guessTimeLimitMilliseconds,
+          vidTimeLimitMilliseconds / 1000
+        );
+      } else {
+        var message = 'Time\'s up! Answer was: <br><b>' + getVideoTitle() + '</b><br>';
+
+        if (isEndOfPlaylist()) {
+          isQuizForPlaylistDone = true;
+          clearCountdownTimer();
+          setQuizStatusDisplay(message + '<br>' + getEndOfPlaylistMessage());
+        } else {
+          setQuizStatusDisplay(message);
+          setVidTimeRemainingMessage(vidTimeLimitMilliseconds / 1000);
+        }
+      }
+
+      if (!isEndOfPlaylist()) {
+        this.ytNextVidTimeoutId = setTimeout(
+          nextVideoAfterQuiz,
+          guessTimeLimitMilliseconds + vidTimeLimitMilliseconds - fadeOutMilliseconds,
+          vidTimeLimitMilliseconds
+        );
+      }
+    }
+
+    function setPausedVideoState() {
+      if (isQuizManuallyStopped || isQuizForPlaylistDone) {
+        return;
+      }
+
+      if (didVideoJustChange) {
+        didVideoJustChange = false;
+        return;
+      }
+
+      isPaused = true;
+
+      player.setVolume(lastVolume);
+
+      clearMessagesAndFutures();
+      setQuizStatusDisplay('(Video and quiz are paused)');
+    }
+
+    function setVideoEndedState() {
+      isQuizManuallyStopped = true;
+
+      if (isEndOfPlaylist()) {
+        isQuizForPlaylistDone = true;
+        return;
+      }
+
+      clearStateForNextVideo();
+    }
+
+    function setVideoUnstartedState() {
+      if (didVideoError) {
+        return;
+      }
+      isQuizForPlaylistDone = false;
+      isQuizManuallyStopped = false;
+      clearStateForNextVideo();
+      setQuizStatusDisplay('(Starting next video)');
+    }
+
+    function setPlaylist() {
+      vidTimestamps = {};
+      var ytPlaylistIdOrUrl = document.getElementById('playlistIdText').value;
+
+      if (!ytPlaylistIdOrUrl) {
+        setLoadPlaylistError('Value cannot be empty');
+        return;
+      }
+
+      try {
+        let url = new URL(ytPlaylistIdOrUrl);
+        let urlHostname = url.hostname.toLowerCase();
+
+        // crappy way of checking for a YT url
+        if (!urlHostname.includes('youtube') && !urlHostname.includes('youtu.be')) {
+          setLoadPlaylistError('Invalid YouTube URL');
+          return;
+        }
+
+        let params = url.searchParams;
+        var playlistId = params.get("list");
+
+        if (!playlistId) {
+          setLoadPlaylistError('Invalid YouTube playlist URL (needs a list= query param)');
+          return;
+        }
+
+        params.forEach((value, key) => {
+          if (key.startsWith('t')) {
+            try {
+              var vidTimestampKey = Number(key.substring(1)) - 1;
+              var vidTimestampValue = Number(value);
+
+              if (isNaN(vidTimestampKey) || isNaN(vidTimestampValue)) {
+                let error = key + '=' + value + ' was invalid'
+                throw error;
+              }
+              vidTimestamps[vidTimestampKey] = vidTimestampValue;
+            } catch (_) {
+              //console.log(_);
+            }
+          }
+        });
+      } catch (_) {
+        playlistId = ytPlaylistIdOrUrl;
+      }
+
+      clearError();
+
+      clearStateForNextVideo();
+      setQuizStatusDisplay('Press Play to start the quiz!');
+
+      setNewYtPlayer(playlistId);
+    }
+
+    function playVideo() {
+      if (!player) { return; }
+      player.playVideo();
+    }
+
+    function pauseVideo() {
+      if (!player) { return; }
+      player.pauseVideo();
+    }
+
+    function stopVideo() {
+      player.stopVideo();
+    }
+
+    function previousVideo() {
+      if (!player) { return; }
+      didVideoJustChange = true;
+      clearStateForNextVideo();
+      player.previousVideo();
+    }
+
+    function nextVideo() {
+      if (!player) { return; }
+      if (isEndOfPlaylist()) {
+        return;
+      }
+      didVideoJustChange = true;
+      clearStateForNextVideo();
+      player.nextVideo();
+    }
+
+    function seekTo(seconds) {
+      player.seekTo(seconds);
+    }
+
+    function doesVideoNeedSeekTo() {
+      var playerPlaylistIndex = player.getPlaylistIndex();
+      if (playerPlaylistIndex in vidTimestamps) {
+        return !hasSeekToBeenApplied;
+      }
+      return false;
+    }
+
+    function clearStateForNextVideo() {
+      isPaused = false;
+      isQuizManuallyStopped = false;
+      isQuizForVideoDone = false;
+      isQuizForPlaylistDone = false;
+      hasSeekToBeenApplied = false;
+
+      blurVideo();
+      clearMessagesAndFutures();
+    }
+
+    function nextVideoAfterQuiz(milliSecondsRemaining) {
+      isQuizManuallyStopped = false;
+      isQuizForVideoDone = false;
+
+      if (isEndOfPlaylist()) {
+        return;
+      }
+
+      // fade out music
+      // should be 2 seconds when fadeOutMilliseconds= 2000
+      var lastVolume = player.getVolume();
+      var nextVideoTimeoutSeconds = milliSecondsRemaining < fadeOutMilliseconds ? milliSecondsRemaining : fadeOutMilliseconds;
+      var fadeOutInterval = nextVideoTimeoutSeconds / lastVolume;
+
+      this.volumeFadeOutIntervalId = setInterval(
+        function () {
+          player.setVolume(player.getVolume() - 1);
+        },
+        fadeOutInterval
+      );
+
+      // play next video
+      // execute timeout after fadeout has finished
+      this.playerNextVideoTimeoutId = setTimeout(
+        function () {
+          setQuizStatusDisplay('(Starting next video)');
+          clearInterval(this.volumeFadeOutIntervalId);
+          clearStateForNextVideo();
+          nextVideo();
+          player.setVolume(lastVolume);
+        },
+        nextVideoTimeoutSeconds
+      );
+    }
+
+    function endQuizForVideo() {
+      if (!player) { return; }
+      isQuizManuallyStopped = true;
+      setQuizStatusDisplay('(Quiz is paused until next video)<br>Title: <b>' + getVideoTitle() + '</b><br>');
+      deblurVideo();
+      clearMessagesAndFutures();
+      player.setVolume(lastVolume);
+    }
+
+    function setTimeLimitSeconds() {
+      setGameSeconds();
+      setVidSeconds();
+    }
+
+    function setGuessAsFinished(secondsRemaining) {
+      isQuizForVideoDone = true;
+      clearTimeout(this.guessTimeRemainingTimeoutId);
+
+      deblurVideo();
+      var message = 'Time\'s up! Answer was: <br><b>' + getVideoTitle() + '</b><br>';
+
+      if (isEndOfPlaylist()) {
+        isQuizForPlaylistDone = true;
+        clearCountdownTimer();
+        setQuizStatusDisplay(message + getEndOfPlaylistMessage());
+      } else {
+        setQuizStatusDisplay(message);
+        setVidTimeRemainingMessage(secondsRemaining);
+      }
+    }
+
+    function setGuessTimeRemainingMessage(secondsRemaining) {
+      setQuizStatusDisplay('Time to guess!');
+      let message = 'Time left:';
+      setSecondsRemaningMessage(message, secondsRemaining);
+
+      secondsRemaining = secondsRemaining - 1;
+      clearInterval(this.countdownTimerId);
+      this.countdownTimerId = setInterval(
+        function () {
+          if (secondsRemaining <= 0) {
+            clearInterval(this.countdownTimerId);
+          } else {
+            setSecondsRemaningMessage(message, secondsRemaining);
+          }
+          secondsRemaining -= 1;
+          lastGuessTimeLimitSeconds = secondsRemaining >= 0 ? secondsRemaining : 0;
+        },
+        1000
+      );
+    }
+
+    function setVidTimeRemainingMessage(secondsRemaining) {
+      let message = 'Next video in:';
+      setSecondsRemaningMessage(message, secondsRemaining);
+
+      secondsRemaining = secondsRemaining - 1;
+      clearInterval(this.vidCountdownTimerId);
+      this.vidCountdownTimerId = setInterval(
+        function () {
+          if (secondsRemaining <= 0) {
+            clearInterval(this.vidCountdownTimerId);
+          } else {
+            setSecondsRemaningMessage(message, secondsRemaining);
+          }
+          secondsRemaining -= 1;
+          lastVidTimeLeftSeconds = secondsRemaining >= 0 ? secondsRemaining : 0;
+        },
+        1000
+      );
+    }
+
+    function setSecondsRemaningMessage(message, secondsRemaining) {
+      setQuizCountdownDisplay('<br>' + message + ' ' + getSecondsMessage(secondsRemaining));
+    }
+
+    function isEndOfPlaylist() {
+      if (!(player.getPlaylist())) {
+        return true;
+      }
+      var lastIndex = player.getPlaylist().length - 1;
+      var currentIndex = player.getPlaylistIndex();
+
+      return currentIndex === lastIndex;
+    }
+
+    function getVideoTitle() {
+      return player.getVideoData().title;
+    }
+
+    function deblurVideo() {
+      document.getElementById('player').style.filter = "blur(0px)";
+    }
+
+    function blurVideo() {
+      document.getElementById('player').style.filter = "blur(70px)";
+    }
+
+    function setGameSeconds() {
+      guessTimeLimitSeconds = Number(document.getElementById('guessTimeLimitSeconds').value);
+      if (guessTimeLimitSeconds < 1) {
+        document.getElementById('guessTimeLimitSeconds').value = 1;
+        guessTimeLimitSeconds = 1;
+      }
+      document.getElementById('quizCountdownCurrentValue').innerHTML = 'Current value: <b>' + guessTimeLimitSeconds + "</b>";
+    }
+
+    function setVidSeconds() {
+      vidTimeLeftSeconds = Number(document.getElementById('vidTimeLeftSeconds').value);
+      if (vidTimeLeftSeconds < 1) {
+        document.getElementById('vidTimeLeftSeconds').value = 1;
+        vidTimeLeftSeconds = 1;
+      }
+      document.getElementById('nextVideoCountdownCurrentValue').innerHTML = 'Current value: <b>' + vidTimeLeftSeconds + "</b>";
+    }
+
+    function setQuizStatusDisplay(message) {
+      document.getElementById('quizStatusDisplay').innerHTML = message;
+    }
+
+    function setQuizCountdownDisplay(message) {
+      document.getElementById('quizCountdownDisplay').innerHTML = message;
+    }
+
+    function setLoadPlaylistError(message) {
+      document.getElementById('errorMessage').innerHTML = message;
+    }
+
+    function clearError() {
+      document.getElementById('errorMessage').innerHTML = "";
+    }
+
+    function getEndOfPlaylistMessage() {
+      return 'End of playlist <img src="img/umaruCry.webp" width="50" height="50">';
+    }
+
+    function clearCountdownTimer() {
+      if (this.countdownTimerId) { clearInterval(this.countdownTimerId); }
+      setQuizCountdownDisplay('');
+    }
+
+    function clearMessagesAndFutures() {
+      clearError();
+
+      if (this.ytNextVidTimeoutId) { clearTimeout(this.ytNextVidTimeoutId); }
+      if (this.guessTimeRemainingTimeoutId) { clearTimeout(this.guessTimeRemainingTimeoutId); }
+      if (this.vidTimeRemainingTimeoutId) { clearTimeout(this.vidTimeRemainingTimeoutId); }
+      if (this.playerNextVideoTimeoutId) { clearTimeout(this.playerNextVideoTimeoutId); }
+      if (this.countdownTimerId) { clearTimeout(this.countdownTimerId); }
+      if (this.vidCountdownTimerId) { clearTimeout(this.vidCountdownTimerId); }
+
+      if (this.volumeFadeOutIntervalId) { clearInterval(this.volumeFadeOutIntervalId); }
+
+      clearCountdownTimer();
+    }
+
+    function initialize() {
+      this.ytVolumeSlider = document.getElementById("ytVolume");
+      setGameSeconds();
+      setVidSeconds();
+    }
+
+    function configurePlayerShuffle() {
+      if (!player) { return; }
+      //player.setShuffle(document.getElementById("myCheck").checked);
+    }
+
+    function getSecondsMessage(seconds) {
+      if (seconds === 1) {
+        return '1 second'
+      }
+      return seconds + ' seconds'
+    }
+
+    function loadCan() {
+      document.getElementById('fooni').src = 'img/can.gif';
+    }
+
+    function loadBanan() {
+      document.getElementById('fooni').src = 'img/banan.webp';
+    }
+
+    function loadPreggers() {
+      document.getElementById('fooni').src = 'img/PREGGERS.webp';
+    }
+
+    function loadFridayNight() {
+      document.getElementById('fooni').src = 'img/friday-night.webp';
+    }
+
+    function loadIntoTheAyayaLand() {
+      document.getElementById('fooni').src = 'img/intotheayaya.webp';
+    }
+
+    function printEventData(eventData) {
+      if (eventData === YT.PlayerState.PLAYING) {
+        console.log('YT.PlayerState.PLAYING');
+      } else if (eventData === YT.PlayerState.PAUSED) {
+        console.log('YT.PlayerState.PAUSED');
+      } else if (eventData === YT.PlayerState.ENDED) {
+        console.log('YT.PlayerState.ENDED');
+      } else if (event.data === -1) {
+        console.log('UNSTARTED');
+      } else {
+        console.log('UNKNOWN: ' + eventData);
+      }
+    }
+  </script>
+</body>
+
+</html>
