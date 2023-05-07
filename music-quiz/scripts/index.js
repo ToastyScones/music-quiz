@@ -410,7 +410,7 @@ function setGuessTimeRemainingMessage(secondsRemaining) {
   clearInterval(this.guessCountdownTimerId);
   this.guessCountdownTimerId = setInterval(
     function () {
-      if (secondsRemaining < 0) {
+      if (secondsRemaining <= 0) {
         clearInterval(this.guessCountdownTimerId);
       } else {
         setSecondsRemaningMessage(message, secondsRemaining);
@@ -461,11 +461,11 @@ function getVideoTitle() {
 }
 
 function deblurVideo() {
-  document.getElementById('player').style.filter = "blur(0px) sepia(0%)";
+  document.getElementById('player').style.filter = "blur(0px)";
 }
 
 function blurVideo() {
-  document.getElementById('player').style.filter = "blur(70px) sepia(60%)";
+  document.getElementById('player').style.filter = "blur(70px)";
 }
 
 function setGameSeconds() {
