@@ -186,10 +186,12 @@
   <input type="text" id="playlistIdText" placeholder="(e.g. PLmra5-9c6QitTCQcJ0uqibBj6MLJCEa3q)" size="53">
   <input type="button" class="button" id="setPlaylistButton" value="Load playlist" onclick="setPlaylist()">
   <label id="errorMessage"></label>
+  <!--
   <br>
   <label>Shuffle Playlist (kind of buggy):</label>
   <input type="checkbox" id="myCheck" onclick="configurePlayerShuffle()">
-  <br><br>
+  <br>-->
+  <br>
   <label>The following will remove any timer <b>and reveal the answer</b> until the next video loads:</label>
   <br>
   <input type="button" class="button" id="endQuizForVidButton" value="End quiz for current video"
@@ -228,6 +230,8 @@
     var lastGuessTimeLimitSeconds;
     var lastVidTimeLeftSeconds;
     var didVideoJustChange = false;
+    var vidTimestamps = {};
+    var hasSeekToBeenApplied = false;
 
     var tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
@@ -298,7 +302,7 @@
       } else if (event.data === -1) {
         setVideoUnstartedState();
       }
-      //console.log('event.data ' + event.data);
+      printEventData(event.data);
     }
 
     function onError(event) {
@@ -343,10 +347,19 @@
     }
 
     function setVideoPlayingState() {
+      if (!player) { return; }
+
+      if (doesVideoNeedSeekTo()) {
+        hasSeekToBeenApplied = true;
+        seekTo(vidTimestamps[player.getPlaylistIndex()]);
+        return;
+      }
+
       didVideoJustChange = false;
       if (isQuizManuallyStopped || isQuizForPlaylistDone) {
         return;
       }
+
       setTimeLimitSeconds();
 
       if (!isPaused) {
@@ -434,6 +447,7 @@
     }
 
     function setPlaylist() {
+      vidTimestamps = {};
       var ytPlaylistIdOrUrl = document.getElementById('playlistIdText').value;
 
       if (!ytPlaylistIdOrUrl) {
@@ -458,6 +472,28 @@
           setLoadPlaylistError('Invalid YouTube playlist URL (needs a list= query param)');
           return;
         }
+
+        console.log('hi');
+
+        params.forEach((value, key) => {
+          if (key.startsWith('t')) {
+            try {
+              var vidTimestampKey = Number(key.substring(1)) - 1;
+              var vidTimestampValue = Number(value);
+
+              if (isNaN(vidTimestampKey) || isNaN(vidTimestampValue)) {
+                console.log(vidTimestampKey)
+                console.log(vidTimestampValue)
+                let error = key + '=' + value + ' was invalid'
+                //setLoadPlaylistError(error);
+                throw error;
+              }
+              vidTimestamps[vidTimestampKey] = vidTimestampValue;
+            } catch (_) {
+              console.log(_);
+            }
+          }
+        });
       } catch (_) {
         playlistId = ytPlaylistIdOrUrl;
       }
@@ -501,14 +537,28 @@
       player.nextVideo();
     }
 
+    function seekTo(seconds) {
+      player.seekTo(seconds);
+    }
+
+    function doesVideoNeedSeekTo() {
+      var playerPlaylistIndex = player.getPlaylistIndex();
+      if (playerPlaylistIndex in vidTimestamps) {
+        return !hasSeekToBeenApplied;
+      }
+      return false;
+    }
+
     function clearStateForNextVideo() {
       isPaused = false;
       isQuizManuallyStopped = false;
       isQuizForVideoDone = false;
       isQuizForPlaylistDone = false;
+      hasSeekToBeenApplied = false;
 
       blurVideo();
       clearMessagesAndFutures();
+      //vidTimestamps = {};
     }
 
     function nextVideoAfterQuiz(milliSecondsRemaining) {
@@ -603,7 +653,7 @@
       setSecondsRemaningMessage(message, secondsRemaining);
 
       secondsRemaining = secondsRemaining - 1;
-      clearInterval(this.countdownTimerId);
+      clearInterval(this.vidCountdownTimerId);
       this.vidCountdownTimerId = setInterval(
         function () {
           if (secondsRemaining <= 0) {
@@ -710,7 +760,7 @@
 
     function configurePlayerShuffle() {
       if (!player) { return; }
-      player.setShuffle(document.getElementById("myCheck").checked);
+      //player.setShuffle(document.getElementById("myCheck").checked);
     }
 
     function getSecondsMessage(seconds) {
@@ -738,6 +788,20 @@
 
     function loadIntoTheAyayaLand() {
       document.getElementById('fooni').src = 'img/intotheayaya.webp';
+    }
+
+    function printEventData(eventData) {
+      if (eventData === YT.PlayerState.PLAYING) {
+        console.log('YT.PlayerState.PLAYING');
+      } else if (eventData === YT.PlayerState.PAUSED) {
+        console.log('YT.PlayerState.PAUSED');
+      } else if (eventData === YT.PlayerState.ENDED) {
+        console.log('YT.PlayerState.ENDED');
+      } else if (event.data === -1) {
+        console.log('UNSTARTED');
+      } else {
+        console.log('UNKNOWN: ' + eventData);
+      }
     }
   </script>
 </body>
