@@ -117,6 +117,7 @@ function setVideoPlayingState() {
   }
 
   player.setVolume(getVolume());
+  needLastVolumeApplied = false;
 
   didVideoJustChange = false;
   if (isQuizManuallyStopped || isQuizForPlaylistDone) {
