@@ -40,9 +40,10 @@ input:focus::placeholder {
 }
 
 h1 {
-  font-size: 20px;
+  font-size: 22px;
   padding-top: 14px;
   overflow: hidden;
+  color: #3d4d52;
 }
 
 #controlTitle {
@@ -98,7 +99,7 @@ input[type='number'] {
 
 #endQuizForVidButton {
   margin-top: 6px;
-  background-color: #dc322f;
+  background-color: #cb4b16;
 }
 
 #player {
@@ -151,4 +152,10 @@ input[type='number'] {
 #volumeText,
 #ytVolume {
   display: none;
+}
+
+#customTimeLink {
+  display: inline-block;
+  margin-top: 5px;
+  margin-bottom: 10px;
 }
