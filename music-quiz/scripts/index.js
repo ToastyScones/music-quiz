@@ -6,7 +6,6 @@ var isPaused = false;
 var isQuizManuallyStopped = false;
 var isQuizForVideoDone = false;
 var isQuizForPlaylistDone = false;
-var lastVolume = undefined;
 var didVideoError = false;
 var lastGuessTimeLimitSeconds;
 var lastVidTimeLeftSeconds;
@@ -56,19 +55,19 @@ function setVolumeStateForNextVideo() {
 }
 
 function onPlayerReady(event) {
-  document.getElementById('ytVolume').value = lastVolume;
   document.getElementById('volumeText').style.display = "inline";
   document.getElementById('ytVolume').style.display = "inline";
 
-  lastVolume = player.getVolume();
-
-  this.ytVolumeSlider.value = lastVolume;
+  this.ytVolumeSlider.value = player.getVolume();
   this.ytVolumeSlider.oninput = function () {
     player.setVolume(this.value);
-    lastVolume = this.value;
   }
 
   configurePlayerShuffle();
+}
+
+function getVolume() {
+  return this.ytVolumeSlider.value;
 }
 
 function onPlayerStateChange(event) {
@@ -117,12 +116,7 @@ function setVideoPlayingState() {
     return;
   }
 
-  if (needLastVolumeApplied) {
-    player.setVolume(lastVolume);
-    needLastVolumeApplied = false;
-  } else {
-    lastVolume = player.getVolume();
-  }
+  player.setVolume(getVolume());
 
   didVideoJustChange = false;
   if (isQuizManuallyStopped || isQuizForPlaylistDone) {
@@ -187,7 +181,7 @@ function setPausedVideoState() {
 
   isPaused = true;
 
-  player.setVolume(lastVolume);
+  player.setVolume(getVolume());
 
   clearMessagesAndFutures();
   setQuizStatusDisplay('(Video and quiz are paused)');
@@ -338,8 +332,7 @@ function nextVideoAfterQuiz(milliSecondsRemaining) {
   }
 
   // Fade out music as video ends
-  lastVolume = player.getVolume();
-  var tenPercentVol = Math.trunc(lastVolume * .1);
+  var tenPercentVol = Math.trunc(getVolume() * .1);
   if (tenPercentVol === 0) {
     tenPercentVol = 1;
   }
@@ -376,7 +369,7 @@ function endQuizForVideo() {
   setQuizStatusDisplay('(Quiz is paused until next video)<br>Title: <b>' + getVideoTitle() + '</b><br>');
   deblurVideo();
   clearMessagesAndFutures();
-  player.setVolume(lastVolume);
+  player.setVolume(getVolume());
 }
 
 function setTimeLimitSeconds() {
