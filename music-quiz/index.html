@@ -26,11 +26,13 @@
   <input type="button" class="button" id="pauseVideoButton" value="Pause" onclick="pauseVideo()">
   <input type="button" class="button" id="nextVideoButton" value="Next Video" onclick="nextVideo()">
   <p id="volumeText">Volume: </p><input type="range" min="1" max="100" value="50" class="slider" id="ytVolume">
-  <br>
+  <br><br>
   <label>YT Playlist URL or ID:</label>
   <input type="text" id="playlistIdText" placeholder="(e.g. PLmra5-9c6QitTCQcJ0uqibBj6MLJCEa3q)" size="53">
   <input type="button" class="button" id="setPlaylistButton" value="Load Playlist" onclick="setPlaylist()">
   <label id="errorMessage"></label>
+  <br>
+  <a id="customTimeLink" href="https://github.com/ToastyScones/toastyscones.github.io#setting-a-start-time-for-specific-videos" target="_blank">How to add custom start times for specific videos</a>
   <!--
   <br>
   <label>Shuffle Playlist (kind of buggy):</label>
@@ -42,6 +44,7 @@
   <input type="button" class="button" id="endQuizForVidButton" value="Pause quiz for current video"
     onclick="endQuizForVideo()">
 
+  <br><br>
   <h1>Settings</h1>
   Quiz countdown (seconds): <input type="number" id="guessTimeLimitSeconds" name="guessTimeLimitSeconds" value="30"
     min="1">
@@ -52,6 +55,12 @@
     value="15" min="1">
   <input type="button" class="button" id="setVidTimeLeftButton" value="Set" onclick="setVidSeconds()">
   <div id="nextVideoCountdownCurrentValue" class="settingsDisplay"></div>
+
+  <br><br>
+  <h1>GitHub Repo (Instructions, README, etc.)</h1>
+  <a href="https://github.com/ToastyScones/toastyscones.github.io" target="_blank">You can find the GitHub repo and README here.</a>
+  <br>
+  <label>Feel free to submit <a href="https://github.com/ToastyScones/ToastyScones.github.io/issues" target="_blank">issues</a> or pull requests.</label>
   <br><br><br>
   <input type="button" class="button" id="fridayButton" value="FRIDAY NIGHT" onclick="loadFridayNight()"><br>
   <input type="button" class="button" id="canButton" value="can" onclick="loadCan()"><br>
