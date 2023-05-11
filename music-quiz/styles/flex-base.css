@@ -1,0 +1,66 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  /*font-family: sans-serif;*/
+  font-size: 1.1em;
+  text-align: center;
+  color: #FFF;
+  font: 400 1em/1.4 Open Sans, sans-serif;
+  text-rendering: optimizeLegibility;
+  z-index: 1;
+  font-smooth: auto;
+}
+
+.main header,
+.main footer,
+.hg-sidebar,
+.main-content {
+  padding: 6px;
+}
+
+.main header,
+.main footer {
+  background: #073642;
+}
+
+.main {
+  min-height: 100vh;
+  background: #ffedc6;
+}
+
+.main,
+.main-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1 1 640px;
+  color: #777;
+}
+
+.footer-links {
+  display: flex;
+  flex-direction: column;
+}
+
+/*TODO: need min width set properly */
+@media (min-width: 800px) {
+  .main-sidebar-1 {
+    order: -1;
+  }
+
+  .main-body {
+    flex-direction: row;
+  }
+
+  .hg-sidebar {
+    flex: 0 1 260px;
+  }
+}

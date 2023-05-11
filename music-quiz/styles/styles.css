@@ -1,161 +1,197 @@
-html * {
+.main-content {
   font-family: Nunito, sans-serif;
-  background-color: #ffefcc;
   color: #586e75;
-}
-
-br {
-  overflow: hidden;
-}
-
-.playerParent {
-  position: relative;
+  justify-content: center;
 }
 
 .button {
   border: none;
   color: white;
   padding: 8px 13px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
   font-size: 14px;
-  background-color: #268bd2;
-  border-radius: 0px;
+  background: #268bd2;
+  height: 32px;
+}
+
+.playerParent {
+  height: 390px;
+  width: 640px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 0;
   overflow: hidden;
+  margin: auto;
+  margin-bottom: 10px;
+  background: #afc0c0;
 }
 
-.button:hover {
-  filter: brightness(85%);
+.player {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-self: center;
 }
 
-.button:active {
-  background: #002b36;
-  filter: brightness(40%);
-  outline: none;
+.quiz-status {
+  flex-direction: column;
+  font-size: 24px;
+  color: #d33682;
+  display: none;
+}
+
+.content-section {
+  border: 1px solid #afc0c0;
+  width: 700px;
+  margin: auto;
+  padding-bottom: 5px;
+  padding-top: 5px;
+  margin-bottom: 10px;
+  background: #fdf6e3;
+}
+
+#quizStatusDisplay,
+#quizCountdownDisplay {
+  margin: 0;
+}
+
+#preQuizText {
+  position: absolute;
+  z-index: 1;
 }
 
 input:focus::placeholder {
   color: transparent;
 }
 
+b {
+  color: #073642;
+}
+
 h1 {
+  margin: 10px;
   font-size: 22px;
-  padding-top: 14px;
-  overflow: hidden;
   color: #3d4d52;
-}
-
-#controlTitle {
-  padding-top: 0px;
-}
-
-#playlistIdText {
-  margin-top: 10px;
 }
 
 #setPlaylistButton,
 #setGuessTimeLimitSecondsButton,
 #setVidTimeLeftButton {
-  padding: 2px 10px;
-  background-color: #859900;
-}
-
-input[type='number'] {
-  width: 60px;
+  background: #859900;
 }
 
 #setPlaylistButton {
-  background-color: #2aa198;
+  background: #2aa198;
+}
+
+#previousVideoButton {
+  background-image: url('../images/icons/skip-previous-white.png');
+  background-size: cover;
+  background-position: center;
+}
+
+#nextVideoButton {
+  background-image: url('../images/icons/skip-next-white.png');
+  background-size: cover;
+  background-position: center;
 }
 
 #playVideoButton {
-  background-color: #859900;
+  background: #859900;
+  background-image: url('../images/icons/play-white.png');
+  background-size: cover;
+  background-position: center;
 }
 
 #pauseVideoButton {
-  background-color: #b58900;
-}
-
-#uselessButt {
-  background-color: #b58900;
-}
-
-#canButton {
-  background-color: #cb4b16;
-}
-
-#preggersButton {
-  background-color: #859900;
-}
-
-#fridayButton {
-  background-color: #6c71c4;
-}
-
-#intoTheAyayaButton {
-  background-color: #2aa198;
+  background: #b58900;
+  background-image: url('../images/icons/pause-white.png');
+  background-size: cover;
+  background-position: center;
 }
 
 #endQuizForVidButton {
-  margin-top: 6px;
-  background-color: #cb4b16;
+  background: #cb4b16;
 }
 
-#player {
-  top: 0;
-  right: 0;
-  margin: 0;
-  padding: 0;
-  /*-webkit-filter: blur(35px);*/
-  filter: blur(70px);
+.vid-control-button {
+  background-size: cover;
+  background-position: center;
+  width: 32px;
 }
 
-#mainView {
-  position: relative;
-  left: -10px;
-  background-color: #ffefcc;
+#ytVolume {
+  height: 10px;
+  width: 80px;
 }
 
-#quizStatusDisplay,
-#quizCountdownDisplay {
-  font-size: 30px;
-  transform: translate(10px, 0px);
-  color: #d33682;
+#fooni-header {
+  height: 60px;
+}
+
+.button:hover {
+  filter: brightness(75%);
+}
+
+#fooni-header:hover {
+  background: #002b36;
+  filter: brightness(100%);
+  outline: solid;
+  outline-color: #6c71c4;
+}
+
+.button:active,
+#fooni-header:active {
+  background-color: #002b36;
+  filter: brightness(40%);
+  outline: none;
+}
+
+.video-controls {
+  display: flex;
+}
+
+.video-controls-2 {
+  padding-left: 29px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+}
+
+.end-quiz-controls {
+  padding-right: 29px;
+  display: flex;
+  margin-left: auto;
+}
+
+.icon {
+  height: 30px;
 }
 
 #errorMessage {
-  font-size: 14px;
-  transform: translate(0px, 0px);
+  font-size: 12px;
   font-weight: bold;
   color: #dc322f;
 }
 
-#fooni {
-  position: fixed;
-  right: 0px;
-  bottom: 0px;
-  background-color: transparent;
-  overflow: hidden;
-  z-index: 99;
+#mainView {
+  display: flex;
+  flex-direction: column;
 }
 
-.settingsDisplay {
-  display: inline-block;
+#last-answer-text {
+  flex: 1;
+  font-size: 16px;
 }
 
-#ytVolume {
-  transform: translate(0px, 2px);
-  height: 14px;
+#last-answer-text {
+  display: none
 }
 
-#volumeText,
-#ytVolume {
-  display: none;
-}
-
-#customTimeLink {
-  display: inline-block;
-  margin-top: 5px;
-  margin-bottom: 10px;
+#quiz-status-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
 }

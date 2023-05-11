@@ -1,19 +1,31 @@
-function loadCan() {
-  document.getElementById('fooni').src = 'images/can.gif';
+const emoteList = [
+  'ratJAM.webp',
+  'banan.webp',
+  'PREGGERS.webp',
+  'friday-night.webp',
+  'intotheayaya.webp',
+  'kleerave.webp',
+  'kkool.webp'
+]
+const emoteFolderDir = 'images/emotes/'
+
+var curEmoteIndex = 0;
+
+function initializeHeaderEmote() {
+  curEmoteIndex = Math.floor(Math.random() * emoteList.length);
+  setHeaderEmote();
 }
 
-function loadBanan() {
-  document.getElementById('fooni').src = 'images/banan.webp';
+function loadNextImg() {
+  curEmoteIndex++;
+  if (curEmoteIndex < 0 || curEmoteIndex >= emoteList.length) {
+    curEmoteIndex = 0;
+  }
+
+  setHeaderEmote();
 }
 
-function loadPreggers() {
-  document.getElementById('fooni').src = 'images/PREGGERS.webp';
-}
-
-function loadFridayNight() {
-  document.getElementById('fooni').src = 'images/friday-night.webp';
-}
-
-function loadIntoTheAyayaLand() {
-  document.getElementById('fooni').src = 'images/intotheayaya.webp';
+function setHeaderEmote(imgSrc) {
+  document.getElementById('fooni-header').src = ''; // prevents weird image stretching when loading the new image
+  document.getElementById('fooni-header').src = emoteFolderDir + emoteList[curEmoteIndex];
 }

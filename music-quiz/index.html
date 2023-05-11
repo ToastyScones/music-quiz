@@ -1,82 +1,108 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 
 <head>
+  <link rel="stylesheet" href="styles/flex-base.css">
   <link rel="stylesheet" href="styles/styles.css">
   <script src="scripts/fooni.js"></script>
   <script src="scripts/index.js"></script>
   <script src="scripts/messages.js"></script>
 </head>
 
-<body>
-  <img id='fooni' src="images/friday-night.webp">
-  <div class="playerParent">
-    <div id="player"></div>
+<body class="main">
+
+  <header>
+    <img id="fooni-header" onclick="loadNextImg()">
+  </header>
+
+  <div class="main-body">
+
+    <section class="main-content">
+
+      <section class="youtube-video-player content-section">
+        <div class="playerParent">
+          <div id="preQuizText">Load a <b>YouTube</b> playlist, then click the <b>play button</b> to start the quiz</div>
+          <div id="player"></div>
+        </div>
+
+        <section class="video-controls">
+          <section class="video-controls-2">
+            <input type="button" class="button vid-control-button" id="previousVideoButton" onclick="previousVideo()">
+            <input type="button" class="button vid-control-button" id="playVideoButton" onclick="playVideo()">
+            <input type="button" class="button vid-control-button" id="pauseVideoButton" onclick="pauseVideo()">
+            <input type="button" class="button vid-control-button" id="nextVideoButton" onclick="nextVideo()">
+            <img id="vol-icon" class="icon" src="images/icons/volume-full-solid-36.png">
+            <input type="range" min="1" max="100" value="50" class="slider" id="ytVolume">
+          </section>
+          <section class="end-quiz-controls">
+            <input type="button" class="button" id="endQuizForVidButton" value="Reveal Answer"
+            onclick="endQuizForVideo()">
+          </section>
+        </section>
+      </section>
+
+      <section id="quiz-status" class="quiz-status content-section">
+        <div id="quiz-status-section">
+          <div id="quizStatusDisplay">[Waiting for quiz to start]</div>
+          <div id="quizCountdownDisplay"></div>
+          <div id="last-answer-text">Previous answer:</div>
+        </div>
+      </section>
+
+      <section class="controls content-section">
+        <div id="errorMessage"></div>
+        <label>YT Playlist URL or ID:</label>
+        <input type="text" id="playlistIdText" placeholder="(e.g. PLmra5-9c6QitTCQcJ0uqibBj6MLJCEa3q)" size="53">
+        <input type="button" class="button" id="setPlaylistButton" value="Load Playlist" onclick="setPlaylist()">
+        <br>
+        <a id="customTimeLink"
+          href="https://github.com/ToastyScones/toastyscones.github.io#setting-a-start-time-for-specific-videos"
+          target="_blank">How to add custom start times for specific videos</a>
+        <!--
+        <label>Shuffle Playlist (kind of buggy):</label>
+        <input type="checkbox" id="myCheck" onclick="configurePlayerShuffle()">
+        -->
+      </section>
+
+      <section class="settings content-section">
+        <h1>Settings</h1>
+        Quiz countdown (seconds): <input type="number" id="guessTimeLimitSeconds" name="guessTimeLimitSeconds"
+          value="30" min="1">
+        <input type="button" class="button" id="setGuessTimeLimitSecondsButton" value="Set" onclick="setGameSeconds()">
+        <div id="quizCountdownCurrentValue" class="settingsDisplay"></div>
+        <br>
+        Post-quiz countdown for next video (seconds): <input type="number" id="vidTimeLeftSeconds"
+          name="vidTimeLeftSeconds" value="15" min="1">
+        <input type="button" class="button" id="setVidTimeLeftButton" value="Set" onclick="setVidSeconds()">
+        <div id="nextVideoCountdownCurrentValue" class="settingsDisplay"></div>
+        <br>
+      </section>
+
+    </section>
+
+    <div class="main-sidebar-1 hg-sidebar"></div>
+
+    <div class="main-sidebar-2 hg-sidebar"></div>
+
   </div>
-  <br>
-  <div id="mainView">
-    <div id="quizStatusDisplay">Load a YouTube playlist and press Play to start the quiz!</div>
-    <div id="quizCountdownDisplay"></div>
-  </div>
-  <br>
 
-  <h1 id="controlTitle">Video Controls</h1>
-  <input type="button" class="button" id="previousVideoButton" value="Previous Video" onclick="previousVideo()">
-  <input type="button" class="button" id="playVideoButton" value="Play" onclick="playVideo()">
-  <input type="button" class="button" id="pauseVideoButton" value="Pause" onclick="pauseVideo()">
-  <input type="button" class="button" id="nextVideoButton" value="Next Video" onclick="nextVideo()">
-  <p id="volumeText">Volume: </p><input type="range" min="1" max="100" value="50" class="slider" id="ytVolume">
-  <br><br>
-  <label>YT Playlist URL or ID:</label>
-  <input type="text" id="playlistIdText" placeholder="(e.g. PLmra5-9c6QitTCQcJ0uqibBj6MLJCEa3q)" size="53">
-  <input type="button" class="button" id="setPlaylistButton" value="Load Playlist" onclick="setPlaylist()">
-  <label id="errorMessage"></label>
-  <br>
-  <a id="customTimeLink" href="https://github.com/ToastyScones/toastyscones.github.io#setting-a-start-time-for-specific-videos" target="_blank">How to add custom start times for specific videos</a>
-  <!--
-  <br>
-  <label>Shuffle Playlist (kind of buggy):</label>
-  <input type="checkbox" id="myCheck" onclick="configurePlayerShuffle()">
-  -->
-  <br><br>
-  <label>This button will remove any timer (and reveal the answer) until the next video loads:</label>
-  <br>
-  <input type="button" class="button" id="endQuizForVidButton" value="Pause quiz for current video"
-    onclick="endQuizForVideo()">
-
-  <br><br>
-  <h1>Settings</h1>
-  Quiz countdown (seconds): <input type="number" id="guessTimeLimitSeconds" name="guessTimeLimitSeconds" value="30"
-    min="1">
-  <input type="button" class="button" id="setGuessTimeLimitSecondsButton" value="Set" onclick="setGameSeconds()">
-  <div id="quizCountdownCurrentValue" class="settingsDisplay"></div>
-  <br>
-  Post-quiz countdown for next video (seconds): <input type="number" id="vidTimeLeftSeconds" name="vidTimeLeftSeconds"
-    value="15" min="1">
-  <input type="button" class="button" id="setVidTimeLeftButton" value="Set" onclick="setVidSeconds()">
-  <div id="nextVideoCountdownCurrentValue" class="settingsDisplay"></div>
-
-  <br><br>
-  <h1>GitHub Repo (Instructions, README, etc.)</h1>
-  <a href="https://github.com/ToastyScones/toastyscones.github.io" target="_blank">You can find the GitHub repo and README here.</a>
-  <br>
-  <label>Feel free to submit <a href="https://github.com/ToastyScones/ToastyScones.github.io/issues" target="_blank">issues</a> or pull requests.</label>
-  <br><br><br>
-  <input type="button" class="button" id="fridayButton" value="FRIDAY NIGHT" onclick="loadFridayNight()"><br>
-  <input type="button" class="button" id="canButton" value="can" onclick="loadCan()"><br>
-  <input type="button" class="button" id="uselessButt" value="Banana, Ready-to-Eat" onclick="loadBanan()"><br>
-  <input type="button" class="button" id="preggersButton" value="PREGGERS" onclick="loadPreggers()"><br>
-  <input type="button" class="button" id="intoTheAyayaButton"
-    value="IntotheAyayalandtheWeebsarmymarchComradesstandsidebysidetostoptheNormanschargeandNammers"
-    onclick="loadIntoTheAyayaLand()"><br>
+  <footer>
+    <section class="footer-links">
+      <a target="_blank" rel="noopener noreferrer" href="https://github.com/ToastyScones/toastyscones.github.io">
+        <img id="fooni-header" src="images\icons\github-mark-white.png" alt="GitHub repo"></a>
+    </section>
+  </footer>
 
   <script>
+    initializeHeaderEmote();
+
     var tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
     var firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-    this.ytVolumeSlider = document.getElementById("ytVolume");
+    this.ytVolumeSlider = document.getElementById('ytVolume');
+
     setTimeLimitSeconds();
   </script>
 </body>
