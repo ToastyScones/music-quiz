@@ -21,7 +21,7 @@ function setNewYtPlayer(playlistId) {
     player = null;
   }
 
-  document.getElementById('mainView').style.minHeight = "150px";
+  document.getElementById('quiz-status-section').style.minHeight = "150px";
 
   player = new YT.Player('player', {
     height: '390',
@@ -55,10 +55,7 @@ function setVolumeStateForNextVideo() {
 }
 
 function onPlayerReady(event) {
-  document.getElementById('volumeText').style.display = "inline";
-  document.getElementById('ytVolume').style.display = "inline";
-
-  this.ytVolumeSlider.value = player.getVolume();
+  this.ytVolumeSlider.value = getVolume();
   this.ytVolumeSlider.oninput = function () {
     player.setVolume(this.value);
   }
@@ -110,6 +107,8 @@ function onError(event) {
 function setVideoPlayingState() {
   if (!player) { return; }
 
+  document.getElementById('preQuizText').innerHTML = '';
+
   if (doesVideoNeedSeekTo()) {
     hasSeekToBeenApplied = true;
     seekTo(vidTimestamps[player.getPlaylistIndex()]);
@@ -146,7 +145,7 @@ function setVideoPlayingState() {
       vidTimeLimitMs / 1000
     );
   } else {
-    var message = 'Time\'s up! Answer was: <br><b>' + getVideoTitle() + '</b><br>';
+    var message = 'Time\'s up! Answer was:<br><b>' + getVideoTitle() + '</b><br>';
 
     if (isEndOfPlaylist()) {
       isQuizForPlaylistDone = true;
@@ -259,9 +258,9 @@ function setPlaylist() {
   clearError();
   clearStateForNextVideo();
   needLastVolumeApplied = false;
-
-  setQuizStatusDisplay('Press Play to start the quiz!');
-
+  document.getElementById('quizStatusDisplay').innerHTML = '[Waiting for quiz to start]';
+  document.getElementById('quiz-status').style.display = "flex";
+  document.getElementById('preQuizText').innerHTML = '<b>Press the play button to start the quiz!</b>';
   setNewYtPlayer(playlistId);
 }
 
@@ -367,9 +366,12 @@ function reduceVolumeForFadeOut(volume) {
 function endQuizForVideo() {
   if (!player) { return; }
   isQuizManuallyStopped = true;
-  setQuizStatusDisplay('(Quiz is paused until next video)<br>Title: <b>' + getVideoTitle() + '</b><br>');
+
   deblurVideo();
   clearMessagesAndFutures();
+  setQuizStatusDisplay('Answer:<br><b>' + getVideoTitle() + '</b><br><br>');
+  setQuizCountdownDisplay('[Quiz is paused until next video]');
+  document.getElementById('preQuizText').innerHTML = '';
   player.setVolume(getVolume());
 }
 
@@ -383,7 +385,7 @@ function setGuessAsFinished(secondsRemaining) {
   clearTimeout(this.guessTimeRemainingTimeoutId);
 
   deblurVideo();
-  var message = 'Time\'s up! Answer was: <br><b>' + getVideoTitle() + '</b><br>';
+  var message = 'Time\'s up! Answer was:<br><b>' + getVideoTitle() + '</b><br>';
 
   if (isEndOfPlaylist()) {
     isQuizForPlaylistDone = true;
