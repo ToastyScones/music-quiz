@@ -78,7 +78,6 @@ b-magenta {
 h1 {
   margin-top: 0px;
   margin-bottom: 10px;
-  font-size: 22px;
   color: #3d4d52;
 }
 
@@ -209,7 +208,7 @@ h1 {
 
 .content-section-title {
   text-align: center;
-  font-size: 20px;
+  font-size: 16px;
 }
 
 #quiz-status-section {
