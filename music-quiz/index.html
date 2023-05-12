@@ -74,7 +74,6 @@
         <input type="checkbox" id="myCheck" onclick="configurePlayerShuffle()">
         -->
       </section>
-
       <section class="settings content-section">
 
         <h1 class="content-section-title">Settings</h1>
@@ -123,7 +122,28 @@
             </div>
           </div>
         </section>
+      </section>
 
+      <section class="troubleshooting content-section">
+        <h1 class="content-section-title">Troubleshooting</h1>
+        <h2>Audio Issues (muted audio, audio doesn't fade out, etc.)</h2>
+        <p>
+          For now, you will need to keep the website visible somewhere on your screen so your browser doesn't lose focus.
+          <br><br>
+          This app uses setInterval and setTimeout in a lot of its functionality, and both of those have degreaded
+          performance on tabs that lose focus (i.e. tabs that are tabbed out, minimized, etc.)
+          <br><br>
+          This was only tested on Firefox and Chromium, so other browsers may have unexpected issues.
+        </p>
+        <h2>Video won't load</h2>
+        <p>
+          YouTube or the user has disabled embedded play that vid, or the video got marked as private/deleted.
+          <br><br>
+          Event codes: <a href="https://developers.google.com/youtube/iframe_api_reference#Events">https://developers.google.com/youtube/iframe_api_reference#Events</a>
+          <br><br>
+          If you're running it locally, some videos won't load if you're running from a local path or IP. See
+          <a href="https://stackoverflow.com/a/56419165">https://stackoverflow.com/a/56419165</a>
+        </p>
       </section>
 
     </section>
@@ -131,7 +151,6 @@
     <div class="main-sidebar-1 hg-sidebar"></div>
 
     <div class="main-sidebar-2 hg-sidebar"></div>
-
   </div>
 
   <footer>
