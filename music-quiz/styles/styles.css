@@ -1,5 +1,4 @@
 .main-content {
-  font-family: Nunito, sans-serif;
   color: #586e75;
   justify-content: center;
 }
@@ -23,14 +22,16 @@
   overflow: hidden;
   margin: auto;
   margin-bottom: 10px;
-  background: #afc0c0;
+  background: #bfd0d0;
 }
 
-.player {
-  height: 100%;
-  display: flex;
+#previous-answer {
+  flex: 1;
+  font-size: 16px;
+  align-items: center;
   justify-content: center;
-  align-self: center;
+  display: none;
+  color: #d33682;
 }
 
 .quiz-status {
@@ -44,20 +45,21 @@
   border: 1px solid #afc0c0;
   width: 700px;
   margin: auto;
-  padding-bottom: 10px;
   padding-top: 10px;
-  margin-bottom: 10px;
+  padding-bottom: 10px;
+  margin-bottom: 5px;
   background: #fdf6e3;
 }
 
-#quizStatusDisplay,
-#quizCountdownDisplay {
+#quiz-status-display,
+#quiz-countdown-display {
   margin: 0;
 }
 
 #preQuizText {
   position: absolute;
   z-index: 1;
+  /*background: #afada6; MAKE PLAYER 50% OPACITY INSTEAD*/
 }
 
 input:focus::placeholder {
@@ -65,7 +67,12 @@ input:focus::placeholder {
 }
 
 b {
-  color: #073642;
+  color: #3d4d52;
+}
+
+b-magenta {
+  font-weight: bold;
+  color: #d33682;
 }
 
 h1 {
@@ -111,8 +118,14 @@ h1 {
   background-position: center;
 }
 
-#endQuizForVidButton {
+#endQuizForVidButton,
+#reveal-answer {
   background: #cb4b16;
+}
+
+#pause-countdown {
+  background: #b58900;
+  display: none;
 }
 
 .vid-control-button {
@@ -152,6 +165,13 @@ h1 {
   display: flex;
 }
 
+.middle-video-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+}
+
 .video-controls-2 {
   padding-left: 29px;
   display: flex;
@@ -181,18 +201,52 @@ h1 {
   flex-direction: column;
 }
 
-#last-answer-text {
-  flex: 1;
-  font-size: 16px;
+.settings {
+  display:flex;
+  text-align: left;
+  flex-direction: column;
 }
 
-#last-answer-text {
-  display: none
+.content-section-title {
+  text-align: center;
+  font-size: 20px;
 }
 
 #quiz-status-section {
   display: flex;
-  align-items: center;
+  align-self: center;
   justify-content: center;
   flex-direction: column;
+}
+
+#github-logo {
+  height: 40px;
+}
+
+.settings-subsection{
+  display: flex;
+  align-items: left;
+  flex-direction: column;
+  gap: 5px;
+  padding-left: 29px;
+  padding-right: 29px;
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+
+.settings-subsection div {
+  flex: 1;
+  display: flex;
+  align-items: left;
+  column-gap: 5px;
+}
+
+.settings-subsection > div:first-child { 
+  margin: 0px;
+  margin-bottom: 10px;
+  flex-direction: column;
+}
+
+#custom-start-time-link {
+  font-size: 14px;
 }

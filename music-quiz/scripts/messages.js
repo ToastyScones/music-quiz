@@ -4,9 +4,9 @@ function getEndOfPlaylistMessage() {
 
 function getSecondsMessage(seconds) {
   if (seconds === 1) {
-    return '1 second'
+    return '<b>1</b> second'
   }
-  return seconds + ' seconds'
+  return '<b>' + seconds + '</b> seconds'
 }
 
 function getFriendlyYoutubeAPIError(eventDataCode) {
