@@ -62,6 +62,7 @@ function onPlayerReady(event) {
   this.ytVolumeSlider.value = getVolume();
   this.ytVolumeSlider.oninput = function () {
     player.setVolume(this.value);
+    unMute();
   }
 
   configurePlayerShuffle();
@@ -550,4 +551,20 @@ function setPreviousAnswer() {
 function setPreviousAnswerState() {
   previousVideoIndex = player.getPlaylistIndex();
   previousVideoTitle = getVideoTitle();
+}
+
+function toggleMute() {
+  if (!player) { return; }
+
+  if (player.isMuted()) {
+    unMute();
+  } else {
+    player.mute();
+    document.getElementById('vol-icon').src = 'images/icons/volume-mute-solid-36.png';
+  }
+}
+
+function unMute() {
+  player.unMute();
+  document.getElementById('vol-icon').src = 'images/icons/volume-full-solid-36.png';
 }
