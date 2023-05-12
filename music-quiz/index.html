@@ -20,8 +20,9 @@
     <section class="main-content">
 
       <section class="youtube-video-player content-section">
-        <div class="playerParent">
-          <div id="preQuizText">Load a <b>YouTube</b> playlist, then click the <b>play button</b> to start the quiz</div>
+        <div id="playerParent" class="playerParent">
+          <div id="preQuizText">Load a <b>YouTube</b> playlist, then click the <b>play button</b> to start the quiz
+          </div>
           <div id="player"></div>
         </div>
 
@@ -34,19 +35,29 @@
             <img id="vol-icon" class="icon" src="images/icons/volume-full-solid-36.png">
             <input type="range" min="1" max="100" value="50" class="slider" id="ytVolume">
           </section>
+          <section class="middle-video-controls">
+            <!--<div id="playlist-video-order">1/72</div>-->
+          </section>
           <section class="end-quiz-controls">
-            <input type="button" class="button" id="endQuizForVidButton" value="Reveal Answer"
-            onclick="endQuizForVideo()">
+            <input type="button" class="button" id="endQuizForVidButton" value="Reveal Answer/Pause Quiz"
+              onclick="endQuizForVideo()">
           </section>
         </section>
       </section>
 
       <section id="quiz-status" class="quiz-status content-section">
         <div id="quiz-status-section">
-          <div id="quizStatusDisplay">[Waiting for quiz to start]</div>
-          <div id="quizCountdownDisplay"></div>
-          <div id="last-answer-text">Previous answer:</div>
+          <div id="quiz-status-display">[Waiting for quiz to start]</div>
+          <div id="quiz-countdown-display"></div>
+          <!--
+          <input type="button" class="button" id="reveal-answer" value="Reveal Answer" onclick="endQuizForVideo()">
+          <input type="button" class="button" id="pause-countdown" value="Pause Countdown" onclick="endQuizForVideo()">
+          -->
         </div>
+      </section>
+
+      <section id="previous-answer" class="content-section">
+        <div id="last-answer-text"></div>
       </section>
 
       <section class="controls content-section">
@@ -55,7 +66,7 @@
         <input type="text" id="playlistIdText" placeholder="(e.g. PLmra5-9c6QitTCQcJ0uqibBj6MLJCEa3q)" size="53">
         <input type="button" class="button" id="setPlaylistButton" value="Load Playlist" onclick="setPlaylist()">
         <br>
-        <a id="customTimeLink"
+        <a id="custom-start-time-link"
           href="https://github.com/ToastyScones/toastyscones.github.io#setting-a-start-time-for-specific-videos"
           target="_blank">How to add custom start times for specific videos</a>
         <!--
@@ -65,16 +76,54 @@
       </section>
 
       <section class="settings content-section">
-        <h1>Settings</h1>
-        Quiz countdown (seconds): <input type="number" id="guessTimeLimitSeconds" name="guessTimeLimitSeconds"
-          value="30" min="1">
-        <input type="button" class="button" id="setGuessTimeLimitSecondsButton" value="Set" onclick="setGameSeconds()">
-        <div id="quizCountdownCurrentValue" class="settingsDisplay"></div>
-        <br>
-        Post-quiz countdown for next video (seconds): <input type="number" id="vidTimeLeftSeconds"
-          name="vidTimeLeftSeconds" value="15" min="1">
-        <input type="button" class="button" id="setVidTimeLeftButton" value="Set" onclick="setVidSeconds()">
-        <div id="nextVideoCountdownCurrentValue" class="settingsDisplay"></div>
+
+        <h1 class="content-section-title">Settings</h1>
+
+        <section class="settings-subsection">
+          <div>
+            <div>
+              <label><b>Quiz countdown (seconds)</b></label>
+            </div>
+            <div>
+              <div id="quizCountdownCurrentValue" class="settingsDisplay"></div>
+            </div>
+            <div>
+              <input type="number" id="guessTimeLimitSeconds" name="guessTimeLimitSeconds" value="30" min="1">
+              <input type="button" class="button apply-button" id="setGuessTimeLimitSecondsButton" value="Apply"
+                onclick="setGameSeconds()">
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-subsection">
+          <div>
+            <div>
+              <label><b>Post-quiz countdown for next video (seconds)</b></label>
+            </div>
+            <div>
+              <div id="nextVideoCountdownCurrentValue" class="settingsDisplay"></div>
+            </div>
+            <div>
+              <input type="number" id="vidTimeLeftSeconds" name="vidTimeLeftSeconds" value="15" min="1">
+              <input type="button" class="button apply-button" id="setVidTimeLeftButton" value="Apply"
+                onclick="setVidSeconds()">
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-subsection">
+          <div>
+            <div>
+              <input type="checkbox" id="disable-fade-out" name="disable-fade-out">
+              <label for="disable-fade-out"><b>Disable audio fade out</b></label>
+            </div>
+            <div>Removes the audio fade out at the end of the quiz countdown. May fix issues with audio being muted if
+              the
+              tab loses focus. May also result in WAYTOODANK moments.
+            </div>
+          </div>
+        </section>
+
       </section>
 
     </section>
@@ -88,7 +137,7 @@
   <footer>
     <section class="footer-links">
       <a target="_blank" rel="noopener noreferrer" href="https://github.com/ToastyScones/toastyscones.github.io">
-        <img id="fooni-header" src="images\icons\github-mark-white.png" alt="GitHub repo"></a>
+        <img id="github-logo" src="images\icons\github-mark-white.png" alt="GitHub repo"></a>
     </section>
   </footer>
 

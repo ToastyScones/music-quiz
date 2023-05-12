@@ -13,6 +13,8 @@ var didVideoJustChange = false;
 var vidTimestamps = {};
 var hasSeekToBeenApplied = false;
 var needLastVolumeApplied = false;
+var previousVideoIndex = 0;
+var previousVideoTitle = '';
 
 function setNewYtPlayer(playlistId) {
   if (player) {
@@ -45,6 +47,8 @@ function setNewYtPlayer(playlistId) {
       'onError': onError
     }
   });
+
+  document.getElementById('player').style.opacity = "50%";
 }
 
 function setVolumeStateForNextVideo() {
@@ -77,7 +81,8 @@ function onPlayerStateChange(event) {
   } else if (event.data === -1) {
     setVideoUnstartedState();
   }
-  //printEventData(event.data);
+  
+  setPreviousAnswer();
 }
 
 function onError(event) {
@@ -107,6 +112,7 @@ function onError(event) {
 function setVideoPlayingState() {
   if (!player) { return; }
 
+  document.getElementById('player').style.opacity = "100%";
   document.getElementById('preQuizText').innerHTML = '';
 
   if (doesVideoNeedSeekTo()) {
@@ -258,9 +264,10 @@ function setPlaylist() {
   clearError();
   clearStateForNextVideo();
   needLastVolumeApplied = false;
-  document.getElementById('quizStatusDisplay').innerHTML = '[Waiting for quiz to start]';
-  document.getElementById('quiz-status').style.display = "flex";
-  document.getElementById('preQuizText').innerHTML = '<b>Press the play button to start the quiz!</b>';
+  document.getElementById('quiz-status-display').innerHTML = '[Waiting for quiz to start]';
+  document.getElementById('quiz-status').style.display = 'flex';
+  document.getElementById('playerParent').style.background = '#FFFFFF';
+  document.getElementById('preQuizText').innerHTML = '<b>Click the play button to start the quiz!</b>';
   setNewYtPlayer(playlistId);
 }
 
@@ -292,6 +299,7 @@ function nextVideo() {
   }
   didVideoJustChange = true;
   clearStateForNextVideo();
+  setPreviousAnswerState();
   player.nextVideo();
 }
 
@@ -337,10 +345,12 @@ function nextVideoAfterQuiz(milliSecondsRemaining) {
     tenPercentVol = 1;
   }
 
-  reduceVolumeForFadeOut(tenPercentVol)
-  this.volumeFadeOutIntervalId = setInterval(
-    reduceVolumeForFadeOut, (fadeOutMs / 10), tenPercentVol
-  );
+  if (!document.getElementById('disable-fade-out').checked) {
+    reduceVolumeForFadeOut(tenPercentVol)
+    this.volumeFadeOutIntervalId = setInterval(
+      reduceVolumeForFadeOut, (fadeOutMs / 10), tenPercentVol
+    );
+  }
 
   // Next video timeout.
   //  While this is queued, music should start to fade out
@@ -483,11 +493,11 @@ function setVidSeconds() {
 }
 
 function setQuizStatusDisplay(message) {
-  document.getElementById('quizStatusDisplay').innerHTML = message;
+  document.getElementById('quiz-status-display').innerHTML = message;
 }
 
 function setQuizCountdownDisplay(message) {
-  document.getElementById('quizCountdownDisplay').innerHTML = message;
+  document.getElementById('quiz-countdown-display').innerHTML = message;
 }
 
 function setLoadPlaylistError(message) {
@@ -522,4 +532,22 @@ function clearMessagesAndFutures() {
 function configurePlayerShuffle() {
   if (!player) { return; }
   //player.setShuffle(document.getElementById("myCheck").checked);
+}
+
+function setPreviousAnswer() {
+  if (!player) { return; }
+
+  var currentVideoIndex = player.getPlaylistIndex();
+
+  if (currentVideoIndex > previousVideoIndex) {
+    document.getElementById('last-answer-text').innerHTML =
+      '<b-magenta>Previous Answer</b-magenta><br><b>' + previousVideoTitle + '</b>';
+    document.getElementById('previous-answer').style.display = "flex";
+  }
+  setPreviousAnswerState();
+}
+
+function setPreviousAnswerState() {
+  previousVideoIndex = player.getPlaylistIndex();
+  previousVideoTitle = getVideoTitle();
 }

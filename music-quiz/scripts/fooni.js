@@ -5,7 +5,9 @@ const emoteList = [
   'friday-night.webp',
   'intotheayaya.webp',
   'kleerave.webp',
-  'kkool.webp'
+  'kkool.webp',
+  'apuband.webp',
+  'catcampfire.webp'
 ]
 const emoteFolderDir = 'images/emotes/'
 
