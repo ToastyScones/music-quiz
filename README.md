@@ -37,12 +37,12 @@ https://www.youtube.com/watch?v=U-g0N1hqIKo&list=PLfRFOBVf8C8dgruEoZR6aF1q1487QJ
 ### Audio Issues (muted audio, audio doesn't fade out, etc.)
 For now, you will need to keep the website visible somewhere on your screen so your browser doesn't lose focus.
 
-This app uses setInterval and setTimeout in a lot of its functionality, and both of those have degreaded performance on tabs that lose focus (i.e. tabs that are tabbed out, minimized, etc.)
+This app uses setInterval and setTimeout in a lot of its functionality, and both of those have degraded performance on tabs that lose focus (i.e. tabs that are tabbed out, minimized, etc.)
 
-This was only tested on Firefox and Chromium, so other browsers may have unexpected issues. 
+This was only tested on Firefox and Chromium, so other browsers may have even more unexpected issues. ( • ᴖ • )
 
 ### Video won't load
-YouTube or the user has disabled embedded play that vid, or the video got marked as private/deleted.
+YouTube or the user has disabled embedded play, or the video got marked as private/deleted.
 
 Event codes: https://developers.google.com/youtube/iframe_api_reference#Events
 
