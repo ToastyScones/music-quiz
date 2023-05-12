@@ -34,13 +34,16 @@ https://www.youtube.com/watch?v=U-g0N1hqIKo&list=PLfRFOBVf8C8dgruEoZR6aF1q1487QJ
 **Note:** This only works with URLs, not playlist IDs.
 
 ## Troubleshooting
+### Audio Issues (muted audio, audio doesn't fade out, etc.)
+For now, you will need to keep the website visible somewhere on your screen so your browser doesn't lose focus.
+
+This app uses setInterval and setTimeout in a lot of its functionality, and both of those have degreaded performance on tabs that lose focus (i.e. tabs that are tabbed out, minimized, etc.)
+
+This was only tested on Firefox and Chromium, so other browsers may have unexpected issues. 
+
 ### Video won't load
 YouTube or the user has disabled embedded play that vid, or the video got marked as private/deleted.
 
 Event codes: https://developers.google.com/youtube/iframe_api_reference#Events
 
 If you're running it locally, some videos won't load if you're running from a local path or IP. See https://stackoverflow.com/a/56419165
-
-
-### Music doesn't fade out
-On some browsers, like Firefox, setInterval is limited if you lose focus on the tab (e.g. tabbing out, minimizing the browser, etc.). For now, you will need to keep the tab open and visible. 

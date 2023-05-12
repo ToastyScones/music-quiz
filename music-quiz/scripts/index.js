@@ -97,6 +97,10 @@ function onError(event) {
   }
   setQuizStatusDisplay(errorMessage);
 
+  if (isEndOfPlaylist) {
+    setPlayerVisible();
+  }
+
   this.onErrorNextVideoTimeoutId = setTimeout(
     function () {
       didVideoError = false;
@@ -110,11 +114,15 @@ function onError(event) {
   );
 }
 
+function setPlayerVisible() {
+  document.getElementById('player').style.opacity = "100%";
+  document.getElementById('preQuizText').innerHTML = '';
+}
+
 function setVideoPlayingState() {
   if (!player) { return; }
 
-  document.getElementById('player').style.opacity = "100%";
-  document.getElementById('preQuizText').innerHTML = '';
+  setPlayerVisible();
 
   if (doesVideoNeedSeekTo()) {
     hasSeekToBeenApplied = true;
@@ -152,7 +160,7 @@ function setVideoPlayingState() {
       vidTimeLimitMs / 1000
     );
   } else {
-    var message = 'Time\'s up! Answer was:<br><b>' + getVideoTitle() + '</b><br>';
+    var message = 'Time\'s up! Answer was:<br><b>' + getVideoTitleWithFallback() + '</b><br>';
 
     if (isEndOfPlaylist()) {
       isQuizForPlaylistDone = true;
@@ -380,7 +388,7 @@ function endQuizForVideo() {
 
   deblurVideo();
   clearMessagesAndFutures();
-  setQuizStatusDisplay('Answer:<br><b>' + getVideoTitle() + '</b><br><br>');
+  setQuizStatusDisplay('Answer:<br><b>' + getVideoTitleWithFallback() + '</b><br><br>');
   setQuizCountdownDisplay('[Quiz is paused until next video]');
   document.getElementById('preQuizText').innerHTML = '';
   player.setVolume(getVolume());
@@ -396,7 +404,7 @@ function setGuessAsFinished(secondsRemaining) {
   clearTimeout(this.guessTimeRemainingTimeoutId);
 
   deblurVideo();
-  var message = 'Time\'s up! Answer was:<br><b>' + getVideoTitle() + '</b><br>';
+  var message = 'Time\'s up! Answer was:<br><b>' + getVideoTitleWithFallback() + '</b><br>';
 
   if (isEndOfPlaylist()) {
     isQuizForPlaylistDone = true;
@@ -461,6 +469,13 @@ function isEndOfPlaylist() {
   var lastIndex = player.getPlaylist().length - 1;
   var currentIndex = player.getPlaylistIndex();
   return currentIndex === lastIndex;
+}
+
+function getVideoTitleWithFallback() {
+  return getVideoTitle() ?? 
+    'I don\'t know!! ＞ᨓ＜ <br>[The YouTube API doesn\'t instantly load, ' +
+    'so clicking Reveal Answer causes issues before loading is complete. ' +
+    'Click it again after the video loads.]'
 }
 
 function getVideoTitle() {
@@ -541,8 +556,10 @@ function setPreviousAnswer() {
   var currentVideoIndex = player.getPlaylistIndex();
 
   if (currentVideoIndex > previousVideoIndex) {
+    let title = previousVideoTitle ?? '[I don\'t know, you\'re clicking too fast!! ＞ᨓ＜]';
+
     document.getElementById('last-answer-text').innerHTML =
-      '<b-magenta>Previous Answer</b-magenta><br><b>' + previousVideoTitle + '</b>';
+      '<b-magenta>Previous Answer</b-magenta><br><b>' + title + '</b>';
     document.getElementById('previous-answer').style.display = "flex";
   }
   setPreviousAnswerState();
