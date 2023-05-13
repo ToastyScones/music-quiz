@@ -586,6 +586,10 @@ function unMute() {
   document.getElementById('vol-icon').src = 'images/icons/volume-full-solid-36.png';
 }
 
+function initializeStyles() {
+  toggleQuizStatusAlignment(document.getElementById('shift-quiz-status-left'));
+}
+
 function toggleQuizStatusAlignment(element) {
   let flexDirection = element.checked ? 'row' : 'column';
   let textAlign = element.checked ? 'left' : 'center';
