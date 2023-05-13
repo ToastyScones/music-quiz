@@ -585,3 +585,16 @@ function unMute() {
   player.unMute();
   document.getElementById('vol-icon').src = 'images/icons/volume-full-solid-36.png';
 }
+
+function toggleQuizStatusAlignment(element) {
+  let flexDirection = element.checked ? 'row' : 'column';
+  let textAlign = element.checked ? 'left' : 'center';
+
+  let quizStatusElement = document.getElementById('quiz-status');
+  let prevAnswerElement = document.getElementById('previous-answer');
+
+  quizStatusElement.style.flexDirection = flexDirection;
+  quizStatusElement.style.textAlign = textAlign;
+  prevAnswerElement.style.flexDirection = flexDirection;
+  prevAnswerElement.style.textAlign = textAlign;
+}
