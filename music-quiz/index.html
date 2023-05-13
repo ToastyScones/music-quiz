@@ -56,7 +56,7 @@
         </div>
       </section>
 
-      <section id="previous-answer" class="content-section">
+      <section id="previous-answer" class="previous-answer content-section">
         <div id="last-answer-text"></div>
       </section>
 
@@ -87,7 +87,7 @@
               <div id="quizCountdownCurrentValue" class="settingsDisplay"></div>
             </div>
             <div>
-              <input type="number" id="guessTimeLimitSeconds" name="guessTimeLimitSeconds" value="30" min="1">
+              <input type="number" id="guessTimeLimitSeconds" name="guessTimeLimitSeconds" value="20" min="1">
               <input type="button" class="button apply-button" id="setGuessTimeLimitSecondsButton" value="Apply"
                 onclick="setGameSeconds()">
             </div>
@@ -103,13 +103,25 @@
               <div id="nextVideoCountdownCurrentValue" class="settingsDisplay"></div>
             </div>
             <div>
-              <input type="number" id="vidTimeLeftSeconds" name="vidTimeLeftSeconds" value="15" min="1">
+              <input type="number" id="vidTimeLeftSeconds" name="vidTimeLeftSeconds" value="5" min="1">
               <input type="button" class="button apply-button" id="setVidTimeLeftButton" value="Apply"
                 onclick="setVidSeconds()">
             </div>
           </div>
         </section>
 
+        <section class="settings-subsection">
+          <div>
+            <div>
+              <input type="checkbox" id="shift-quiz-status-left" name="shift-quiz-status-left"
+                onchange="toggleQuizStatusAlignment(this)">
+              <label for="shift-quiz-status-left"><b>Align quiz status text to the left</b></label>
+            </div>
+            <div>
+              Will align the countdown and answer text to the left.
+            </div>
+          </div>
+        </section>
         <section class="settings-subsection">
           <div>
             <div>
@@ -126,23 +138,60 @@
 
       <section class="troubleshooting content-section">
         <h1 class="content-section-title">Troubleshooting</h1>
-        <h2>Audio Issues (muted audio, audio doesn't fade out, etc.)</h2>
+        <h2>Muted audio/audio doesn't fade out/countdown acting weird/next video kicking off early</h2>
         <p>
-          For now, you will need to keep the website visible somewhere on your screen so your browser doesn't lose focus.
+          For now, you will need to keep the website visible somewhere on your desktop so your browser doesn't lose
+          focus.
           <br><br>
           This app uses setInterval and setTimeout in a lot of its functionality, and both of those have degraded
           performance on tabs that lose focus (i.e. tabs that are tabbed out, minimized, etc.)
           <br><br>
-          This was only tested on Firefox and Chromium, so other browsers may have even more unexpected issues. ( • ᴖ • )
+          This was only tested on Firefox and Chromium, so other browsers may have even more unexpected issues. ( • ᴖ •
+          )
+          <br><br>
+          For Chrome/Chromium, turning on the 'Sites can play sound' option seemed to have helped.
+        </p>
+        <h2>Audio between videos is unbalanced</h2>
+        <p>
+          The issue is that the videos themselves have different audio levels.
+          <br><br>
+          Unforunately, audio compressors (within this site's JavaScript or through a browser extension/add-on) won't work.
+          Due to <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS" target="_blank">CORS restrictions</a>,
+          the audio from
+          the embedded player can't be maniuplated from outside a YouTube domain.
+          <br><br>
+          You can test this out by installing a YouTube audio compressor extension/add-on. It'll work on the actual YouTube site, but
+          not here. (◞‸◟；)
+          <br><br>
+          You can also enable 'Enable Loudness Equalization' in Windows for your device, but it will affect all audio
+          sources.
         </p>
         <h2>Video won't load</h2>
         <p>
           YouTube or the user has disabled embedded play, or the video got marked as private/deleted.
           <br><br>
-          Event codes: <a href="https://developers.google.com/youtube/iframe_api_reference#Events">https://developers.google.com/youtube/iframe_api_reference#Events</a>
+          Event codes: <a href="https://developers.google.com/youtube/iframe_api_reference#Events"
+            target="_blank">https://developers.google.com/youtube/iframe_api_reference#Events</a>
           <br><br>
           If you're running it locally, some videos won't load if you're running from a local path or IP. See
-          <a href="https://stackoverflow.com/a/56419165">https://stackoverflow.com/a/56419165</a>
+          <a href="https://stackoverflow.com/a/56419165" target="_blank">https://stackoverflow.com/a/56419165</a>
+        </p>
+        <h2>Autoplay doesn't work</h2>
+        <p>
+          Enable autoplay for your browser:
+        <ul>
+          <li>Firefox: <a href="https://support.mozilla.org/en-US/kb/block-autoplay"
+              target="_blank">https://support.mozilla.org/en-US/kb/block-autoplay</a></li>
+          <li>Opera: <a href="https://forums.opera.com/post/211179"
+              target="_blank">https://forums.opera.com/post/211179</a></li>
+          <li>
+            Chrome/Chromium (couldn't find an official source, so here are some copy paste instructions):
+            <br>
+            <b>Settings -> Privacy and security -> Site settings -> Additional Content Settings -> Sound -> Sites can
+              play
+              sound</b>
+          </li>
+        </ul>
         </p>
       </section>
 

@@ -25,20 +25,16 @@
   background: #bfd0d0;
 }
 
-#previous-answer {
-  flex: 1;
-  font-size: 16px;
-  align-items: center;
-  justify-content: center;
-  display: none;
-  color: #d33682;
-}
-
+.previous-answer,
 .quiz-status {
   flex-direction: column;
-  font-size: 24px;
+  font-size: 26px;
   color: #d33682;
   display: none;
+}
+
+.previous-answer{
+  font-size: 16px;
 }
 
 .content-section {
@@ -271,5 +267,19 @@ p {
 
 .troubleshooting p {
   margin-top: 5px;
+  margin-bottom: 30px;
+}
+
+.troubleshooting ul {
+  margin-top: -25px;
   margin-bottom: 20px;
+  font-size: 14px;
+  margin-left: 29px;
+  margin-right: 29px;
+}
+
+#last-answer-text,
+.quiz-status {
+  padding-left: 10px;
+  padding-right: 10px;
 }
