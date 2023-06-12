@@ -20,7 +20,7 @@ function getFriendlyYoutubeAPIError(eventDataCode) {
       return baseMessage + 'The video requested was not found or is private.' + '</b>';
     case 101:
     case 150:
-      return baseMessage + 'YT playlist ID is invalid or the owner of the requested video does not allow it to be played in embedded players' + '</b>';
+      return baseMessage + 'Playlist is private, ID is invalid, or the owner of the requested video does not allow it to be played in embedded players' + '</b>';
     default:
       return baseMessage + 'Unknown error (spooky)' + '</b>';
   }
