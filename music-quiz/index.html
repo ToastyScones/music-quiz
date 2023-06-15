@@ -22,7 +22,10 @@
 
       <section class="youtube-video-player content-section">
         <div id="playerParent" class="playerParent">
-          <div id="preQuizText">Load a <b>YouTube</b> playlist, then click the <b>play button</b> to start the quiz
+          <div id="preQuizText">
+            Load a <b>public</b> or <b>unlisted YouTube</b> playlist, and then click the <b>green play button</b> to start the quiz.
+            <br/>
+            <a href="https://github.com/ToastyScones/toastyscones.github.io#usage" target="_blank">Click here for more info</a>
           </div>
           <div id="player"></div>
         </div>
@@ -36,8 +39,8 @@
             <img id="vol-icon" class="icon" src="images/icons/volume-full-solid-36.png" onclick="toggleMute()">
             <input type="range" min="1" max="100" value="50" class="slider" id="ytVolume">
           </section>
-          <section class="middle-video-controls">
-            <!--<div id="playlist-video-order">1/72</div>-->
+          <section id="middle-video-controls" class="middle-video-controls">
+            <div id="playlist-video-order"></div>
           </section>
           <section class="end-quiz-controls">
             <input type="button" class="button" id="endQuizForVidButton" value="Reveal Answer/Pause Quiz"
@@ -50,10 +53,6 @@
         <div id="quiz-status-section">
           <div id="quiz-status-display">[Waiting for quiz to start]</div>
           <div id="quiz-countdown-display"></div>
-          <!--
-          <input type="button" class="button" id="reveal-answer" value="Reveal Answer" onclick="endQuizForVideo()">
-          <input type="button" class="button" id="pause-countdown" value="Pause Countdown" onclick="endQuizForVideo()">
-          -->
         </div>
       </section>
 
@@ -65,15 +64,11 @@
         <div id="errorMessage"></div>
         <label>YT Playlist URL or ID:</label>
         <input type="text" id="playlistIdText" placeholder="(e.g. PLmra5-9c6QitTCQcJ0uqibBj6MLJCEa3q)" size="53">
-        <input type="button" class="button" id="setPlaylistButton" value="Load Playlist" onclick="setPlaylist()">
+        <input type="button" class="button" id="loadPlaylistButton" value="Load Playlist" onclick="loadPlaylist()">
         <br>
         <a id="custom-start-time-link"
           href="https://github.com/ToastyScones/toastyscones.github.io#setting-a-start-time-for-specific-videos"
           target="_blank">How to add custom start times for specific videos</a>
-        <!--
-        <label>Shuffle Playlist (kind of buggy):</label>
-        <input type="checkbox" id="myCheck" onclick="configurePlayerShuffle()">
-        -->
       </section>
       <section class="settings content-section">
 
@@ -156,12 +151,14 @@
         <p>
           The issue is that the videos themselves have different audio levels.
           <br><br>
-          Unforunately, audio compressors (within this site's JavaScript or through a browser extension/add-on) won't work.
+          Unforunately, audio compressors (within this site's JavaScript or through a browser extension/add-on) won't
+          work.
           Due to <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS" target="_blank">CORS restrictions</a>,
           the audio from
           the embedded player can't be maniuplated from outside a YouTube domain.
           <br><br>
-          You can test this out by installing a YouTube audio compressor extension/add-on. It'll work on the actual YouTube site, but
+          You can test this out by installing a YouTube audio compressor extension/add-on. It'll work on the actual
+          YouTube site, but
           not here. (◞‸◟；)
           <br><br>
           You can also enable 'Enable Loudness Equalization' in Windows for your device, but it will affect all audio

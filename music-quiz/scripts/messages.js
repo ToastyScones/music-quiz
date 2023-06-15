@@ -41,3 +41,7 @@ function printEventData(eventData) {
     console.log('UNKNOWN: ' + eventData);
   }
 }
+
+function getPlaylistOrderDisplay(currentIndex, maxSize) {
+  return currentIndex + '/' + maxSize;
+}

@@ -4,7 +4,9 @@ Basic GitHub page for YouTube music quizzes.
 Link: https://toastyscones.github.io/music-quiz/
 
 ## Usage
-Copy a YouTube playlist URL or ID, paste into the **YT Playlist URL or ID** field, and click Load Playlist. Press Play to start the quiz!
+Copy a YouTube playlist URL or ID, paste into the **YT Playlist URL or ID** field, and click Load Playlist. Finally, press the green play button to start the quiz.
+
+YouTube playlist must be set to **public** or **unlisted**; Private playlists won't work.
 
 YT URL example:
 ```
