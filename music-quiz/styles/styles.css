@@ -23,6 +23,7 @@
   margin: auto;
   margin-bottom: 10px;
   background: #bfd0d0;
+  flex-direction: column;
 }
 
 .previous-answer,
@@ -53,7 +54,6 @@
 }
 
 #preQuizText {
-  position: absolute;
   z-index: 1;
 }
 
@@ -85,13 +85,13 @@ p {
   font-size: 14px;
 }
 
-#setPlaylistButton,
+#loadPlaylistButton,
 #setGuessTimeLimitSecondsButton,
 #setVidTimeLeftButton {
   background: #859900;
 }
 
-#setPlaylistButton {
+#loadPlaylistButton {
   background: #2aa198;
 }
 
@@ -282,4 +282,14 @@ p {
 .quiz-status {
   padding-left: 10px;
   padding-right: 10px;
+}
+
+.middle-video-controls {
+  display: none;
+  justify-content: right;
+  margin-right: 10px;
+}
+
+#playlist-video-order {
+  margin-bottom: 2px;
 }

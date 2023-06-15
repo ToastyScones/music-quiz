@@ -64,8 +64,7 @@ function onPlayerReady(event) {
     player.setVolume(this.value);
     unMute();
   }
-
-  configurePlayerShuffle();
+  initializePlaylistCounter();
 }
 
 function getVolume() {
@@ -82,7 +81,7 @@ function onPlayerStateChange(event) {
   } else if (event.data === -1) {
     setVideoUnstartedState();
   }
-  
+
   setPreviousAnswer();
 }
 
@@ -97,9 +96,7 @@ function onError(event) {
   }
   setQuizStatusDisplay(errorMessage);
 
-  if (isEndOfPlaylist) {
-    setPlayerVisible();
-  }
+  setPlayerVisible();
 
   this.onErrorNextVideoTimeoutId = setTimeout(
     function () {
@@ -221,9 +218,10 @@ function setVideoUnstartedState() {
 
   clearStateForNextVideo();
   setQuizStatusDisplay('(Starting next video)');
+  setCurrentPlaylistCounter();
 }
 
-function setPlaylist() {
+function loadPlaylist() {
   vidTimestamps = {};
   var ytPlaylistIdOrUrl = document.getElementById('playlistIdText').value;
 
@@ -272,11 +270,13 @@ function setPlaylist() {
 
   clearError();
   clearStateForNextVideo();
+  clearPlaylistCounter();
   needLastVolumeApplied = false;
   document.getElementById('quiz-status-display').innerHTML = '[Waiting for quiz to start]';
   document.getElementById('quiz-status').style.display = 'flex';
   document.getElementById('playerParent').style.background = '#FFFFFF';
-  document.getElementById('preQuizText').innerHTML = '<b>Click the play button to start the quiz!</b>';
+  document.getElementById('preQuizText').style.position = 'absolute';
+  document.getElementById('preQuizText').innerHTML = '<b>Click the green play button below to start the quiz!</b>';
   setNewYtPlayer(playlistId);
 }
 
@@ -545,11 +545,6 @@ function clearMessagesAndFutures() {
   clearCountdownTimer();
 }
 
-function configurePlayerShuffle() {
-  if (!player) { return; }
-  //player.setShuffle(document.getElementById("myCheck").checked);
-}
-
 function setPreviousAnswer() {
   if (!player) { return; }
 
@@ -601,4 +596,24 @@ function toggleQuizStatusAlignment(element) {
   quizStatusElement.style.textAlign = textAlign;
   prevAnswerElement.style.flexDirection = flexDirection;
   prevAnswerElement.style.textAlign = textAlign;
+}
+
+function clearPlaylistCounter() {
+  if (!player?.getPlaylist()) { return; }
+  document.getElementById('playlist-video-order').innerHTML = '';
+  document.getElementById('middle-video-controls').style.display = 'none';
+}
+
+function initializePlaylistCounter() {
+  if (!player?.getPlaylist()) { return; }
+  setCurrentPlaylistCounter();
+  document.getElementById('middle-video-controls').style.display = 'flex';
+}
+
+function setCurrentPlaylistCounter() {
+  if (!player?.getPlaylist()) { return; }
+  var lastId = player.getPlaylist().length;
+  var currentId = player.getPlaylistIndex() + 1;
+
+  document.getElementById('playlist-video-order').innerHTML = getPlaylistOrderDisplay(currentId, lastId);
 }
