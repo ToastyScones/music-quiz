@@ -196,6 +196,7 @@ function setPausedVideoState() {
   player.setVolume(getVolume());
 
   clearMessagesAndFutures();
+  setCurrentPlaylistCounter();
   setQuizStatusDisplay('(Video and quiz are paused)');
 }
 
