@@ -33,3 +33,7 @@ function setHeaderEmote(imgSrc) {
   document.getElementById('fooni-header').src = ''; // prevents weird image stretching when loading the new image
   document.getElementById('fooni-header').src = emoteFolderDir + emoteList[curEmoteIndex];
 }
+
+function getEndOfPlaylistEmote() {
+  return emoteFolderDir + 'umaruCry.webp';
+}

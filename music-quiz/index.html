@@ -5,9 +5,10 @@
   <title>Music Quiz Thingy</title>
   <link rel="stylesheet" href="styles/flex-base.css">
   <link rel="stylesheet" href="styles/styles.css">
+  <script src="scripts/context.js"></script>
   <script src="scripts/fooni.js"></script>
-  <script src="scripts/index.js"></script>
   <script src="scripts/messages.js"></script>
+  <script src="scripts/index.js"></script>
 </head>
 
 <body class="main">
@@ -85,7 +86,7 @@
             <div>
               <input type="number" id="guessTimeLimitSeconds" name="guessTimeLimitSeconds" value="20" min="1">
               <input type="button" class="button apply-button" id="setGuessTimeLimitSecondsButton" value="Apply"
-                onclick="setGameSeconds()">
+                onclick="context.setGameSeconds()">
             </div>
           </div>
         </section>
@@ -101,7 +102,7 @@
             <div>
               <input type="number" id="vidTimeLeftSeconds" name="vidTimeLeftSeconds" value="5" min="1">
               <input type="button" class="button apply-button" id="setVidTimeLeftButton" value="Apply"
-                onclick="setVidSeconds()">
+                onclick="context.setVidSeconds()">
             </div>
           </div>
         </section>
@@ -209,16 +210,7 @@
 
   <script>
     initializeHeaderEmote();
-    initializeStyles();
-
-    var tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    var firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-    this.ytVolumeSlider = document.getElementById('ytVolume');
-
-    setTimeLimitSeconds();
+    initializeMainPage();
   </script>
 </body>
 
