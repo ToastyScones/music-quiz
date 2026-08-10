@@ -6,6 +6,10 @@ function initPlaylistBuilder() {
   document.getElementById('resetBuilderOrderButton').onclick = resetBuilderOrder;
   document.getElementById('randomizeBuilderOrderButton').onclick = randomizeBuilderOrder;
   document.getElementById('resetBuilderStartTimesButton').onclick = resetBuilderStartTimes;
+
+  var listEl = document.getElementById('playlist-builder-list');
+  listEl.addEventListener('dragover', onBuilderListDragOver);
+  listEl.addEventListener('drop', onBuilderListDrop);
 }
 
 function showBuilderEmptyState() {
@@ -54,6 +58,17 @@ function createDragHandle() {
   return dragHandle;
 }
 
+function createBuilderDropZone(insertIndex) {
+  var dropZone = document.createElement('div');
+  dropZone.className = 'playlist-builder-drop-zone';
+  dropZone.dataset.insertIndex = String(insertIndex);
+  return dropZone;
+}
+
+function isBuilderDropZoneNoOp(insertIndex, fromIndex) {
+  return insertIndex === fromIndex || insertIndex === fromIndex + 1;
+}
+
 function renderBuilderList() {
   if (!context.videoOrder || context.videoOrder.length === 0) {
     showBuilderEmptyState();
@@ -65,6 +80,8 @@ function renderBuilderList() {
   listEl.innerHTML = '';
 
   context.videoOrder.forEach(function (videoId, index) {
+    listEl.appendChild(createBuilderDropZone(index));
+
     var row = document.createElement('div');
     row.className = 'playlist-builder-row';
     row.dataset.index = String(index);
@@ -134,12 +151,10 @@ function renderBuilderList() {
     row.appendChild(previewBtn);
     row.appendChild(reorderControls);
 
-    row.addEventListener('dragover', onBuilderDragOver);
-    row.addEventListener('dragleave', onBuilderDragLeave);
-    row.addEventListener('drop', onBuilderDrop);
-
     listEl.appendChild(row);
   });
+
+  listEl.appendChild(createBuilderDropZone(context.videoOrder.length));
 
   updateBuilderUrlField();
   fetchVideoTitles(context.videoOrder);
@@ -158,6 +173,26 @@ function isQuizRunning() {
 
 var builderDragSourceIndex = null;
 var builderDragSourceRow = null;
+var builderDragImageEl = null;
+
+function createBuilderRowDragImage(row, event) {
+  var rowRect = row.getBoundingClientRect();
+  var dragImage = row.cloneNode(true);
+  dragImage.classList.add('playlist-builder-drag-image');
+  dragImage.classList.remove('dragging', 'now-playing');
+  dragImage.style.width = rowRect.width + 'px';
+  dragImage.style.position = 'fixed';
+  dragImage.style.top = '-1000px';
+  dragImage.style.left = '-1000px';
+  dragImage.style.pointerEvents = 'none';
+  document.body.appendChild(dragImage);
+
+  var offsetX = event.clientX - rowRect.left;
+  var offsetY = event.clientY - rowRect.top;
+  event.dataTransfer.setDragImage(dragImage, offsetX, offsetY);
+
+  return dragImage;
+}
 
 function onBuilderDragStart(event) {
   var row = event.target.closest('.playlist-builder-row');
@@ -170,54 +205,72 @@ function onBuilderDragStart(event) {
   row.classList.add('dragging');
   event.dataTransfer.effectAllowed = 'move';
   event.dataTransfer.setData('text/plain', row.dataset.videoId);
+  builderDragImageEl = createBuilderRowDragImage(row, event);
 }
 
 function clearDropIndicators() {
-  document.querySelectorAll('.playlist-builder-row').forEach(function (row) {
-    row.classList.remove('drop-target-before', 'drop-target-after');
-    delete row.dataset.dropPosition;
+  document.querySelectorAll('.playlist-builder-drop-zone.active').forEach(function (dropZone) {
+    dropZone.classList.remove('active');
   });
 }
 
-function onBuilderDragOver(event) {
+function getBuilderInsertIndexFromPointer(clientY) {
+  var rows = document.querySelectorAll('#playlist-builder-list .playlist-builder-row');
+
+  for (var i = 0; i < rows.length; i++) {
+    var rect = rows[i].getBoundingClientRect();
+    if (clientY < rect.top + rect.height / 2) {
+      return i;
+    }
+  }
+
+  return rows.length;
+}
+
+function activateBuilderDropZoneForPointer(clientY) {
+  if (builderDragSourceIndex === null) {
+    clearDropIndicators();
+    return;
+  }
+
+  var insertIndex = getBuilderInsertIndexFromPointer(clientY);
+  if (isBuilderDropZoneNoOp(insertIndex, builderDragSourceIndex)) {
+    clearDropIndicators();
+    return;
+  }
+
+  var dropZone = document.querySelector(
+    '.playlist-builder-drop-zone[data-insert-index="' + insertIndex + '"]'
+  );
+
+  clearDropIndicators();
+  if (dropZone) {
+    dropZone.classList.add('active');
+  }
+}
+
+function onBuilderListDragOver(event) {
   event.preventDefault();
   event.dataTransfer.dropEffect = 'move';
-
-  var row = event.currentTarget;
-  if (!builderDragSourceRow || row === builderDragSourceRow) {
-    return;
-  }
-
-  var rect = row.getBoundingClientRect();
-  var insertBefore = event.clientY < rect.top + rect.height / 2;
-
-  clearDropIndicators();
-  row.classList.add(insertBefore ? 'drop-target-before' : 'drop-target-after');
-  row.dataset.dropPosition = insertBefore ? 'before' : 'after';
+  activateBuilderDropZoneForPointer(event.clientY);
 }
 
-function onBuilderDragLeave(event) {
-  var row = event.currentTarget;
-  if (!row.contains(event.relatedTarget)) {
-    row.classList.remove('drop-target-before', 'drop-target-after');
-    delete row.dataset.dropPosition;
-  }
-}
-
-function onBuilderDrop(event) {
+function onBuilderListDrop(event) {
   event.preventDefault();
 
-  var targetRow = event.currentTarget;
-  var targetIndex = Number(targetRow.dataset.index);
-  var insertBefore = targetRow.dataset.dropPosition === 'before';
-
-  clearDropIndicators();
-
   if (builderDragSourceIndex === null) {
+    clearDropIndicators();
     return;
   }
 
-  var toIndex = insertBefore ? targetIndex : targetIndex + 1;
+  var insertIndex = getBuilderInsertIndexFromPointer(event.clientY);
+  clearDropIndicators();
+
+  if (isBuilderDropZoneNoOp(insertIndex, builderDragSourceIndex)) {
+    return;
+  }
+
+  var toIndex = insertIndex;
   if (builderDragSourceIndex < toIndex) {
     toIndex--;
   }
@@ -230,6 +283,10 @@ function onBuilderDrop(event) {
 function onBuilderDragEnd() {
   if (builderDragSourceRow) {
     builderDragSourceRow.classList.remove('dragging');
+  }
+  if (builderDragImageEl) {
+    builderDragImageEl.remove();
+    builderDragImageEl = null;
   }
   builderDragSourceIndex = null;
   builderDragSourceRow = null;
