@@ -305,20 +305,32 @@ p {
   list-style: none;
   display: flex;
   align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.playlist-builder-chevron {
+  position: absolute;
+  left: 29px;
+}
+
+.playlist-builder-title {
+  display: inline-flex;
+  align-items: center;
   gap: 6px;
 }
 
 .playlist-builder-chevron::before {
-  content: '▶';
+  content: '▼';
   display: inline-block;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1;
   color: #586e75;
-  font-variant-emoji: text;
 }
 
 details[open] .playlist-builder-chevron::before {
-  content: '▼';
+  content: '▲';
+  font-size: 14px;
 }
 
 .playlist-builder-summary::-webkit-details-marker {
