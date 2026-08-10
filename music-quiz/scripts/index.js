@@ -701,6 +701,7 @@ function setCurrentPlaylistCounter() {
   var lastId = player.getPlaylist().length;
   var currentId = player.getPlaylistIndex() + 1;
   setPlaylistOrderDisplay(currentId, lastId);
+  updateBuilderPlayingHighlight();
 }
 
 function isPlaylistInitialized() {

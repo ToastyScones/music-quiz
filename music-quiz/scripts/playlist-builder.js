@@ -4,6 +4,7 @@ function initPlaylistBuilder() {
   document.getElementById('applyBuilderButton').onclick = applyBuilderToQuiz;
   document.getElementById('copyBuilderUrlButton').onclick = copyBuilderUrl;
   document.getElementById('resetBuilderOrderButton').onclick = resetBuilderOrder;
+  document.getElementById('randomizeBuilderOrderButton').onclick = randomizeBuilderOrder;
   document.getElementById('resetBuilderStartTimesButton').onclick = resetBuilderStartTimes;
 }
 
@@ -142,6 +143,7 @@ function renderBuilderList() {
 
   updateBuilderUrlField();
   fetchVideoTitles(context.videoOrder);
+  updateBuilderPlayingHighlight();
 }
 
 function isQuizRunning() {
@@ -333,6 +335,93 @@ function resetBuilderOrder() {
   });
 
   renderBuilderList();
+}
+
+function shuffleVideoOrder(order) {
+  var shuffled = order.slice();
+
+  for (var i = shuffled.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var temp = shuffled[i];
+    shuffled[i] = shuffled[j];
+    shuffled[j] = temp;
+  }
+
+  return shuffled;
+}
+
+function randomizeBuilderOrder() {
+  if (!context.videoOrder || context.videoOrder.length < 2) {
+    return;
+  }
+
+  var timestampsByVideoId = getTimestampsByVideoIdFromBuilderUI();
+  var order = shuffleVideoOrder(context.videoOrder);
+
+  if (arraysEqual(order, context.videoOrder)) {
+    order = shuffleVideoOrder(context.videoOrder);
+  }
+
+  var newTimestamps = {};
+  order.forEach(function (videoId, index) {
+    if (timestampsByVideoId[videoId]) {
+      newTimestamps[index] = timestampsByVideoId[videoId];
+    }
+  });
+
+  context.videoOrder = order;
+  context.vidTimestamps = newTimestamps;
+  renderBuilderList();
+}
+
+function getCurrentPlayerVideoId() {
+  if (!player) {
+    return null;
+  }
+
+  if (player.getVideoData) {
+    var videoData = player.getVideoData();
+    if (videoData && videoData.video_id) {
+      return videoData.video_id;
+    }
+  }
+
+  if (!player.getPlaylist) {
+    return null;
+  }
+
+  var playlist = player.getPlaylist();
+  var currentIndex = player.getPlaylistIndex();
+  if (!playlist || currentIndex < 0 || currentIndex >= playlist.length) {
+    return null;
+  }
+
+  return playlist[currentIndex];
+}
+
+function updateBuilderPlayingHighlight() {
+  document.querySelectorAll('.playlist-builder-row').forEach(function (row) {
+    row.classList.remove('now-playing');
+  });
+
+  if (!player || !isPlaylistInitialized()) {
+    return;
+  }
+
+  var playerState = player.getPlayerState();
+  if (playerState === -1 || playerState === YT.PlayerState.CUED) {
+    return;
+  }
+
+  var currentVideoId = getCurrentPlayerVideoId();
+  if (!currentVideoId) {
+    return;
+  }
+
+  var row = document.querySelector('.playlist-builder-row[data-video-id="' + currentVideoId + '"]');
+  if (row) {
+    row.classList.add('now-playing');
+  }
 }
 
 function resetBuilderStartTimes() {

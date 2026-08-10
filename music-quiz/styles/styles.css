@@ -376,6 +376,12 @@ details[open] .playlist-builder-chevron::before {
   box-shadow: inset 0 -3px 0 #268bd2;
 }
 
+.playlist-builder-row.now-playing {
+  border-color: #268bd2;
+  background: #e8f4fc;
+  box-shadow: 0 0 0 1px #268bd2;
+}
+
 .builder-position {
   font-weight: bold;
   min-width: 20px;
@@ -464,6 +470,7 @@ details[open] .playlist-builder-chevron::before {
 }
 
 #resetBuilderOrderButton,
+#randomizeBuilderOrderButton,
 #resetBuilderStartTimesButton {
   background: #6c71c4;
 }
