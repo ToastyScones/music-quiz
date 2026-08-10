@@ -1,5 +1,11 @@
 var player;
 var context = new QuizContext();
+var pendingLoadMode = null;
+var pendingPlaylistId = null;
+var pendingVideoIds = null;
+var pendingStartIndex = 0;
+var pendingYoutubeOrderDiscovery = false;
+var isTransitioningToCustomOrder = false;
 
 function initializeMainPage() {
   toggleQuizStatusAlignment(document.getElementById('shift-quiz-status-left'));
@@ -13,13 +19,19 @@ function initializeMainPage() {
   this.ytVolumeSlider = document.getElementById('ytVolume');
 
   context.setTimeLimitSeconds();
+  initPlaylistBuilder();
+  showBuilderEmptyState();
 }
 
-function setNewYtPlayer(playlistId) {
+function destroyPlayer() {
   if (player) {
     player.destroy();
     player = null;
   }
+}
+
+function createYtPlayer() {
+  destroyPlayer();
 
   document.getElementById('quiz-status-section').style.minHeight = "150px";
 
@@ -27,8 +39,6 @@ function setNewYtPlayer(playlistId) {
     height: '390',
     width: '640',
     playerVars: {
-      'listType': 'playlist',
-      'list': playlistId,
       'disablekb': 1,
       'autoplay': 0,
       'playsinline': 0,
@@ -49,6 +59,76 @@ function setNewYtPlayer(playlistId) {
   document.getElementById('player').style.opacity = "50%";
 }
 
+function setNewYtPlayerFromPlaylistId(playlistId) {
+  context.pendingPlaylistInit = true;
+  pendingLoadMode = 'playlistId';
+  pendingPlaylistId = playlistId;
+  createYtPlayer();
+}
+
+function setNewYtPlayerFromOrder(videoIds, startIndex) {
+  context.pendingPlaylistInit = true;
+  pendingLoadMode = 'videoIds';
+  pendingVideoIds = videoIds;
+  pendingStartIndex = startIndex || 0;
+  createYtPlayer();
+}
+
+function reloadPlayerWithCurrentOrder() {
+  if (!context.videoOrder || context.videoOrder.length === 0) {
+    return;
+  }
+
+  context.pendingPlaylistInit = true;
+
+  if (player && player.cuePlaylist) {
+    player.cuePlaylist(context.videoOrder, 0);
+  } else if (player && player.loadPlaylist) {
+    player.loadPlaylist(context.videoOrder, 0);
+  } else {
+    setNewYtPlayerFromOrder(context.videoOrder);
+  }
+}
+
+function tryCompletePlaylistInit() {
+  if (!context.pendingPlaylistInit || !player?.getPlaylist) {
+    return;
+  }
+
+  var playlist = player.getPlaylist();
+  if (!playlist || playlist.length === 0) {
+    return;
+  }
+
+  var playlistOrder = playlist.slice();
+
+  if (pendingYoutubeOrderDiscovery) {
+    context.youtubePlaylistOrder = playlistOrder.slice();
+    pendingYoutubeOrderDiscovery = false;
+    isTransitioningToCustomOrder = true;
+    setNewYtPlayerFromOrder(context.videoOrder, 0);
+    return;
+  }
+
+  if (!context.youtubePlaylistOrder) {
+    context.youtubePlaylistOrder = playlistOrder.slice();
+  }
+
+  if (!context.videoOrder || context.videoOrder.length === 0) {
+    context.videoOrder = playlistOrder.slice();
+  }
+
+  if (!arraysEqual(playlistOrder, context.videoOrder)) {
+    reloadPlayerWithCurrentOrder();
+    return;
+  }
+
+  context.pendingPlaylistInit = false;
+  isTransitioningToCustomOrder = false;
+  setCurrentPlaylistCounter();
+  onPlaylistReadyForBuilder();
+}
+
 function setVolumeStateForNextVideo() {
   if (!(player?.setVolume) || context.needLastVolumeApplied) { return; }
 
@@ -61,8 +141,33 @@ function onPlayerReady(event) {
   this.ytVolumeSlider.oninput = function () {
     player.setVolume(this.value);
     unMute();
+  };
+
+  if (pendingLoadMode === 'playlistId' && pendingPlaylistId) {
+    var playlistOptions = {
+      listType: 'playlist',
+      list: pendingPlaylistId,
+      index: 0
+    };
+    if (player.cuePlaylist) {
+      player.cuePlaylist(playlistOptions);
+    } else {
+      player.loadPlaylist(playlistOptions);
+    }
+    pendingLoadMode = null;
+    pendingPlaylistId = null;
+  } else if (pendingLoadMode === 'videoIds' && pendingVideoIds) {
+    if (player.cuePlaylist) {
+      player.cuePlaylist(pendingVideoIds, pendingStartIndex);
+    } else {
+      player.loadPlaylist(pendingVideoIds, pendingStartIndex);
+    }
+    pendingLoadMode = null;
+    pendingVideoIds = null;
+    pendingStartIndex = 0;
   }
 
+  tryCompletePlaylistInit();
   setCurrentPlaylistCounter();
 }
 
@@ -81,11 +186,16 @@ function onPlayerStateChange(event) {
     setVideoUnstartedState();
   }
 
+  tryCompletePlaylistInit();
   setCurrentPlaylistCounter();
   setPreviousAnswer();
 }
 
 function onError(event) {
+  if (isTransitioningToCustomOrder) {
+    return;
+  }
+
   context.didVideoError = true;
 
   deblurVideo();
@@ -116,35 +226,72 @@ function setPlayerVisible() {
   document.getElementById('preQuizText').innerHTML = '';
 }
 
-function setVideoPlayingState() {
-  if (!player) { return; }
+function clearQuizFutures() {
+  if (this.ytNextVidTimeoutId) {
+    clearTimeout(this.ytNextVidTimeoutId);
+    this.ytNextVidTimeoutId = null;
+  }
+  if (this.guessTimeRemainingTimeoutId) {
+    clearTimeout(this.guessTimeRemainingTimeoutId);
+    this.guessTimeRemainingTimeoutId = null;
+  }
+  if (this.nextVideoTimeoutId) {
+    clearTimeout(this.nextVideoTimeoutId);
+    this.nextVideoTimeoutId = null;
+  }
+  if (this.guessCountdownTimerId) {
+    clearInterval(this.guessCountdownTimerId);
+    this.guessCountdownTimerId = null;
+  }
+  if (this.vidCountdownTimerId) {
+    clearInterval(this.vidCountdownTimerId);
+    this.vidCountdownTimerId = null;
+  }
+  if (this.volumeFadeOutIntervalId) {
+    clearInterval(this.volumeFadeOutIntervalId);
+    this.volumeFadeOutIntervalId = null;
+  }
+}
 
-  setPlayerVisible();
+function getQuizTimerLimitsMs() {
+  context.setTimeLimitSeconds();
 
-  if (doesVideoNeedSeekTo()) {
-    context.hasSeekToBeenApplied = true;
-    seekTo(context.vidTimestamps[player.getPlaylistIndex()]);
+  if (
+    !context.isPaused ||
+    context.lastGuessTimeLimitSeconds === undefined ||
+    context.lastGuessTimeLimitSeconds <= 0
+  ) {
+    return {
+      guessTimeLimitMs: context.guessTimeLimitSeconds * 1000,
+      vidTimeLimitMs: context.vidTimeLeftSeconds * 1000
+    };
+  }
+
+  var guessTimeLimitMs = context.lastGuessTimeLimitSeconds * 1000;
+  var vidTimeLimitMs = (context.lastVidTimeLeftSeconds ?? context.vidTimeLeftSeconds) * 1000;
+
+  if (guessTimeLimitMs <= 0) {
+    guessTimeLimitMs = context.guessTimeLimitSeconds * 1000;
+    vidTimeLimitMs = context.vidTimeLeftSeconds * 1000;
+  }
+
+  return { guessTimeLimitMs, vidTimeLimitMs };
+}
+
+function startQuizTimersIfPlaying() {
+  if (!player || player.getPlayerState() !== YT.PlayerState.PLAYING) {
     return;
   }
 
-  player.setVolume(getVolume());
-  context.needLastVolumeApplied = false;
-
-  context.didVideoJustChange = false;
   if (context.isQuizManuallyStopped || context.isQuizForPlaylistDone) {
     return;
   }
 
-  context.setTimeLimitSeconds();
+  clearQuizFutures();
 
-  if (!context.isPaused) {
-    //resumed from saved values
-    var guessTimeLimitMs = context.guessTimeLimitSeconds * 1000;
-    var vidTimeLimitMs = context.vidTimeLeftSeconds * 1000;
-  } else {
-    var guessTimeLimitMs = context.lastGuessTimeLimitSeconds * 1000;
-    var vidTimeLimitMs = (context.lastVidTimeLeftSeconds ?? context.vidTimeLeftSeconds) * 1000;
-  }
+  var timerLimits = getQuizTimerLimitsMs();
+  var guessTimeLimitMs = timerLimits.guessTimeLimitMs;
+  var vidTimeLimitMs = timerLimits.vidTimeLimitMs;
 
   context.isPaused = false;
 
@@ -170,7 +317,7 @@ function setVideoPlayingState() {
   }
 
   if (!isEndOfPlaylist()) {
-    let ytNextVidTimeoutMs = guessTimeLimitMs + vidTimeLimitMs - context.fadeOutMs;
+    var ytNextVidTimeoutMs = guessTimeLimitMs + vidTimeLimitMs - context.fadeOutMs;
     if (ytNextVidTimeoutMs <= 0) {
       ytNextVidTimeoutMs = vidTimeLimitMs;
     }
@@ -181,7 +328,40 @@ function setVideoPlayingState() {
   }
 }
 
+function setVideoPlayingState() {
+  if (!player) { return; }
+
+  setPlayerVisible();
+  context.isPreviewStarting = false;
+
+  if (context.isPreviewing) {
+    return;
+  }
+
+  player.setVolume(getVolume());
+  context.needLastVolumeApplied = false;
+
+  context.didVideoJustChange = false;
+  context.isWaitingForQuizStart = false;
+  if (context.isQuizManuallyStopped || context.isQuizForPlaylistDone) {
+    return;
+  }
+
+  if (doesVideoNeedSeekTo()) {
+    context.hasSeekToBeenApplied = true;
+    seekTo(context.vidTimestamps[player.getPlaylistIndex()]);
+    setTimeout(startQuizTimersIfPlaying, 300);
+    return;
+  }
+
+  startQuizTimersIfPlaying();
+}
+
 function setPausedVideoState() {
+  if (context.isPreviewing) {
+    return;
+  }
+
   if (context.isQuizManuallyStopped || context.isQuizForPlaylistDone) {
     return;
   }
@@ -212,71 +392,58 @@ function setVideoEndedState() {
 
 function setVideoUnstartedState() {
   if (context.didVideoError) { return; }
+  if (context.isPreviewStarting) { return; }
 
   context.isQuizForPlaylistDone = false;
   context.isQuizManuallyStopped = false;
 
   clearStateForNextVideo();
+  if (context.isWaitingForQuizStart) {
+    setQuizReadyDisplay();
+    return;
+  }
   setQuizStatusDisplay('(Starting next video)');
 }
 
 function loadPlaylist() {
-  context.vidTimestamps = {};
   var ytPlaylistIdOrUrl = document.getElementById('playlistIdText').value;
+  var parsed = parsePlaylistInput(ytPlaylistIdOrUrl);
 
-  if (!ytPlaylistIdOrUrl) {
-    setLoadPlaylistError('Value cannot be empty');
+  if (parsed.error) {
+    setLoadPlaylistError(parsed.error);
     return;
   }
 
-  try {
-    let url = new URL(ytPlaylistIdOrUrl);
-    let urlHostname = url.hostname.toLowerCase();
+  context.resetBuilderState();
+  context.vidTimestamps = parsed.timestamps;
+  context.sourcePlaylistId = parsed.playlistId;
+  context.needLastVolumeApplied = false;
 
-    // crappy way of checking for a YT url
-    if (!urlHostname.includes('youtube') && !urlHostname.includes('youtu.be')) {
-      setLoadPlaylistError('Invalid YouTube URL');
-      return;
-    }
-
-    let params = url.searchParams;
-    var playlistId = params.get("list");
-
-    if (!playlistId) {
-      setLoadPlaylistError('Invalid YouTube playlist URL (needs a list= query param)');
-      return;
-    }
-
-    params.forEach((value, key) => {
-      if (key.startsWith('t')) {
-        try {
-          var vidTimestampKey = Number(key.substring(1)) - 1;
-          var vidTimestampValue = Number(value);
-
-          if (isNaN(vidTimestampKey) || isNaN(vidTimestampValue)) {
-            let error = key + '=' + value + ' was invalid'
-            throw error;
-          }
-          context.vidTimestamps[vidTimestampKey] = vidTimestampValue;
-        } catch (_) {
-          //console.log(_);
-        }
-      }
-    });
-  } catch (_) {
-    playlistId = ytPlaylistIdOrUrl;
+  if (parsed.videoOrder) {
+    context.videoOrder = parsed.videoOrder.slice();
+    pendingYoutubeOrderDiscovery = true;
+    isTransitioningToCustomOrder = false;
+  } else {
+    context.videoOrder = null;
+    pendingYoutubeOrderDiscovery = false;
   }
 
-  context.needLastVolumeApplied = false;
+  showBuilderEmptyState();
+  if (context.videoOrder) {
+    renderBuilderList();
+  }
+
   clearError();
   clearStateForNextVideo();
   clearPlaylistCounter();
   setQuizReadyDisplay();
-  setNewYtPlayer(playlistId);
+
+  setNewYtPlayerFromPlaylistId(parsed.playlistId);
 }
 
 function playVideo() {
   if (!player) { return; }
+  context.isPreviewing = false;
   player.playVideo();
 }
 
@@ -326,6 +493,7 @@ function clearStateForNextVideo() {
   setVolumeStateForNextVideo();
 }
 
+
 // This function gets called in the last couple seconds as the 
 //  music fades out and the next video is queued to play.
 function nextVideoAfterQuiz(milliSecondsRemaining) {
@@ -370,16 +538,29 @@ function reduceVolumeForFadeOut(volume) {
   player.setVolume(player.getVolume() - volume);
 }
 
-function endQuizForVideo() {
-  if (!player) { return; }
+function stopQuizLikeManualReveal() {
   context.isQuizManuallyStopped = true;
-
   deblurVideo();
   clearMessagesAndFutures();
   setQuizStatusDisplay('Answer:<br><b>' + getVideoTitleWithFallback() + '</b><br><br>');
   setQuizCountdownDisplay('[Quiz is paused until next video]');
   document.getElementById('preQuizText').innerHTML = '';
-  player.setVolume(getVolume());
+  if (player) {
+    player.setVolume(getVolume());
+  }
+}
+
+function resetQuizCountdownToSettings() {
+  context.setTimeLimitSeconds();
+  context.lastGuessTimeLimitSeconds = undefined;
+  context.lastVidTimeLeftSeconds = undefined;
+  context.isPaused = false;
+  context.isQuizForVideoDone = false;
+}
+
+function endQuizForVideo() {
+  if (!player) { return; }
+  stopQuizLikeManualReveal();
 }
 
 function setGuessAsFinished(secondsRemaining) {
@@ -474,16 +655,12 @@ function clearCountdownTimer() {
 
 function clearMessagesAndFutures() {
   clearError();
+  clearQuizFutures();
 
-  if (this.ytNextVidTimeoutId) { clearTimeout(this.ytNextVidTimeoutId); }
-  if (this.guessTimeRemainingTimeoutId) { clearTimeout(this.guessTimeRemainingTimeoutId); }
-  if (this.vidTimeRemainingTimeoutId) { clearTimeout(this.vidTimeRemainingTimeoutId); }
-  if (this.nextVideoTimeoutId) { clearTimeout(this.nextVideoTimeoutId); }
-  if (this.onErrorNextVideoTimeoutId) { clearTimeout(this.onErrorNextVideoTimeoutId); }
-
-  if (this.guessCountdownTimerId) { clearInterval(this.guessCountdownTimerId); }
-  if (this.vidCountdownTimerId) { clearInterval(this.vidCountdownTimerId); }
-  if (this.volumeFadeOutIntervalId) { clearInterval(this.volumeFadeOutIntervalId); }
+  if (this.onErrorNextVideoTimeoutId) {
+    clearTimeout(this.onErrorNextVideoTimeoutId);
+    this.onErrorNextVideoTimeoutId = null;
+  }
 
   clearCountdownTimer();
 }

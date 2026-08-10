@@ -15,6 +15,13 @@ class QuizContext {
   needLastVolumeApplied;
   previousVideoIndex;
   previousVideoTitle;
+  sourcePlaylistId;
+  youtubePlaylistOrder;
+  videoOrder;
+  pendingPlaylistInit;
+  isPreviewing;
+  isPreviewStarting;
+  isWaitingForQuizStart;
 
   constructor() {
     this.initialize();
@@ -32,7 +39,24 @@ class QuizContext {
     this.hasSeekToBeenApplied = false;
     this.needLastVolumeApplied = false;
     this.previousVideoIndex = 0;
-    this.previousVideoTitle = ''
+    this.previousVideoTitle = '';
+    this.sourcePlaylistId = null;
+    this.youtubePlaylistOrder = null;
+    this.videoOrder = null;
+    this.pendingPlaylistInit = false;
+    this.isPreviewing = false;
+    this.isPreviewStarting = false;
+    this.isWaitingForQuizStart = false;
+  }
+
+  resetBuilderState() {
+    this.sourcePlaylistId = null;
+    this.youtubePlaylistOrder = null;
+    this.videoOrder = null;
+    this.pendingPlaylistInit = false;
+    this.isPreviewing = false;
+    this.isPreviewStarting = false;
+    this.isWaitingForQuizStart = false;
   }
 
   setNextVideoState() {
@@ -42,6 +66,7 @@ class QuizContext {
     this.isQuizForPlaylistDone = false;
     this.hasSeekToBeenApplied = false;
     this.lastVidTimeLeftSeconds = undefined;
+    this.lastGuessTimeLimitSeconds = undefined;
   }
 
   setTimeLimitSeconds() {
