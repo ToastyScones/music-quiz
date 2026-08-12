@@ -8,7 +8,9 @@
   <script src="scripts/context.js"></script>
   <script src="scripts/fooni.js"></script>
   <script src="scripts/messages.js"></script>
+  <script src="scripts/playlist-url.js"></script>
   <script src="scripts/index.js"></script>
+  <script src="scripts/playlist-builder.js"></script>
 </head>
 
 <body class="main">
@@ -68,8 +70,38 @@
         <input type="button" class="button" id="loadPlaylistButton" value="Load Playlist" onclick="loadPlaylist()">
         <br>
         <a id="custom-start-time-link"
-          href="https://github.com/ToastyScones/toastyscones.github.io#setting-a-start-time-for-specific-videos"
-          target="_blank">How to add custom start times for specific videos</a>
+          href="https://github.com/ToastyScones/toastyscones.github.io#playlist-builder"
+          target="_blank">How to set custom start times (or use the Playlist Builder below)</a>
+      </section>
+
+      <section class="playlist-builder content-section">
+        <details id="playlist-builder-section">
+          <summary class="content-section-title playlist-builder-summary">
+            <span class="playlist-builder-chevron" aria-hidden="true"></span>
+            <span class="playlist-builder-title">
+              Playlist Builder
+              <img class="icon" src="images/emotes/POI.png" alt="">
+            </span>
+          </summary>
+          <div id="playlist-builder-empty" class="playlist-builder-empty">
+            Load a playlist to configure order and start times.
+          </div>
+          <div id="playlist-builder-content" class="playlist-builder-content" style="display: none;">
+            <p class="playlist-builder-hint">
+              Set start times per video, reorder with drag or arrow buttons, then Apply to Quiz or Copy URL.
+            </p>
+            <div id="playlist-builder-list" class="playlist-builder-list"></div>
+            <div class="playlist-builder-actions">
+              <input type="button" class="button" id="applyBuilderButton" value="Apply to Quiz">
+              <input type="button" class="button" id="copyBuilderUrlButton" value="Copy URL">
+              <input type="button" class="button" id="resetBuilderOrderButton" value="Reset Order">
+              <input type="button" class="button" id="randomizeBuilderOrderButton" value="Randomize Order">
+              <input type="button" class="button" id="resetBuilderStartTimesButton" value="Reset Start Times">
+            </div>
+            <label class="playlist-builder-url-label" for="playlist-builder-url">Generated URL:</label>
+            <input type="text" id="playlist-builder-url" class="playlist-builder-url" readonly size="53">
+          </div>
+        </details>
       </section>
       <section class="settings content-section">
 
