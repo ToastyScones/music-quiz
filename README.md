@@ -35,6 +35,35 @@ https://www.youtube.com/watch?v=U-g0N1hqIKo&list=PLfRFOBVf8C8dgruEoZR6aF1q1487QJ
 
 **Note:** This only works with URLs, not playlist IDs.
 
+## Playlist Builder
+
+After loading a playlist, expand the **Playlist Builder** section below the load controls to configure your quiz visually.
+
+1. Load a **public** or **unlisted** YouTube playlist URL or ID.
+2. Open **Playlist Builder** and set start times per video (use `mm:ss` or seconds).
+3. Use **Preview** to check a start time in the main player (video loads paused at that timestamp).
+4. Reorder videos with drag-and-drop or the **↑** / **↓** buttons — this does not change the YouTube playlist.
+5. Click **Apply to Quiz** to reload the player with your order and start times, then press the green play button.
+6. Click **Copy URL** to copy a shareable link with your configuration.
+
+### Custom playlist order in URLs
+
+To preserve a custom video order (not just start times), use the `order` query param with comma-separated video IDs:
+
+```
+order=vid1,vid2,vid3
+```
+
+When `order` is present, `t[X]=seconds` refers to position **X** in that custom order (1-based), not the original YouTube playlist order.
+
+**Example** (custom order + start times at positions 1 and 3):
+
+```
+https://www.youtube.com/playlist?list=PLxxx&order=vid2,vid1,vid3&t1=30&t3=13
+```
+
+The builder only adds `order=` to generated URLs when the order differs from the original YouTube playlist. Plain playlist IDs still use YouTube's default order.
+
 ## Troubleshooting
 ### Muted audio/audio doesn't fade out/countdown acting weird/next video kicking off early
 For now, you will need to keep the website visible somewhere on your desktop so your browser doesn't lose focus.

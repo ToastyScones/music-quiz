@@ -57,6 +57,7 @@ function getVideoDidNotLoadMessage() {
 }
 
 function setQuizReadyDisplay() {
+  context.isWaitingForQuizStart = true;
   document.getElementById('quiz-status-display').innerHTML = '[Waiting for quiz to start]';
   document.getElementById('quiz-status').style.display = 'flex';
   document.getElementById('playerParent').style.background = '#FFFFFF';
