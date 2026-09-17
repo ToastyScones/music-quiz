@@ -91,7 +91,8 @@ p {
   background: #859900;
 }
 
-#loadPlaylistButton {
+#addQueueButton,
+#playQueueButton {
   background: #2aa198;
 }
 
@@ -527,7 +528,7 @@ details[open] .playlist-builder-chevron::before {
 
 .queue-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   padding: 4px 6px;
   border: 1px solid #afc0c0;
@@ -539,11 +540,31 @@ details[open] .playlist-builder-chevron::before {
   min-width: 18px;
   text-align: right;
   font-weight: bold;
+  padding-top: 2px;
 }
 
-.queue-label {
+.queue-thumb {
+  width: 56px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: 2px;
+  flex: 0 0 auto;
+}
+
+.queue-info {
   flex: 1;
   min-width: 0;
+}
+
+.queue-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.queue-author {
+  font-size: 11px;
+  color: #8aa0a8;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -551,4 +572,5 @@ details[open] .playlist-builder-chevron::before {
 
 .queue-remove {
   flex: 0 0 auto;
+  align-self: center;
 }

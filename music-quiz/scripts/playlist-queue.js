@@ -14,8 +14,8 @@ var autoAdvanceTimerId = null;
 var autoAdvanceSecondsLeft = 0;
 var AUTO_ADVANCE_DELAY_SECONDS = 30;
 
-function makeQueueLabel(parsed) {
-  var label = parsed.playlistId || 'playlist';
+function makeQueueLabel(title, parsed) {
+  var label = title || 'playlist';
   if (parsed.videoOrder) {
     label += ' (custom order)';
   }
@@ -25,7 +25,35 @@ function makeQueueLabel(parsed) {
   return label;
 }
 
+function fetchPlaylistMetadata(item, onDone) {
+  if (!YOUTUBE_API_KEY) {
+    if (onDone) { onDone(null); }
+    return;
+  }
+
+  var url = 'https://www.googleapis.com/youtube/v3/playlists?part=snippet'
+    + '&key=' + YOUTUBE_API_KEY
+    + '&id=' + encodeURIComponent(item.parsed.playlistId);
+
+  fetch(url)
+    .then(function (res) {
+      if (!res.ok) { throw new Error('HTTP ' + res.status); }
+      return res.json();
+    })
+    .then(function (data) {
+      var snippet = null;
+      if (data && data.items && data.items.length > 0) {
+        snippet = data.items[0].snippet;
+      }
+      if (onDone) { onDone(snippet); }
+    })
+    .catch(function () {
+      if (onDone) { onDone(null); }
+    });
+}
+
 function addPlaylistToQueue() {
+  clearError();
   var ytPlaylistIdOrUrl = document.getElementById('playlistIdText').value;
   var parsed = parsePlaylistInput(ytPlaylistIdOrUrl);
 
@@ -34,9 +62,38 @@ function addPlaylistToQueue() {
     return;
   }
 
-  playlistQueue.push({ parsed: parsed, label: makeQueueLabel(parsed) });
+  var item = {
+    parsed: parsed,
+    title: makeQueueLabel(parsed.playlistId, parsed),
+    author: null,
+    thumbnail: parsed.firstVideoId
+      ? 'https://i.ytimg.com/vi/' + parsed.firstVideoId + '/default.jpg'
+      : null,
+    metaLoaded: false
+  };
+  playlistQueue.push(item);
   renderQueueList();
   document.getElementById('playlistIdText').value = '';
+
+  fetchPlaylistMetadata(item, function (snippet) {
+    if (snippet) {
+      item.title = makeQueueLabel(snippet.title, item.parsed);
+      item.author = snippet.channelTitle || null;
+      var thumb = null;
+      if (snippet.thumbnail) {
+        if (typeof snippet.thumbnail === 'string') {
+          thumb = snippet.thumbnail;
+        } else if (snippet.thumbnail.default && snippet.thumbnail.default.url) {
+          thumb = snippet.thumbnail.default.url;
+        }
+      }
+      if (thumb) {
+        item.thumbnail = thumb;
+      }
+      item.metaLoaded = true;
+    }
+    renderQueueList();
+  });
 }
 
 function renderQueueList() {
@@ -51,34 +108,59 @@ function renderQueueList() {
   }
 
   for (var i = 0; i < playlistQueue.length; i++) {
-    var item = playlistQueue[i];
+    (function (i) {
+      var item = playlistQueue[i];
 
-    var row = document.createElement('div');
-    row.className = 'queue-item';
+      var row = document.createElement('div');
+      row.className = 'queue-item';
 
-    var number = document.createElement('span');
-    number.className = 'queue-number';
-    number.textContent = String(i + 1);
+      var number = document.createElement('span');
+      number.className = 'queue-number';
+      number.textContent = String(i + 1);
 
-    var label = document.createElement('span');
-    label.className = 'queue-label';
-    label.textContent = item.label;
-    label.title = item.label;
+      var thumb = document.createElement('img');
+      thumb.className = 'queue-thumb';
+      thumb.alt = '';
+      if (item.thumbnail) {
+        thumb.src = item.thumbnail;
+      } else {
+        thumb.style.display = 'none';
+      }
 
-    var removeButton = document.createElement('input');
-    removeButton.type = 'button';
-    removeButton.className = 'button queue-remove';
-    removeButton.value = 'Remove';
-    (function (index) {
+      var info = document.createElement('div');
+      info.className = 'queue-info';
+
+      var title = document.createElement('div');
+      title.className = 'queue-title';
+      title.textContent = item.title;
+      title.title = item.title;
+
+      var author = document.createElement('div');
+      author.className = 'queue-author';
+      if (item.author) {
+        author.textContent = item.author;
+        author.title = item.author;
+      } else {
+        author.style.display = 'none';
+      }
+
+      info.appendChild(title);
+      info.appendChild(author);
+
+      var removeButton = document.createElement('input');
+      removeButton.type = 'button';
+      removeButton.className = 'button queue-remove';
+      removeButton.value = 'Remove';
       removeButton.onclick = function () {
-        removePlaylistFromQueue(index);
+        removePlaylistFromQueue(i);
       };
-    })(i);
 
-    row.appendChild(number);
-    row.appendChild(label);
-    row.appendChild(removeButton);
-    container.appendChild(row);
+      row.appendChild(number);
+      row.appendChild(thumb);
+      row.appendChild(info);
+      row.appendChild(removeButton);
+      container.appendChild(row);
+    })(i);
   }
 }
 
@@ -106,12 +188,15 @@ function playQueue() {
     setLoadPlaylistError('Queue is empty. Add some playlists first.');
     return;
   }
+  clearError();
   queueIndex = 0;
   clearAutoAdvanceTimers();
-  loadPlaylistFromParsed(playlistQueue[0].parsed, true);
-  // Note: the auto-advance countdown is NOT started here. It only begins when
-  // the current (first) queued playlist ends, via setVideoEndedState() in
-  // index.js -> maybeAutoAdvanceToNextPlaylist().
+  // Behave like the old "Load Playlist": cue the first queued playlist
+  // (autoPlay = false) so the user then starts the quiz with the green play
+  // button. The auto-advance countdown is NOT started here; it only begins
+  // when the current (first) queued playlist ends, via setVideoEndedState()
+  // in index.js -> maybeAutoAdvanceToNextPlaylist().
+  loadPlaylistFromParsed(playlistQueue[0].parsed, false);
 }
 
 function loadPlaylistFromParsed(parsed, autoPlay) {

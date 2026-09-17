@@ -415,20 +415,6 @@ function setVideoUnstartedState() {
   setQuizStatusDisplay('(Starting next video)');
 }
 
-function loadPlaylist() {
-  var ytPlaylistIdOrUrl = document.getElementById('playlistIdText').value;
-  var parsed = parsePlaylistInput(ytPlaylistIdOrUrl);
-
-  if (parsed.error) {
-    setLoadPlaylistError(parsed.error);
-    return;
-  }
-
-  queueIndex = -1;
-  clearAutoAdvanceTimers();
-  loadPlaylistFromParsed(parsed, false);
-}
-
 function playVideo() {
   if (!player) { return; }
   context.isPreviewing = false;
