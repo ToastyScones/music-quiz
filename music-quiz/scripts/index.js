@@ -6,6 +6,7 @@ var pendingVideoIds = null;
 var pendingStartIndex = 0;
 var pendingYoutubeOrderDiscovery = false;
 var isTransitioningToCustomOrder = false;
+var pendingAutoPlay = false;
 
 function initializeMainPage() {
   toggleQuizStatusAlignment(document.getElementById('shift-quiz-status-left'));
@@ -55,7 +56,6 @@ function createYtPlayer() {
       'onError': onError
     }
   });
-
   document.getElementById('player').style.opacity = "50%";
 }
 
@@ -149,19 +149,28 @@ function onPlayerReady(event) {
       list: pendingPlaylistId,
       index: 0
     };
-    if (player.cuePlaylist) {
+    if (pendingAutoPlay && player.loadPlaylist) {
+      player.loadPlaylist(playlistOptions);
+      if (!pendingYoutubeOrderDiscovery) {
+        pendingAutoPlay = false;
+      }
+    } else if (player.cuePlaylist) {
       player.cuePlaylist(playlistOptions);
+      pendingAutoPlay = false;
     } else {
       player.loadPlaylist(playlistOptions);
     }
     pendingLoadMode = null;
     pendingPlaylistId = null;
   } else if (pendingLoadMode === 'videoIds' && pendingVideoIds) {
-    if (player.cuePlaylist) {
+    if (pendingAutoPlay && player.loadPlaylist) {
+      player.loadPlaylist(pendingVideoIds, pendingStartIndex);
+    } else if (player.cuePlaylist) {
       player.cuePlaylist(pendingVideoIds, pendingStartIndex);
     } else {
       player.loadPlaylist(pendingVideoIds, pendingStartIndex);
     }
+    pendingAutoPlay = false;
     pendingLoadMode = null;
     pendingVideoIds = null;
     pendingStartIndex = 0;
@@ -384,6 +393,7 @@ function setVideoEndedState() {
 
   if (isEndOfPlaylist()) {
     context.isQuizForPlaylistDone = true;
+    maybeAutoAdvanceToNextPlaylist();
     return;
   }
 
@@ -414,31 +424,9 @@ function loadPlaylist() {
     return;
   }
 
-  context.resetBuilderState();
-  context.vidTimestamps = parsed.timestamps;
-  context.sourcePlaylistId = parsed.playlistId;
-  context.needLastVolumeApplied = false;
-
-  if (parsed.videoOrder) {
-    context.videoOrder = parsed.videoOrder.slice();
-    pendingYoutubeOrderDiscovery = true;
-    isTransitioningToCustomOrder = false;
-  } else {
-    context.videoOrder = null;
-    pendingYoutubeOrderDiscovery = false;
-  }
-
-  showBuilderEmptyState();
-  if (context.videoOrder) {
-    renderBuilderList();
-  }
-
-  clearError();
-  clearStateForNextVideo();
-  clearPlaylistCounter();
-  setQuizReadyDisplay();
-
-  setNewYtPlayerFromPlaylistId(parsed.playlistId);
+  queueIndex = -1;
+  clearAutoAdvanceTimers();
+  loadPlaylistFromParsed(parsed, false);
 }
 
 function playVideo() {

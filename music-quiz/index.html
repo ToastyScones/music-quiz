@@ -10,6 +10,7 @@
   <script src="scripts/messages.js"></script>
   <script src="scripts/playlist-url.js"></script>
   <script src="scripts/index.js"></script>
+  <script src="scripts/playlist-queue.js"></script>
   <script src="scripts/playlist-builder.js"></script>
 </head>
 
@@ -68,6 +69,9 @@
         <label>YT Playlist URL or ID:</label>
         <input type="text" id="playlistIdText" placeholder="(e.g. PLmra5-9c6QitTCQcJ0uqibBj6MLJCEa3q)" size="53">
         <input type="button" class="button" id="loadPlaylistButton" value="Load Playlist" onclick="loadPlaylist()">
+        <input type="button" class="button" id="addQueueButton" value="Add to Queue" onclick="addPlaylistToQueue()">
+        <input type="button" class="button" id="playQueueButton" value="Play Queue" onclick="playQueue()">
+        <div id="playlistQueueList" class="playlist-queue-list"></div>
         <br>
         <a id="custom-start-time-link"
           href="https://github.com/ToastyScones/toastyscones.github.io#playlist-builder"

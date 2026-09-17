@@ -517,3 +517,38 @@ details[open] .playlist-builder-chevron::before {
   font-size: 12px;
   box-sizing: border-box;
 }
+
+.playlist-queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.queue-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border: 1px solid #afc0c0;
+  background: #eee8d5;
+  font-size: 12px;
+}
+
+.queue-number {
+  min-width: 18px;
+  text-align: right;
+  font-weight: bold;
+}
+
+.queue-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.queue-remove {
+  flex: 0 0 auto;
+}
