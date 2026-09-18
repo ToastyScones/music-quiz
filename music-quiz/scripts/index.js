@@ -187,8 +187,14 @@ function getVolume() {
 function onPlayerStateChange(event) {
   if (event.data === YT.PlayerState.PLAYING) {
     setVideoPlayingState();
+    // Resume the auto-advance countdown when the video resumes so it
+    // does not fire while the video is paused.
+    resumeAutoAdvanceCountdown();
   } else if (event.data === YT.PlayerState.PAUSED) {
     setPausedVideoState();
+    // Pause the auto-advance countdown so it does not auto-load the next
+    // playlist while the user is watching the paused video.
+    pauseAutoAdvanceCountdown();
   } else if (event.data === YT.PlayerState.ENDED) {
     setVideoEndedState();
   } else if (event.data === -1) {
@@ -210,6 +216,7 @@ function onError(event) {
   deblurVideo();
 
   var errorMessage = getFriendlyYoutubeAPIError(event.data);
+  var playlistId = event.target.getPlaylistId();
   if (isEndOfPlaylist()) {
     errorMessage += '<br>' + getEndOfPlaylistMessage();
   }
@@ -393,7 +400,6 @@ function setVideoEndedState() {
 
   if (isEndOfPlaylist()) {
     context.isQuizForPlaylistDone = true;
-    maybeAutoAdvanceToNextPlaylist();
     return;
   }
 
@@ -548,6 +554,9 @@ function setGuessAsFinished(secondsRemaining) {
     context.isQuizForPlaylistDone = true;
     clearCountdownTimer();
     setQuizStatusDisplay(message + getEndOfPlaylistMessage());
+    // Start the auto-advance countdown once the user has seen the
+    // "End of playlist" message, not when the video ends.
+    maybeAutoAdvanceToNextPlaylist();
   } else {
     setQuizStatusDisplay(message);
     setVidTimeRemainingMessage(secondsRemaining);

@@ -2,16 +2,19 @@
 // "YT Playlist URL or ID:" input and auto-advance to the next queued playlist
 // (after a short countdown) when the current one finishes.
 //
-// UI: "Add to Queue" / "Play Queue" buttons in index.html (controls section).
+// UI: "Add to Queue" / "Load Queue" buttons in index.html (controls section).
 // All functions here are global and cooperate with scripts/index.js:
 //   - loadPlaylistFromParsed(parsed, autoPlay) is the shared load path used by
 //     both a manual "Load Playlist" and an auto-advance.
-//   - maybeAutoAdvanceToNextPlaylist() is called from setVideoEndedState().
+//   - maybeAutoAdvanceToNextPlaylist() is called when "End of playlist" is
+//     displayed (setGuessAsFinished in index.js), not when the video ends.
 
 var playlistQueue = [];
 var queueIndex = -1;
 var autoAdvanceTimerId = null;
 var autoAdvanceSecondsLeft = 0;
+var autoAdvancePaused = false;
+var autoAdvancePausedSeconds = 0;
 var AUTO_ADVANCE_DELAY_SECONDS = 30;
 
 function makeQueueLabel(title, parsed) {
@@ -113,6 +116,9 @@ function renderQueueList() {
 
       var row = document.createElement('div');
       row.className = 'queue-item';
+      if (i === queueIndex) {
+        row.classList.add('now-playing');
+      }
 
       var number = document.createElement('span');
       number.className = 'queue-number';
@@ -164,12 +170,19 @@ function renderQueueList() {
   }
 }
 
+function isAutoAdvanceCountdownActive() {
+  // Active means either an interval is ticking OR the countdown is paused
+  // mid-way (a pending advance that will resume). This lets the remove
+  // path cancel a paused countdown immediately too.
+  return autoAdvanceTimerId !== null || autoAdvancePaused;
+}
+
 function removePlaylistFromQueue(index) {
   if (index < 0 || index >= playlistQueue.length) {
     return;
   }
 
-  var countdownActive = autoAdvanceTimerId !== null;
+  var countdownActive = isAutoAdvanceCountdownActive();
   playlistQueue.splice(index, 1);
   if (queueIndex >= 0 && index < queueIndex) {
     queueIndex--;
@@ -190,12 +203,12 @@ function playQueue() {
   }
   clearError();
   queueIndex = 0;
+  renderQueueList();
   clearAutoAdvanceTimers();
   // Behave like the old "Load Playlist": cue the first queued playlist
   // (autoPlay = false) so the user then starts the quiz with the green play
   // button. The auto-advance countdown is NOT started here; it only begins
-  // when the current (first) queued playlist ends, via setVideoEndedState()
-  // in index.js -> maybeAutoAdvanceToNextPlaylist().
+  // when "End of playlist" is displayed (setGuessAsFinished in index.js).
   loadPlaylistFromParsed(playlistQueue[0].parsed, false);
 }
 
@@ -247,8 +260,14 @@ function maybeAutoAdvanceToNextPlaylist() {
 }
 
 function startAutoAdvanceCountdown() {
+  // If the countdown was paused (e.g. the user paused the video), resume
+  // from where it left off instead of restarting from the full delay.
+  // Capture this BEFORE clearAutoAdvanceTimers below resets the flags.
+  var resumeFrom = (autoAdvancePaused && autoAdvancePausedSeconds > 0)
+    ? autoAdvancePausedSeconds
+    : AUTO_ADVANCE_DELAY_SECONDS;
   clearAutoAdvanceTimers();
-  autoAdvanceSecondsLeft = AUTO_ADVANCE_DELAY_SECONDS;
+  autoAdvanceSecondsLeft = resumeFrom;
   setQuizStatusDisplay('Next playlist in: ' + getSecondsMessage(autoAdvanceSecondsLeft));
   autoAdvanceTimerId = setInterval(function () {
     autoAdvanceSecondsLeft--;
@@ -264,12 +283,9 @@ function startAutoAdvanceCountdown() {
 }
 
 function loadNextQueuedPlaylist() {
-  var nextIndex = queueIndex + 1;
-  if (nextIndex < 0 || nextIndex >= playlistQueue.length) {
-    return;
-  }
-  queueIndex = nextIndex;
-  loadPlaylistFromParsed(playlistQueue[nextIndex].parsed, true);
+  queueIndex++;
+  renderQueueList();
+  loadPlaylistFromParsed(playlistQueue[queueIndex].parsed, true);
 }
 
 function clearAutoAdvanceTimers() {
@@ -278,4 +294,33 @@ function clearAutoAdvanceTimers() {
     autoAdvanceTimerId = null;
   }
   autoAdvanceSecondsLeft = 0;
+  // Definitive teardown: also drop any paused state so a stale
+  // "paused" flag cannot survive and fire on a later video-resume.
+  autoAdvancePaused = false;
+  autoAdvancePausedSeconds = 0;
+}
+
+function pauseAutoAdvanceCountdown() {
+  if (!isAutoAdvanceCountdownActive()) {
+    return;
+  }
+  // Remember how long was left so a resume can pick up where it left off.
+  var remaining = autoAdvanceSecondsLeft;
+  clearAutoAdvanceTimers();
+  autoAdvancePaused = true;
+  autoAdvancePausedSeconds = remaining;
+}
+
+function resumeAutoAdvanceCountdown() {
+  if (!autoAdvancePaused) {
+    return;
+  }
+  // Only resume if there is actually a next queued playlist to advance to;
+  // otherwise drop the paused state so it cannot fire later.
+  if (queueIndex < 0 || queueIndex + 1 >= playlistQueue.length) {
+    autoAdvancePaused = false;
+    autoAdvancePausedSeconds = 0;
+    return;
+  }
+  startAutoAdvanceCountdown();
 }
