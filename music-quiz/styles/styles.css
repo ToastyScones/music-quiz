@@ -536,6 +536,12 @@ details[open] .playlist-builder-chevron::before {
   font-size: 12px;
 }
 
+.queue-item.now-playing {
+  border-color: #268bd2;
+  background: #e8f4fc;
+  box-shadow: 0 0 0 1px #268bd2;
+}
+
 .queue-number {
   min-width: 18px;
   text-align: right;

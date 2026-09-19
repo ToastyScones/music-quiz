@@ -28,33 +28,6 @@ function makeQueueLabel(title, parsed) {
   return label;
 }
 
-function fetchPlaylistMetadata(item, onDone) {
-  if (!YOUTUBE_API_KEY) {
-    if (onDone) { onDone(null); }
-    return;
-  }
-
-  var url = 'https://www.googleapis.com/youtube/v3/playlists?part=snippet'
-    + '&key=' + YOUTUBE_API_KEY
-    + '&id=' + encodeURIComponent(item.parsed.playlistId);
-
-  fetch(url)
-    .then(function (res) {
-      if (!res.ok) { throw new Error('HTTP ' + res.status); }
-      return res.json();
-    })
-    .then(function (data) {
-      var snippet = null;
-      if (data && data.items && data.items.length > 0) {
-        snippet = data.items[0].snippet;
-      }
-      if (onDone) { onDone(snippet); }
-    })
-    .catch(function () {
-      if (onDone) { onDone(null); }
-    });
-}
-
 function addPlaylistToQueue() {
   clearError();
   var ytPlaylistIdOrUrl = document.getElementById('playlistIdText').value;
@@ -67,36 +40,36 @@ function addPlaylistToQueue() {
 
   var item = {
     parsed: parsed,
-    title: makeQueueLabel(parsed.playlistId, parsed),
+    title: null,
     author: null,
-    thumbnail: parsed.firstVideoId
-      ? 'https://i.ytimg.com/vi/' + parsed.firstVideoId + '/default.jpg'
-      : null,
+    thumbnail: null,
     metaLoaded: false
   };
   playlistQueue.push(item);
-  renderQueueList();
   document.getElementById('playlistIdText').value = '';
+  fetchPlaylistMetadata(parsed.playlistId, item)
+    .then(function () {
+      renderQueueList();
+    });
+}
 
-  fetchPlaylistMetadata(item, function (snippet) {
-    if (snippet) {
-      item.title = makeQueueLabel(snippet.title, item.parsed);
-      item.author = snippet.channelTitle || null;
-      var thumb = null;
-      if (snippet.thumbnail) {
-        if (typeof snippet.thumbnail === 'string') {
-          thumb = snippet.thumbnail;
-        } else if (snippet.thumbnail.default && snippet.thumbnail.default.url) {
-          thumb = snippet.thumbnail.default.url;
-        }
-      }
-      if (thumb) {
-        item.thumbnail = thumb;
-      }
-      item.metaLoaded = true;
+async function fetchPlaylistMetadata(playlistId, item) {
+  var url = 'https://www.youtube.com/oembed?url=https://www.youtube.com/playlist?list=' +
+    encodeURIComponent(playlistId) + '&format=json';
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error('oEmbed failed');
     }
-    renderQueueList();
-  });
+    const data = await response.json();
+    item.title = data.title;
+    item.author = data.author_name;
+    item.thumbnail = data.thumbnail_url;
+    item.metaLoaded = true;
+  } catch {
+    item.title = playlistId;
+  }
 }
 
 function renderQueueList() {
