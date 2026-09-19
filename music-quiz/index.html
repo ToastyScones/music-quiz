@@ -58,6 +58,7 @@
         <div id="quiz-status-section">
           <div id="quiz-status-display">[Waiting for quiz to start]</div>
           <div id="quiz-countdown-display"></div>
+          <div id="next-playlist-display"></div>
         </div>
       </section>
 
@@ -70,7 +71,7 @@
         <label>YT Playlist URL or ID:</label>
         <input type="text" id="playlistIdText" placeholder="(e.g. PLmra5-9c6QitTCQcJ0uqibBj6MLJCEa3q)" size="53">
         <input type="button" class="button" id="addQueueButton" value="Add to Queue" onclick="addPlaylistToQueue()">
-        <input type="button" class="button" id="playQueueButton" value="Load Queue" onclick="playQueue()">
+        <input type="button" class="button" id="loadQueueButton" value="Load Queue" onclick="loadQueue()">
         <div id="playlistQueueList" class="playlist-queue-list"></div>
         <br>
         <a id="custom-start-time-link"

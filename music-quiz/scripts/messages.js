@@ -78,6 +78,10 @@ function setQuizCountdownDisplay(message) {
   document.getElementById('quiz-countdown-display').innerHTML = message;
 }
 
+function setNextPlaylistDisplay(message) {
+  document.getElementById('next-playlist-display').innerHTML = message;
+}
+
 function setLoadPlaylistError(message) {
   document.getElementById('errorMessage').innerHTML = message;
 }
@@ -110,4 +114,8 @@ function toggleQuizStatusAlignment(element) {
 
 function clearPlaylistCounter() {
   document.getElementById('playlist-video-order').innerHTML = '';
+}
+
+function clearNextPlaylistDisplay() {
+  document.getElementById('next-playlist-display').innerHTML = '';
 }

@@ -169,7 +169,7 @@ function removePlaylistFromQueue(index) {
   renderQueueList();
 }
 
-function playQueue() {
+function loadQueue() {
   if (playlistQueue.length === 0) {
     setLoadPlaylistError('Queue is empty. Add some playlists first.');
     return;
@@ -213,7 +213,7 @@ function loadPlaylistFromParsed(parsed, autoPlay) {
 
   if (autoPlay) {
     context.isWaitingForQuizStart = false;
-    setQuizStatusDisplay('Loading next playlist...');
+    setNextPlaylistDisplay('Loading next playlist...');
   } else {
     setQuizReadyDisplay();
   }
@@ -241,7 +241,7 @@ function startAutoAdvanceCountdown() {
     : AUTO_ADVANCE_DELAY_SECONDS;
   clearAutoAdvanceTimers();
   autoAdvanceSecondsLeft = resumeFrom;
-  setQuizStatusDisplay('Next playlist in: ' + getSecondsMessage(autoAdvanceSecondsLeft));
+  setNextPlaylistDisplay('Next playlist in: ' + getSecondsMessage(autoAdvanceSecondsLeft));
   autoAdvanceTimerId = setInterval(function () {
     autoAdvanceSecondsLeft--;
     if (autoAdvanceSecondsLeft <= 0) {
@@ -251,7 +251,7 @@ function startAutoAdvanceCountdown() {
       loadNextQueuedPlaylist();
       return;
     }
-    setQuizStatusDisplay('Next playlist in: ' + getSecondsMessage(autoAdvanceSecondsLeft));
+    setNextPlaylistDisplay('Next playlist in: ' + getSecondsMessage(autoAdvanceSecondsLeft));
   }, 1000);
 }
 

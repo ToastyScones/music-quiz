@@ -178,6 +178,7 @@ function onPlayerReady(event) {
 
   tryCompletePlaylistInit();
   setCurrentPlaylistCounter();
+  clearNextPlaylistDisplay();
 }
 
 function getVolume() {
