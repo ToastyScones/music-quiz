@@ -38,6 +38,8 @@ function addPlaylistToQueue() {
     return;
   }
 
+  var wasInFinalFinishedState = isFinalFinishedState();
+
   var item = {
     parsed: parsed,
     title: null,
@@ -51,6 +53,25 @@ function addPlaylistToQueue() {
     .then(function () {
       renderQueueList();
     });
+
+  if (wasInFinalFinishedState) {
+    // The quiz was in the final finished state (last playlist, last video,
+    // and the end-of-playlist message displayed with no upcoming playlists).
+    // Now that a new playlist has been added, automatically start the
+    // countdown to load it.
+    maybeAutoAdvanceToNextPlaylist();
+  }
+}
+
+function isFinalFinishedState() {
+  // The quiz is "final finished" when it is on its last playlist (no
+  // upcoming queued playlists), on its last video, and the end-of-playlist
+  // message is displayed. In that state a countdown to the next playlist
+  // cannot start until another playlist is added.
+  return context.isQuizForPlaylistDone &&
+    isEndOfPlaylist() &&
+    queueIndex >= 0 &&
+    queueIndex + 1 >= playlistQueue.length;
 }
 
 async function fetchPlaylistMetadata(playlistId, item) {
