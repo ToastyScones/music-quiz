@@ -147,6 +147,14 @@ function renderQueueList() {
       info.appendChild(title);
       info.appendChild(author);
 
+      var playButton = document.createElement('input');
+      playButton.type = 'button';
+      playButton.className = 'queue-play';
+      playButton.title = 'Play this playlist';
+      playButton.onclick = function () {
+        loadPlaylistAtIndex(i);
+      };
+
       var removeButton = document.createElement('input');
       removeButton.type = 'button';
       removeButton.className = 'button queue-remove';
@@ -158,6 +166,7 @@ function renderQueueList() {
       row.appendChild(number);
       row.appendChild(thumb);
       row.appendChild(info);
+      row.appendChild(playButton);
       row.appendChild(removeButton);
       container.appendChild(row);
     })(i);
@@ -280,6 +289,16 @@ function loadNextQueuedPlaylist() {
   queueIndex++;
   renderQueueList();
   loadPlaylistFromParsed(playlistQueue[queueIndex].parsed, true);
+}
+
+function loadPlaylistAtIndex(index) {
+  if (index < 0 || index >= playlistQueue.length) {
+    return;
+  }
+  clearAutoAdvanceTimers();
+  queueIndex = index;
+  renderQueueList();
+  loadPlaylistFromParsed(playlistQueue[index].parsed, true);
 }
 
 function clearAutoAdvanceTimers() {

@@ -580,3 +580,25 @@ details[open] .playlist-builder-chevron::before {
   flex: 0 0 auto;
   align-self: center;
 }
+
+.queue-play {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: #859900;
+  background-image: url('../images/icons/play-white.png');
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+}
+
+.queue-play:hover {
+  filter: brightness(75%);
+}
+
+.queue-play:active {
+  filter: brightness(40%);
+}
