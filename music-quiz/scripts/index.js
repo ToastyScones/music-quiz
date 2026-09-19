@@ -268,6 +268,7 @@ function clearQuizFutures() {
     clearInterval(this.volumeFadeOutIntervalId);
     this.volumeFadeOutIntervalId = null;
   }
+  clearAutoAdvanceTimers();
 }
 
 function getQuizTimerLimitsMs() {
@@ -555,8 +556,6 @@ function setGuessAsFinished(secondsRemaining) {
     context.isQuizForPlaylistDone = true;
     clearCountdownTimer();
     setQuizStatusDisplay(message + getEndOfPlaylistMessage());
-    // Start the auto-advance countdown once the user has seen the
-    // "End of playlist" message, not when the video ends.
     maybeAutoAdvanceToNextPlaylist();
   } else {
     setQuizStatusDisplay(message);

@@ -271,6 +271,7 @@ function clearAutoAdvanceTimers() {
   // "paused" flag cannot survive and fire on a later video-resume.
   autoAdvancePaused = false;
   autoAdvancePausedSeconds = 0;
+  clearNextPlaylistDisplay();
 }
 
 function pauseAutoAdvanceCountdown() {
@@ -282,6 +283,7 @@ function pauseAutoAdvanceCountdown() {
   clearAutoAdvanceTimers();
   autoAdvancePaused = true;
   autoAdvancePausedSeconds = remaining;
+  setNextPlaylistDisplay('(Next playlist countdown paused)')
 }
 
 function resumeAutoAdvanceCountdown() {
