@@ -581,6 +581,12 @@ details[open] .playlist-builder-chevron::before {
   align-self: center;
 }
 
+.queue-remove:disabled {
+  background: #6b6b6b;
+  color: #b8b8b8;
+  cursor: not-allowed;
+}
+
 .queue-play {
   flex: 0 0 auto;
   align-self: center;

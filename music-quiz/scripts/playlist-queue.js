@@ -159,6 +159,7 @@ function renderQueueList() {
       removeButton.type = 'button';
       removeButton.className = 'button queue-remove';
       removeButton.value = 'Remove';
+      removeButton.disabled = i === queueIndex;
       removeButton.onclick = function () {
         removePlaylistFromQueue(i);
       };

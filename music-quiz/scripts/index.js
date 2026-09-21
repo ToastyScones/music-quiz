@@ -217,13 +217,16 @@ function onError(event) {
   deblurVideo();
 
   var errorMessage = getFriendlyYoutubeAPIError(event.data);
-  var playlistId = event.target.getPlaylistId();
   if (isEndOfPlaylist()) {
     errorMessage += '<br>' + getEndOfPlaylistMessage();
   }
   setQuizStatusDisplay(errorMessage);
 
   setPlayerVisible();
+
+  if (event.data === 2 && context.isWaitingForQuizStart) {
+    return;
+  }
 
   this.onErrorNextVideoTimeoutId = setTimeout(
     function () {
@@ -424,6 +427,26 @@ function setVideoUnstartedState() {
 }
 
 function playVideo() {
+  /*
+  if (!player) { return; }
+
+  // Check if a video is loaded in the player
+  var videoData = player.getVideoData ? player.getVideoData() : null;
+  var hasVideoLoaded = videoData && videoData.video_id;
+
+  if (hasVideoLoaded) {
+    // A video is loaded in the player, play the current video
+    context.isPreviewing = false;
+    player.playVideo();
+  } else if (!context.isWaitingForQuizStart) {
+    // No playlist is currently loaded
+    if (playlistQueue.length === 0) {
+      setLoadPlaylistError('Queue is empty. Add some playlists first.');
+    } else {
+      // Start from the first playlist
+      loadPlaylistAtIndex(0);
+    }
+  }*/
   if (!player) { return; }
   context.isPreviewing = false;
   player.playVideo();
