@@ -627,7 +627,7 @@ function isEndOfPlaylist() {
 
   var lastIndex = player.getPlaylist().length - 1;
   var currentIndex = player.getPlaylistIndex();
-  return currentIndex === lastIndex;
+  return currentIndex === lastIndex || (lastIndex === -1 && currentIndex === 0);
 }
 
 // True when the player is on the first video of the current playlist.

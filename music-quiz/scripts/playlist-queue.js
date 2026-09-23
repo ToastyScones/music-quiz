@@ -51,7 +51,7 @@ async function addPlaylistToQueue() {
   // user can retry, and an error is displayed instead of queuing the item.
   var metaLoaded = await fetchPlaylistMetadata(parsed.playlistId, item);
   if (!metaLoaded) {
-    setLoadPlaylistError('Could not fetch playlist metadata from YouTube. ' +
+    setLoadPlaylistError('Could not add YouTube playlist. ' +
       'Make sure the playlist ID/URL is correct and the playlist is public.');
     return;
   }
@@ -255,7 +255,7 @@ function loadPlaylistFromParsed(parsed, autoPlay) {
 
   if (autoPlay) {
     context.isWaitingForQuizStart = false;
-    setNextPlaylistDisplay('Loading next playlist...');
+    setQuizStartingDisplay();
     // The autoPlay branch is taken when the user presses the play button
     // in the queue (loadPlaylistAtIndex) or when auto-advancing to the next
     // playlist, neither of which calls setQuizReadyDisplay(). Without this,

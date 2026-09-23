@@ -13,7 +13,7 @@ function getFriendlyYoutubeAPIError(eventDataCode) {
   var baseMessage = 'Error: Video could not be played. Code: ' + eventDataCode + '<br>Message: <b>'
   switch (Number(eventDataCode)) {
     case 2:
-      return baseMessage + 'The request contains an invalid video ID value.' + '</b>';
+      return baseMessage + 'The request contains an invalid video ID value. (Could also be a YouTube bug, some playlists error out like this for no reason)' + '</b>';
     case 5:
       return baseMessage + 'The requested content cannot be played in an HTML5 player.' + '</b>';
     case 100:
@@ -54,6 +54,15 @@ function getVideoDidNotLoadMessage() {
   return 'I don\'t know!! ＞ᨓ＜ <br>[The YouTube API doesn\'t instantly load, ' +
     'so clicking Reveal Answer causes issues before loading is complete. ' +
     'Click it again after the video loads.]'
+}
+
+function setQuizStartingDisplay() {
+  document.getElementById('preQuizText').innerHTML = '';
+  document.getElementById('quiz-status').style.display = 'flex';
+  document.getElementById('playerParent').style.background = '#FFFFFF';
+  document.getElementById('preQuizText').style.position = 'absolute';
+  document.getElementById('quiz-status-display').innerHTML = '';
+  setNextPlaylistDisplay('Loading next playlist...');
 }
 
 function setQuizReadyDisplay() {
