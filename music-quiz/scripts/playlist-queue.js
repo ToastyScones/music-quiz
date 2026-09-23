@@ -2,7 +2,7 @@
 // "YT Playlist URL or ID:" input and auto-advance to the next queued playlist
 // (after a short countdown) when the current one finishes.
 //
-// UI: "Add to Queue" / "Load Queue" buttons in index.html (controls section).
+// UI: "Add to Queue" / "Play Queue" buttons in index.html (controls section).
 // All functions here are global and cooperate with scripts/index.js:
 //   - loadPlaylistFromParsed(parsed, autoPlay) is the shared load path used by
 //     both a manual "Load Playlist" and an auto-advance.
@@ -28,7 +28,7 @@ function makeQueueLabel(title, parsed) {
   return label;
 }
 
-function addPlaylistToQueue() {
+async function addPlaylistToQueue() {
   clearError();
   var ytPlaylistIdOrUrl = document.getElementById('playlistIdText').value;
   var parsed = parsePlaylistInput(ytPlaylistIdOrUrl);
@@ -38,8 +38,6 @@ function addPlaylistToQueue() {
     return;
   }
 
-  var wasInFinalFinishedState = isFinalFinishedState();
-
   var item = {
     parsed: parsed,
     title: null,
@@ -47,12 +45,22 @@ function addPlaylistToQueue() {
     thumbnail: null,
     metaLoaded: false
   };
+
+  // The playlist is only added to the queue if its metadata can be fetched
+  // via the oEmbed REST request. On failure the input is left intact so the
+  // user can retry, and an error is displayed instead of queuing the item.
+  var metaLoaded = await fetchPlaylistMetadata(parsed.playlistId, item);
+  if (!metaLoaded) {
+    setLoadPlaylistError('Could not fetch playlist metadata from YouTube. ' +
+      'Make sure the playlist ID/URL is correct and the playlist is public.');
+    return;
+  }
+
+  var wasInFinalFinishedState = isFinalFinishedState();
+
   playlistQueue.push(item);
   document.getElementById('playlistIdText').value = '';
-  fetchPlaylistMetadata(parsed.playlistId, item)
-    .then(function () {
-      renderQueueList();
-    });
+  renderQueueList();
 
   if (wasInFinalFinishedState) {
     // The quiz was in the final finished state (last playlist, last video,
@@ -88,8 +96,9 @@ async function fetchPlaylistMetadata(playlistId, item) {
     item.author = data.author_name;
     item.thumbnail = data.thumbnail_url;
     item.metaLoaded = true;
+    return true;
   } catch {
-    item.title = playlistId;
+    return false;
   }
 }
 
@@ -200,7 +209,7 @@ function removePlaylistFromQueue(index) {
   renderQueueList();
 }
 
-function loadQueue() {
+function playQueue() {
   if (playlistQueue.length === 0) {
     setLoadPlaylistError('Queue is empty. Add some playlists first.');
     return;
@@ -209,11 +218,13 @@ function loadQueue() {
   queueIndex = 0;
   renderQueueList();
   clearAutoAdvanceTimers();
-  // Behave like the old "Load Playlist": cue the first queued playlist
-  // (autoPlay = false) so the user then starts the quiz with the green play
-  // button. The auto-advance countdown is NOT started here; it only begins
-  // when "End of playlist" is displayed (setGuessAsFinished in index.js).
-  loadPlaylistFromParsed(playlistQueue[0].parsed, false);
+  // Start the quiz immediately: autoPlay = true plays the first queued
+  // playlist right away (same as the per-item "play" button in the queue
+  // list), so the first video starts and the quiz begins without the user
+  // having to click the green play button. The auto-advance countdown is
+  // NOT started here; it only begins when "End of playlist" is displayed
+  // (setGuessAsFinished in index.js).
+  loadPlaylistFromParsed(playlistQueue[0].parsed, true);
 }
 
 function loadPlaylistFromParsed(parsed, autoPlay) {
@@ -245,6 +256,12 @@ function loadPlaylistFromParsed(parsed, autoPlay) {
   if (autoPlay) {
     context.isWaitingForQuizStart = false;
     setNextPlaylistDisplay('Loading next playlist...');
+    // The autoPlay branch is taken when the user presses the play button
+    // in the queue (loadPlaylistAtIndex) or when auto-advancing to the next
+    // playlist, neither of which calls setQuizReadyDisplay(). Without this,
+    // the #quiz-status section stays at its CSS default (display: none) and
+    // never reappears after a fresh queue load.
+    document.getElementById('quiz-status').style.display = 'flex';
   } else {
     setQuizReadyDisplay();
   }

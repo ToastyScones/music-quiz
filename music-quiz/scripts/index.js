@@ -427,26 +427,6 @@ function setVideoUnstartedState() {
 }
 
 function playVideo() {
-  /*
-  if (!player) { return; }
-
-  // Check if a video is loaded in the player
-  var videoData = player.getVideoData ? player.getVideoData() : null;
-  var hasVideoLoaded = videoData && videoData.video_id;
-
-  if (hasVideoLoaded) {
-    // A video is loaded in the player, play the current video
-    context.isPreviewing = false;
-    player.playVideo();
-  } else if (!context.isWaitingForQuizStart) {
-    // No playlist is currently loaded
-    if (playlistQueue.length === 0) {
-      setLoadPlaylistError('Queue is empty. Add some playlists first.');
-    } else {
-      // Start from the first playlist
-      loadPlaylistAtIndex(0);
-    }
-  }*/
   if (!player) { return; }
   context.isPreviewing = false;
   player.playVideo();
@@ -463,6 +443,15 @@ function stopVideo() {
 
 function previousVideo() {
   if (!player) { return; }
+  // At the first video, "previous" means the previous queued playlist;
+  // jump there (it auto-plays). Do nothing if there is no previous one.
+  var previousPlaylistIndex = (queueIndex >= 0) ? queueIndex - 1 : -1;
+  if (isFirstVideoInPlaylist() &&
+      previousPlaylistIndex >= 0 &&
+      previousPlaylistIndex < playlistQueue.length) {
+    loadPlaylistAtIndex(previousPlaylistIndex);
+    return;
+  }
   context.didVideoJustChange = true;
   clearStateForNextVideo();
   player.previousVideo();
@@ -471,6 +460,10 @@ function previousVideo() {
 function nextVideo() {
   if (!player) { return; }
   if (isEndOfPlaylist()) {
+    // At the last video, advance to the next queued playlist (auto-plays).
+    if (queueIndex >= 0 && queueIndex + 1 < playlistQueue.length) {
+      loadNextQueuedPlaylist();
+    }
     return;
   }
   context.didVideoJustChange = true;
@@ -635,6 +628,18 @@ function isEndOfPlaylist() {
   var lastIndex = player.getPlaylist().length - 1;
   var currentIndex = player.getPlaylistIndex();
   return currentIndex === lastIndex;
+}
+
+// True when the player is on the first video of the current playlist.
+// Mirrors isEndOfPlaylist(); returns true when the playlist isn't
+// initialized so the caller treats a missing/initializing player as
+// "at the first video" (jumping to the previous playlist, if any, is the
+// only sensible move).
+function isFirstVideoInPlaylist() {
+  if (!isPlaylistInitialized()) {
+    return true;
+  }
+  return player.getPlaylistIndex() === 0;
 }
 
 function getVideoTitleWithFallback() {
