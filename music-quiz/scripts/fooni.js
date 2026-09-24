@@ -35,5 +35,5 @@ function setHeaderEmote(imgSrc) {
 }
 
 function getEndOfPlaylistEmote() {
-  return emoteFolderDir + 'umaruCry.webp';
+  return emoteFolderDir + 'KannaBlob.png';
 }

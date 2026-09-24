@@ -22,6 +22,7 @@ class QuizContext {
   isPreviewing;
   isPreviewStarting;
   isWaitingForQuizStart;
+  detachedFromPlaylist;
 
   constructor() {
     this.initialize();
@@ -47,6 +48,7 @@ class QuizContext {
     this.isPreviewing = false;
     this.isPreviewStarting = false;
     this.isWaitingForQuizStart = false;
+    this.detachedFromPlaylist = false;
   }
 
   resetBuilderState() {

@@ -312,7 +312,11 @@ function renderQueueList() {
       removeButton.type = 'button';
       removeButton.className = 'button queue-remove';
       removeButton.value = 'Remove';
-      removeButton.disabled = item.pending || i === queueIndex;
+      // Remove is disabled only while the playlist is still being added
+      // (pending). It is enabled for the currently-playing playlist too:
+      // removing it detaches that playlist from the queue (it keeps playing
+      // in the player) and cancels any pending auto-advance.
+      removeButton.disabled = item.pending;
       removeButton.onclick = function () {
         removePlaylistFromQueue(i);
       };
@@ -340,10 +344,22 @@ function removePlaylistFromQueue(index) {
     return;
   }
 
+  // Removing the currently-playing playlist detaches it from the queue: it
+  // keeps playing in the player (no auto-advance will fire, since queueIndex
+  // becomes -1 and maybeAutoAdvanceToNextPlaylist() bails on queueIndex < 0),
+  // but the player state and the queue list both reflect that it is no
+  // longer part of the queue.
+  var removingCurrent = index === queueIndex;
+
   var countdownActive = isAutoAdvanceCountdownActive();
   playlistQueue.splice(index, 1);
   if (queueIndex >= 0 && index < queueIndex) {
     queueIndex--;
+  } else if (removingCurrent) {
+    // The current item is gone, so there is no "now playing" queued playlist
+    // anymore. Detach the player from the queue.
+    queueIndex = -1;
+    context.detachedFromPlaylist = true;
   }
 
   var hasNext = queueIndex >= 0 && queueIndex + 1 < playlistQueue.length;
@@ -378,6 +394,9 @@ function loadPlaylistFromParsed(parsed, autoPlay) {
   context.resetBuilderState();
   context.vidTimestamps = parsed.timestamps;
   context.sourcePlaylistId = parsed.playlistId;
+  // A freshly loaded playlist is attached to the queue again, so a
+  // previously-detached state never carries over into the next playlist.
+  context.detachedFromPlaylist = false;
   context.needLastVolumeApplied = false;
 
   if (parsed.videoOrder) {

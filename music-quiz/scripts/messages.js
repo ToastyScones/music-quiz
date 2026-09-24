@@ -1,5 +1,5 @@
 function getEndOfPlaylistMessage() {
-  return 'End of playlist <img src="' + getEndOfPlaylistEmote() + '" width="50" height="50">';
+  return 'End of playlist <img src="' + getEndOfPlaylistEmote() + '" width="50" height="50" style="background-color: #073642;">';
 }
 
 function getSecondsMessage(seconds) {
