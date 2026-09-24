@@ -17,6 +17,25 @@ var autoAdvancePaused = false;
 var autoAdvancePausedSeconds = 0;
 var AUTO_ADVANCE_DELAY_SECONDS = 30;
 
+// Whether the queue thumbnails are blurred. The checkbox in index.html
+// tracks this across re-renders.
+var queueThumbsBlurred = true;
+
+// Blur every queue thumbnail in the list. Called whenever the queue
+// re-renders and when the user toggles the checkbox.
+function applyQueueThumbBlur() {
+  var thumbs = document.querySelectorAll('.queue-thumb');
+  for (var i = 0; i < thumbs.length; i++) {
+    thumbs[i].style.filter = queueThumbsBlurred ? 'blur(3px)' : 'blur(0px)';
+  }
+}
+
+// Tied to the "Blur queue thumbnails" checkbox in index.html.
+function toggleQueueThumbBlur(checkbox) {
+  queueThumbsBlurred = !!checkbox.checked;
+  applyQueueThumbBlur();
+}
+
 function makeQueueLabel(title, parsed) {
   var label = title || 'playlist';
   if (parsed.videoOrder) {
@@ -40,35 +59,54 @@ async function addPlaylistToQueue() {
 
   var item = {
     parsed: parsed,
-    title: null,
+    title: 'Adding playlist...',
     author: null,
     thumbnail: null,
-    metaLoaded: false
+    metaLoaded: false,
+    pending: true
   };
 
-  // The playlist is only added to the queue if its metadata can be fetched
-  // via the oEmbed REST request. On failure the input is left intact so the
-  // user can retry, and an error is displayed instead of queuing the item.
-  var metaLoaded = await fetchPlaylistMetadata(parsed.playlistId, item);
-  if (!metaLoaded) {
-    setLoadPlaylistError('Could not add YouTube playlist. ' +
-      'Make sure the playlist ID/URL is correct and the playlist is public.');
-    return;
-  }
-
+  // The Add to Queue button is disabled and a temporary queue item is shown
+  // for the duration of the add. The button is re-enabled at the end of this
+  // function, whether the add succeeds or errors out.
+  var addQueueButton = document.getElementById('addQueueButton');
+  addQueueButton.disabled = true;
+  // Capture the final-finished state before pushing the temp item, because
+  // adding an item to the queue changes playlistQueue.length and would make
+  // isFinalFinishedState() report false.
   var wasInFinalFinishedState = isFinalFinishedState();
-
   playlistQueue.push(item);
-  document.getElementById('playlistIdText').value = '';
   renderQueueList();
 
-  if (wasInFinalFinishedState) {
-    // The quiz was in the final finished state (last playlist, last video,
-    // and the end-of-playlist message displayed with no upcoming playlists).
-    // Now that a new playlist has been added, automatically start the
-    // countdown to load it.
-    maybeAutoAdvanceToNextPlaylist();
+  // The playlist is only added to the queue if its metadata can be fetched
+  // via the oEmbed REST request. On failure the temporary queue item is
+  // removed and the input is left intact so the user can retry, and an error
+  // is displayed instead of queuing the item.
+  var metaLoaded = await fetchPlaylistMetadata(parsed.playlistId, item);
+
+  if (metaLoaded) {
+    item.pending = false;
+    document.getElementById('playlistIdText').value = '';
+
+    if (wasInFinalFinishedState) {
+      // The quiz was in the final finished state (last playlist, last video,
+      // and the end-of-playlist message displayed with no upcoming playlists).
+      // Now that a new playlist has been added, automatically start the
+      // countdown to load it.
+      maybeAutoAdvanceToNextPlaylist();
+    }
+  } else {
+    // Error out: remove the temporary queue item so the queue only reflects
+    // playlists that were actually added.
+    var tempIndex = playlistQueue.indexOf(item);
+    if (tempIndex !== -1) {
+      playlistQueue.splice(tempIndex, 1);
+    }
   }
+
+  // Re-enable the Add to Queue button and refresh the queue display.
+  addQueueButton.disabled = false;
+  renderQueueList();
 }
 
 function isFinalFinishedState() {
@@ -96,11 +134,110 @@ async function fetchPlaylistMetadata(playlistId, item) {
     item.author = data.author_name;
     item.thumbnail = data.thumbnail_url;
     item.metaLoaded = true;
+    const result = await validateYouTubePlaylist(playlistId);
+    // For some reason, loadPlaylist and cuePlaylist won't return an error if embed is disabled
+    //  in the first video or the playlist as a whole. We need to do one last check and validate
+    //  here before inserting into the queue. 
+    if (!result.isValid) {
+      setLoadPlaylistError('Could not add YouTube playlist. ' +
+        'The video owner does not allow it to be embedded.');
+      return false;
+    }
     return true;
   } catch {
+    setLoadPlaylistError('Could not add YouTube playlist. ' +
+      'Make sure the playlist ID/URL is correct and the playlist is public.');
     return false;
   }
 }
+
+function validateYouTubePlaylist(playlistId) {
+  return new Promise((resolve) => {
+    const containerId = `yt-val-${Math.random().toString(36).substr(2, 9)}`;
+    const div = document.createElement('div');
+    div.id = containerId;
+    div.style.cssText = "width:1px;height:1px;opacity:0;position:absolute;pointer-events:none;";
+    document.body.appendChild(div);
+
+    let player = null;
+    let isResolved = false;
+    let errorTimeout = null;
+
+    // The single exit point ensuring proper cleanup
+    const finalize = (isValid, message) => {
+      if (isResolved) return; // Prevent double execution
+      isResolved = true;
+
+      if (errorTimeout) clearTimeout(errorTimeout);
+
+      try {
+        if (player && typeof player.destroy === 'function') {
+          player.destroy();
+        }
+      } catch (err) {
+        console.error("Error during player destruction:", err);
+      } finally {
+        player = null;
+        const el = document.getElementById(containerId);
+        if (el) el.remove();
+        resolve({ isValid, message });
+      }
+    };
+
+    const playerConfig = {
+      height: '1',
+      width: '1',
+      playerVars: {
+        listType: 'playlist',
+        list: playlistId,
+        autoplay: 0,
+        mute: 1,
+        controls: 0,
+        showinfo: 0,
+        rel: 0
+      },
+      events: {
+        'onReady': (event) => {
+          try {
+            if (typeof event.target.setPlaybackQuality === 'function') {
+              event.target.setPlaybackQuality('small'); 
+            }
+
+            const playlistData = event.target.getPlaylist();
+            
+            // Check structural layout arrays
+            if (!playlistData || playlistData.length === 0) {
+              finalize(false, "Playlist is empty or private.");
+              return;
+            }
+
+            // DELAY RESOLUTION: Give onError a brief window (250ms) to intercept
+            errorTimeout = setTimeout(() => {
+              finalize(true, "Playlist is valid.");
+            }, 250);
+
+          } catch (err) {
+            finalize(false, `Processing error: ${err.message}`);
+          }
+        },
+        'onError': (event) => {
+          finalize(false, `YouTube API Error Code: ${event.data}`);
+        }
+      }
+    };
+
+    try {
+      if (typeof YT !== 'undefined' && YT.Player) {
+        player = new YT.Player(containerId, playerConfig);
+      } else {
+        finalize(false, "YouTube API script not loaded yet.");
+      }
+    } catch (err) {
+      finalize(false, `Initialization failed: ${err.message}`);
+    }
+  });
+}
+
 
 function renderQueueList() {
   var container = document.getElementById('playlistQueueList');
@@ -132,9 +269,12 @@ function renderQueueList() {
       thumb.alt = '';
       if (item.thumbnail) {
         thumb.src = item.thumbnail;
-      } else {
-        thumb.style.display = 'none';
       }
+      // The wrapper clips the blurred image so the blur does not bleed
+      // past the thumbnail's boundary.
+      var thumbWrap = document.createElement('div');
+      thumbWrap.className = 'queue-thumb-wrap';
+      thumbWrap.appendChild(thumb);
 
       var info = document.createElement('div');
       info.className = 'queue-info';
@@ -160,6 +300,10 @@ function renderQueueList() {
       playButton.type = 'button';
       playButton.className = 'queue-play';
       playButton.title = 'Play this playlist';
+      // While the playlist is still being added (pending), render the play
+      // button but keep it disabled so the user cannot start a playlist
+      // whose metadata has not loaded yet.
+      playButton.disabled = item.pending;
       playButton.onclick = function () {
         loadPlaylistAtIndex(i);
       };
@@ -168,19 +312,20 @@ function renderQueueList() {
       removeButton.type = 'button';
       removeButton.className = 'button queue-remove';
       removeButton.value = 'Remove';
-      removeButton.disabled = i === queueIndex;
+      removeButton.disabled = item.pending || i === queueIndex;
       removeButton.onclick = function () {
         removePlaylistFromQueue(i);
       };
 
       row.appendChild(number);
-      row.appendChild(thumb);
+      row.appendChild(thumbWrap);
       row.appendChild(info);
       row.appendChild(playButton);
       row.appendChild(removeButton);
       container.appendChild(row);
     })(i);
   }
+  applyQueueThumbBlur();
 }
 
 function isAutoAdvanceCountdownActive() {

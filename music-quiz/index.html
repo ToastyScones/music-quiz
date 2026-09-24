@@ -28,7 +28,7 @@
       <section class="youtube-video-player content-section">
         <div id="playerParent" class="playerParent">
           <div id="preQuizText">
-            Get started by adding one or more <b>public</b> or <b>unlisted</b> YouTube playlists to the queue, and then clicking <b>Play Queue</b>.
+            Add one or more YouTube playlists to the queue, and then click <b>Play Queue</b>!
             <br/>
             <a href="https://github.com/ToastyScones/toastyscones.github.io#usage" target="_blank">Click here for more info</a>
           </div>
@@ -71,7 +71,10 @@
         <label>YT Playlist URL or ID:</label>
         <input type="text" id="playlistIdText" placeholder="(e.g. PLmra5-9c6QitTCQcJ0uqibBj6MLJCEa3q)" size="53">
         <input type="button" class="button" id="addQueueButton" value="Add to Queue" onclick="addPlaylistToQueue()">
-        <input type="button" class="button" id="playQueueButton" value="Play Queue" onclick="playQueue()">
+        <div class="queue-actions">
+          <input type="button" class="button" id="playQueueButton" value="Play Queue" onclick="playQueue()">
+          <label for="queueThumbsBlur" class="queue-thumb-blur-toggle"><input type="checkbox" id="queueThumbsBlur" checked onchange="toggleQueueThumbBlur(this)"><b>Blur thumbnails</b></label>
+        </div>
         <div id="playlistQueueList" class="playlist-queue-list"></div>
         <br>
         <a id="custom-start-time-link"

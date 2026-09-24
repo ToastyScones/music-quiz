@@ -96,6 +96,23 @@ p {
   background: #2aa198;
 }
 
+.queue-actions {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
+.queue-actions #playQueueButton {
+  grid-column: 2;
+}
+
+.queue-thumb-blur-toggle {
+  margin: 0;
+  text-align: right;
+  font-size: 12px;
+  padding-right: 17px;
+}
+
 #previousVideoButton {
   background-image: url('../images/icons/skip-previous-white.png');
   background-size: cover;
@@ -149,6 +166,11 @@ p {
 
 .button:hover {
   filter: brightness(75%);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 #fooni-header:hover {
@@ -546,15 +568,26 @@ details[open] .playlist-builder-chevron::before {
   min-width: 18px;
   text-align: right;
   font-weight: bold;
-  padding-top: 2px;
+  align-self: center;
+}
+
+.queue-thumb-wrap {
+  width: 56px;
+  height: 32px;
+  overflow: hidden;
+  border-radius: 2px;
+  flex: 0 0 auto;
+  background: #c8c8c8;
 }
 
 .queue-thumb {
-  width: 56px;
-  height: 32px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border-radius: 2px;
-  flex: 0 0 auto;
+  display: block;
+  /* The wrapper's overflow: hidden keeps the blur within the thumbnail's
+     boundary. */
+  filter: blur(3px);
 }
 
 .queue-info {
@@ -607,4 +640,9 @@ details[open] .playlist-builder-chevron::before {
 
 .queue-play:active {
   filter: brightness(40%);
+}
+
+.queue-play:disabled {
+  background-color: #6b6b6b;
+  cursor: not-allowed;
 }
