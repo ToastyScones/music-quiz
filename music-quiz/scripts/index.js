@@ -656,7 +656,7 @@ function deblurVideo() {
 }
 
 function blurVideo() {
-  document.getElementById('player').style.filter = "blur(70px)";
+  document.getElementById('player').style.filter = "blur(70px) hue-rotate(180deg)";
 }
 
 function clearCountdownTimer() {

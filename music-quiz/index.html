@@ -150,6 +150,22 @@
         <section class="settings-subsection">
           <div>
             <div>
+              <label><b>Auto-advance delay between playlists (seconds)</b></label>
+            </div>
+            <div>
+              <div id="autoAdvanceDelayCurrentValue" class="settingsDisplay"></div>
+            </div>
+            <div>
+              <input type="number" id="autoAdvanceDelaySeconds" name="autoAdvanceDelaySeconds" value="15" min="1">
+              <input type="button" class="button apply-button" id="setAutoAdvanceDelayButton" value="Apply"
+                onclick="context.setAutoAdvanceDelaySeconds()">
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-subsection">
+          <div>
+            <div>
               <input type="checkbox" id="shift-quiz-status-left" name="shift-quiz-status-left"
                 onchange="toggleQuizStatusAlignment(this)">
               <label for="shift-quiz-status-left"><b>Align quiz status text to the left</b></label>

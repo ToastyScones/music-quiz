@@ -23,6 +23,7 @@ class QuizContext {
   isPreviewStarting;
   isWaitingForQuizStart;
   detachedFromPlaylist;
+  autoAdvanceDelaySeconds;
 
   constructor() {
     this.initialize();
@@ -49,6 +50,7 @@ class QuizContext {
     this.isPreviewStarting = false;
     this.isWaitingForQuizStart = false;
     this.detachedFromPlaylist = false;
+    this.autoAdvanceDelaySeconds = 15;
   }
 
   resetBuilderState() {
@@ -74,6 +76,7 @@ class QuizContext {
   setTimeLimitSeconds() {
     this.setGameSeconds();
     this.setVidSeconds();
+    this.setAutoAdvanceDelaySeconds();
   }
 
   setGameSeconds() {
@@ -84,6 +87,11 @@ class QuizContext {
   setVidSeconds() {
     this.vidTimeLeftSeconds = this.getCountdownSeconds('vidTimeLeftSeconds');
     setCountdownSettingDisplay('vidTimeLeftSeconds', 'nextVideoCountdownCurrentValue', this.vidTimeLeftSeconds);
+  }
+
+  setAutoAdvanceDelaySeconds() {
+    this.autoAdvanceDelaySeconds = this.getCountdownSeconds('autoAdvanceDelaySeconds');
+    setCountdownSettingDisplay('autoAdvanceDelaySeconds', 'autoAdvanceDelayCurrentValue', this.autoAdvanceDelaySeconds);
   }
 
   getCountdownSeconds(sourceElement) {

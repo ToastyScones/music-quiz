@@ -15,7 +15,6 @@ var autoAdvanceTimerId = null;
 var autoAdvanceSecondsLeft = 0;
 var autoAdvancePaused = false;
 var autoAdvancePausedSeconds = 0;
-var AUTO_ADVANCE_DELAY_SECONDS = 30;
 
 // Whether the queue thumbnails are blurred. The checkbox in index.html
 // tracks this across re-renders.
@@ -318,7 +317,10 @@ function renderQueueList() {
       // in the player) and cancels any pending auto-advance.
       removeButton.disabled = item.pending;
       removeButton.onclick = function () {
-        removePlaylistFromQueue(i);
+        // Final-confirmation popup: greys out the page and asks the user
+        // to confirm. The item is removed only if they click Yes;
+        // otherwise no action is taken.
+        openRemoveQueuePopup(i, item.title);
       };
 
       row.appendChild(number);
@@ -368,6 +370,60 @@ function removePlaylistFromQueue(index) {
   }
 
   renderQueueList();
+}
+
+function openRemoveQueuePopup(index, playlistTitle) {
+  // Grey out the page and show a final-confirmation popup before the
+  // removal happens. Only clicking "Yes" performs the removal.
+  var popup = document.createElement('div');
+  popup.className = 'remove-popup';
+  popup.id = 'remove-queue-popup';
+
+  var title = document.createElement('h4');
+  title.className = 'remove-popup-title';
+  title.textContent = 'Remove "' + playlistTitle + '" from queue?';
+
+  var message = document.createElement('p');
+  message.className = 'remove-popup-message';
+  message.textContent = 'Please note that this cannot be undone.';
+
+  var yesButton = document.createElement('button');
+  yesButton.type = 'button';
+  yesButton.className = 'button remove-popup-yes';
+  yesButton.textContent = 'Yes';
+  yesButton.onclick = function () {
+    closeRemoveQueuePopup();
+    removePlaylistFromQueue(index);
+  };
+
+  var noButton = document.createElement('button');
+  noButton.type = 'button';
+  noButton.className = 'button remove-popup-no';
+  noButton.textContent = 'No';
+  noButton.onclick = function () {
+    closeRemoveQueuePopup();
+  };
+
+  popup.appendChild(title);
+  popup.appendChild(message);
+  var buttons = document.createElement('div');
+  buttons.className = 'remove-popup-buttons';
+  buttons.appendChild(yesButton);
+  buttons.appendChild(noButton);
+  popup.appendChild(buttons);
+
+  var overlay = document.createElement('div');
+  overlay.className = 'remove-popup-overlay';
+  overlay.id = 'remove-queue-popup-overlay';
+  overlay.appendChild(popup);
+  document.body.appendChild(overlay);
+}
+
+function closeRemoveQueuePopup() {
+  var overlay = document.getElementById('remove-queue-popup-overlay');
+  if (overlay) {
+    overlay.parentNode.removeChild(overlay);
+  }
 }
 
 function playQueue() {
@@ -448,9 +504,11 @@ function startAutoAdvanceCountdown() {
   // If the countdown was paused (e.g. the user paused the video), resume
   // from where it left off instead of restarting from the full delay.
   // Capture this BEFORE clearAutoAdvanceTimers below resets the flags.
+  // The delay is configurable via the "Auto-advance delay between
+  // playlists" setting in index.html (context.autoAdvanceDelaySeconds).
   var resumeFrom = (autoAdvancePaused && autoAdvancePausedSeconds > 0)
     ? autoAdvancePausedSeconds
-    : AUTO_ADVANCE_DELAY_SECONDS;
+    : context.autoAdvanceDelaySeconds;
   clearAutoAdvanceTimers();
   autoAdvanceSecondsLeft = resumeFrom;
   setNextPlaylistDisplay('Next playlist in: ' + getSecondsMessage(autoAdvanceSecondsLeft));

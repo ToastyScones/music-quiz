@@ -88,7 +88,7 @@ p {
 #loadPlaylistButton,
 #setGuessTimeLimitSecondsButton,
 #setVidTimeLeftButton {
-  background: #859900;
+  background: #268bd2;
 }
 
 #addQueueButton,
@@ -564,6 +564,15 @@ details[open] .playlist-builder-chevron::before {
   box-shadow: 0 0 0 1px #268bd2;
 }
 
+/* Applied while the user is confirming a remove. Greys the whole row out;
+   renderQueueList() runs on confirm (Yes) and rebuilds the list, so the
+   class is dropped on "No" and no longer needed on "Yes". */
+.queue-item.queue-removing {
+  opacity: 0.5;
+  background: #d0d0d0;
+  border-color: #909090;
+}
+
 .queue-number {
   min-width: 18px;
   text-align: right;
@@ -645,4 +654,58 @@ details[open] .playlist-builder-chevron::before {
 .queue-play:disabled {
   background-color: #6b6b6b;
   cursor: not-allowed;
+}
+
+/* Custom confirmation popup: greys out the page behind the popup */
+.remove-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.remove-popup {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #073642;
+  color: #FFF;
+  border: 2px solid #268bd2;
+  border-radius: 6px;
+  min-width: 300px;
+  max-width: 90%;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+.remove-popup-title {
+  margin: 0;
+  font-size: 18px;
+}
+
+.remove-popup-message {
+  margin: 0;
+  font-size: 14px;
+  color: #bfd0d0;
+}
+
+.remove-popup-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.remove-popup-yes {
+  background: #859900;
+}
+
+.remove-popup-no {
+  background: #6b6b6b;
 }
