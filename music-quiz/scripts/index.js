@@ -299,6 +299,17 @@ function getQuizTimerLimitsMs() {
   return { guessTimeLimitMs, vidTimeLimitMs };
 }
 
+// Whether a video is currently actively playing in the player.
+// Returns false when there is no player, or the player is in any
+// non-playing state (unstarted, cued, paused, or ended). Mirrors the
+// guard used by startQuizTimersIfPlaying below.
+function isVideoPlaying() {
+  if (!player || player.getPlayerState() !== YT.PlayerState.PLAYING) {
+    return false;
+  }
+  return true;
+}
+
 function startQuizTimersIfPlaying() {
   if (!player || player.getPlayerState() !== YT.PlayerState.PLAYING) {
     return;
@@ -503,17 +514,7 @@ function nextVideoAfterQuiz(milliSecondsRemaining) {
   }
 
   // Fade out music as video ends
-  var tenPercentVol = Math.trunc(getVolume() * .1);
-  if (tenPercentVol === 0) {
-    tenPercentVol = 1;
-  }
-
-  if (!document.getElementById('disable-fade-out').checked) {
-    reduceVolumeForFadeOut(tenPercentVol)
-    this.volumeFadeOutIntervalId = setInterval(
-      reduceVolumeForFadeOut, (context.fadeOutMs / 10), tenPercentVol
-    );
-  }
+  startVolumeFadeOut();
 
   // Next video timeout.
   //  While this is queued, music should start to fade out
@@ -529,6 +530,27 @@ function nextVideoAfterQuiz(milliSecondsRemaining) {
       nextVideo();
     },
     nextVideoTimeoutMs
+  );
+}
+
+// Start fading out the current (still-playing) audio over context.fadeOutMs,
+// so it is nearly silent by the time the next video/playlist is actually
+// loaded. The fade interval is torn down by clearQuizFutures (via
+// clearStateForNextVideo / loadPlaylistFromParsed) when the next
+// video/playlist is loaded. Honors the "Disable audio fade out" checkbox
+// (no-ops if it is checked).
+function startVolumeFadeOut() {
+  if (!player) { return; }
+  if (document.getElementById('disable-fade-out').checked) { return; }
+
+  var tenPercentVol = Math.trunc(getVolume() * .1);
+  if (tenPercentVol === 0) {
+    tenPercentVol = 1;
+  }
+
+  reduceVolumeForFadeOut(tenPercentVol);
+  this.volumeFadeOutIntervalId = setInterval(
+    reduceVolumeForFadeOut, (context.fadeOutMs / 10), tenPercentVol
   );
 }
 

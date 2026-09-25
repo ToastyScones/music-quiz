@@ -512,6 +512,28 @@ function startAutoAdvanceCountdown() {
   clearAutoAdvanceTimers();
   autoAdvanceSecondsLeft = resumeFrom;
   setNextPlaylistDisplay('Next playlist in: ' + getSecondsMessage(autoAdvanceSecondsLeft));
+
+  // If the just-finished playlist's video is still playing, fade its audio
+  // out over context.fadeOutMs (the same pattern used by nextVideoAfterQuiz
+  // when advancing to the next video within a playlist) so it is nearly
+  // silent by the time the next playlist auto-loads. The fade starts once
+  // the countdown reaches the final fadeOutMs so the current audio plays at
+  // full volume for the rest of the countdown; if the countdown is shorter
+  // than fadeOutMs it starts immediately. This only applies to auto-advance
+  // (autoplay); manual loads (the queue play button / loadPlaylistAtIndex)
+  // keep the existing no-fade behavior.
+  var fadeStarted = false;
+  var fadeStartSeconds = Math.min(resumeFrom, Math.ceil(context.fadeOutMs / 1000));
+  var startPlaylistFadeOut = function () {
+    if (!fadeStarted && isVideoPlaying()) {
+      fadeStarted = true;
+      startVolumeFadeOut();
+    }
+  };
+  if (autoAdvanceSecondsLeft <= fadeStartSeconds) {
+    startPlaylistFadeOut();
+  }
+
   autoAdvanceTimerId = setInterval(function () {
     autoAdvanceSecondsLeft--;
     if (autoAdvanceSecondsLeft <= 0) {
@@ -520,6 +542,9 @@ function startAutoAdvanceCountdown() {
       clearAutoAdvanceTimers();
       loadNextQueuedPlaylist();
       return;
+    }
+    if (autoAdvanceSecondsLeft <= fadeStartSeconds) {
+      startPlaylistFadeOut();
     }
     setNextPlaylistDisplay('Next playlist in: ' + getSecondsMessage(autoAdvanceSecondsLeft));
   }, 1000);
