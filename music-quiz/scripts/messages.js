@@ -13,7 +13,7 @@ function getFriendlyYoutubeAPIError(eventDataCode) {
   var baseMessage = 'Error: Video could not be played. Code: ' + eventDataCode + '<br>Message: <b>'
   switch (Number(eventDataCode)) {
     case 2:
-      return baseMessage + 'The request contains an invalid video ID value. (Could also be a YouTube bug, some playlists error out like this for no reason)' + '</b>';
+      return baseMessage + 'The request contains an invalid video ID value.' + '</b>';
     case 5:
       return baseMessage + 'The requested content cannot be played in an HTML5 player.' + '</b>';
     case 100:

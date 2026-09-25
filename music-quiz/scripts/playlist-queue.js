@@ -138,8 +138,7 @@ async function fetchPlaylistMetadata(playlistId, item) {
     //  in the first video or the playlist as a whole. We need to do one last check and validate
     //  here before inserting into the queue. 
     if (!result.isValid) {
-      setLoadPlaylistError('Could not add YouTube playlist. ' +
-        'The video owner does not allow it to be embedded.');
+      setLoadPlaylistError('Could not add YouTube playlist. ' + result.message);
       return false;
     }
     return true;
@@ -206,7 +205,7 @@ function validateYouTubePlaylist(playlistId) {
             
             // Check structural layout arrays
             if (!playlistData || playlistData.length === 0) {
-              finalize(false, "Playlist is empty or private.");
+              finalize(false, "Playlist is empty or the video owner does not allow it to be embedded.");
               return;
             }
 
@@ -220,7 +219,7 @@ function validateYouTubePlaylist(playlistId) {
           }
         },
         'onError': (event) => {
-          finalize(false, `YouTube API Error Code: ${event.data}`);
+          finalize(false, getFriendlyYoutubeAPIError(event.data));
         }
       }
     };
