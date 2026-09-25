@@ -88,11 +88,29 @@ p {
 #loadPlaylistButton,
 #setGuessTimeLimitSecondsButton,
 #setVidTimeLeftButton {
-  background: #859900;
+  background: #268bd2;
 }
 
-#loadPlaylistButton {
+#addQueueButton,
+#playQueueButton {
   background: #2aa198;
+}
+
+.queue-actions {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
+.queue-actions #playQueueButton {
+  grid-column: 2;
+}
+
+.queue-thumb-blur-toggle {
+  margin: 0;
+  text-align: right;
+  font-size: 12px;
+  padding-right: 17px;
 }
 
 #previousVideoButton {
@@ -126,9 +144,16 @@ p {
   background: #cb4b16;
 }
 
-#pause-countdown {
-  background: #b58900;
+/* The countdown pause/resume button is only shown while the auto-advance
+   countdown between playlists is active (ticking or user-paused). The
+   display: none default keeps it out of the flow until
+   showCountdownToggleButton() / hideCountdownToggleButton() in
+   playlist-queue.js toggles it. */
+#countdownToggleButton {
+  background: #859900;
   display: none;
+  margin-top: 5px;
+  align-self: center;
 }
 
 .vid-control-button {
@@ -148,6 +173,11 @@ p {
 
 .button:hover {
   filter: brightness(75%);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 #fooni-header:hover {
@@ -298,7 +328,7 @@ p {
   text-align: left;
 }
 
-.playlist-builder-summary {
+.content-section-summary {
   cursor: pointer;
   padding-left: 29px;
   padding-right: 29px;
@@ -309,18 +339,18 @@ p {
   position: relative;
 }
 
-.playlist-builder-chevron {
+.content-section-chevron {
   position: absolute;
   left: 29px;
 }
 
-.playlist-builder-title {
+.content-section-title-text {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-.playlist-builder-chevron::before {
+.content-section-chevron::before {
   content: '▼';
   display: inline-block;
   font-size: 14px;
@@ -328,12 +358,12 @@ p {
   color: #586e75;
 }
 
-details[open] .playlist-builder-chevron::before {
+details[open] .content-section-chevron::before {
   content: '▲';
   font-size: 14px;
 }
 
-.playlist-builder-summary::-webkit-details-marker {
+.content-section-summary::-webkit-details-marker {
   display: none;
 }
 
@@ -516,4 +546,173 @@ details[open] .playlist-builder-chevron::before {
   width: calc(100% - 58px);
   font-size: 12px;
   box-sizing: border-box;
+}
+
+.playlist-queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.queue-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 6px;
+  border: 1px solid #afc0c0;
+  background: #eee8d5;
+  font-size: 12px;
+}
+
+.queue-item.now-playing {
+  border-color: #268bd2;
+  background: #e8f4fc;
+  box-shadow: 0 0 0 1px #268bd2;
+}
+
+/* Applied while the user is confirming a remove. Greys the whole row out;
+   renderQueueList() runs on confirm (Yes) and rebuilds the list, so the
+   class is dropped on "No" and no longer needed on "Yes". */
+.queue-item.queue-removing {
+  opacity: 0.5;
+  background: #d0d0d0;
+  border-color: #909090;
+}
+
+.queue-number {
+  min-width: 18px;
+  text-align: right;
+  font-weight: bold;
+  align-self: center;
+}
+
+.queue-thumb-wrap {
+  width: 56px;
+  height: 32px;
+  overflow: hidden;
+  border-radius: 2px;
+  flex: 0 0 auto;
+  background: #c8c8c8;
+}
+
+.queue-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  /* The wrapper's overflow: hidden keeps the blur within the thumbnail's
+     boundary. */
+  filter: blur(3px);
+}
+
+.queue-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.queue-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.queue-author {
+  font-size: 11px;
+  color: #8aa0a8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.queue-remove {
+  flex: 0 0 auto;
+  align-self: center;
+}
+
+.queue-remove:disabled {
+  background: #6b6b6b;
+  color: #b8b8b8;
+  cursor: not-allowed;
+}
+
+.queue-play {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: #859900;
+  background-image: url('../images/icons/play-white.png');
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+}
+
+.queue-play:hover {
+  filter: brightness(75%);
+}
+
+.queue-play:active {
+  filter: brightness(40%);
+}
+
+.queue-play:disabled {
+  background-color: #6b6b6b;
+  cursor: not-allowed;
+}
+
+/* Custom confirmation popup: greys out the page behind the popup */
+.remove-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.remove-popup {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #073642;
+  color: #FFF;
+  border: 2px solid #268bd2;
+  border-radius: 6px;
+  min-width: 300px;
+  max-width: 90%;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+.remove-popup-title {
+  margin: 0;
+  font-size: 18px;
+}
+
+.remove-popup-message {
+  margin: 0;
+  font-size: 14px;
+  color: #bfd0d0;
+}
+
+.remove-popup-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.remove-popup-yes {
+  background: #859900;
+}
+
+.remove-popup-no {
+  background: #6b6b6b;
 }

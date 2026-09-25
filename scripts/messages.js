@@ -1,5 +1,5 @@
 function getEndOfPlaylistMessage() {
-  return 'End of playlist <img src="' + getEndOfPlaylistEmote() + '" width="50" height="50">';
+  return 'End of playlist <img src="' + getEndOfPlaylistEmote() + '" width="50" height="50" style="background-color: #073642;">';
 }
 
 function getSecondsMessage(seconds) {
@@ -56,6 +56,15 @@ function getVideoDidNotLoadMessage() {
     'Click it again after the video loads.]'
 }
 
+function setQuizStartingDisplay() {
+  document.getElementById('preQuizText').innerHTML = '';
+  document.getElementById('quiz-status').style.display = 'flex';
+  document.getElementById('playerParent').style.background = '#FFFFFF';
+  document.getElementById('preQuizText').style.position = 'absolute';
+  document.getElementById('quiz-status-display').innerHTML = '';
+  setNextPlaylistDisplay('Loading next playlist...');
+}
+
 function setQuizReadyDisplay() {
   context.isWaitingForQuizStart = true;
   document.getElementById('quiz-status-display').innerHTML = '[Waiting for quiz to start]';
@@ -76,6 +85,10 @@ function setQuizStatusDisplay(message) {
 
 function setQuizCountdownDisplay(message) {
   document.getElementById('quiz-countdown-display').innerHTML = message;
+}
+
+function setNextPlaylistDisplay(message) {
+  document.getElementById('next-playlist-display').innerHTML = message;
 }
 
 function setLoadPlaylistError(message) {
@@ -110,4 +123,8 @@ function toggleQuizStatusAlignment(element) {
 
 function clearPlaylistCounter() {
   document.getElementById('playlist-video-order').innerHTML = '';
+}
+
+function clearNextPlaylistDisplay() {
+  document.getElementById('next-playlist-display').innerHTML = '';
 }

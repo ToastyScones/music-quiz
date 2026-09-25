@@ -6,6 +6,7 @@ var pendingVideoIds = null;
 var pendingStartIndex = 0;
 var pendingYoutubeOrderDiscovery = false;
 var isTransitioningToCustomOrder = false;
+var pendingAutoPlay = false;
 
 function initializeMainPage() {
   toggleQuizStatusAlignment(document.getElementById('shift-quiz-status-left'));
@@ -55,7 +56,6 @@ function createYtPlayer() {
       'onError': onError
     }
   });
-
   document.getElementById('player').style.opacity = "50%";
 }
 
@@ -149,19 +149,28 @@ function onPlayerReady(event) {
       list: pendingPlaylistId,
       index: 0
     };
-    if (player.cuePlaylist) {
+    if (pendingAutoPlay && player.loadPlaylist) {
+      player.loadPlaylist(playlistOptions);
+      if (!pendingYoutubeOrderDiscovery) {
+        pendingAutoPlay = false;
+      }
+    } else if (player.cuePlaylist) {
       player.cuePlaylist(playlistOptions);
+      pendingAutoPlay = false;
     } else {
       player.loadPlaylist(playlistOptions);
     }
     pendingLoadMode = null;
     pendingPlaylistId = null;
   } else if (pendingLoadMode === 'videoIds' && pendingVideoIds) {
-    if (player.cuePlaylist) {
+    if (pendingAutoPlay && player.loadPlaylist) {
+      player.loadPlaylist(pendingVideoIds, pendingStartIndex);
+    } else if (player.cuePlaylist) {
       player.cuePlaylist(pendingVideoIds, pendingStartIndex);
     } else {
       player.loadPlaylist(pendingVideoIds, pendingStartIndex);
     }
+    pendingAutoPlay = false;
     pendingLoadMode = null;
     pendingVideoIds = null;
     pendingStartIndex = 0;
@@ -169,6 +178,7 @@ function onPlayerReady(event) {
 
   tryCompletePlaylistInit();
   setCurrentPlaylistCounter();
+  clearNextPlaylistDisplay();
 }
 
 function getVolume() {
@@ -207,6 +217,10 @@ function onError(event) {
   setQuizStatusDisplay(errorMessage);
 
   setPlayerVisible();
+
+  if (event.data === 2 && context.isWaitingForQuizStart) {
+    return;
+  }
 
   this.onErrorNextVideoTimeoutId = setTimeout(
     function () {
@@ -251,6 +265,7 @@ function clearQuizFutures() {
     clearInterval(this.volumeFadeOutIntervalId);
     this.volumeFadeOutIntervalId = null;
   }
+  clearAutoAdvanceTimers();
 }
 
 function getQuizTimerLimitsMs() {
@@ -276,6 +291,17 @@ function getQuizTimerLimitsMs() {
   }
 
   return { guessTimeLimitMs, vidTimeLimitMs };
+}
+
+// Whether a video is currently actively playing in the player.
+// Returns false when there is no player, or the player is in any
+// non-playing state (unstarted, cued, paused, or ended). Mirrors the
+// guard used by startQuizTimersIfPlaying below.
+function isVideoPlaying() {
+  if (!player || player.getPlayerState() !== YT.PlayerState.PLAYING) {
+    return false;
+  }
+  return true;
 }
 
 function startQuizTimersIfPlaying() {
@@ -405,42 +431,6 @@ function setVideoUnstartedState() {
   setQuizStatusDisplay('(Starting next video)');
 }
 
-function loadPlaylist() {
-  var ytPlaylistIdOrUrl = document.getElementById('playlistIdText').value;
-  var parsed = parsePlaylistInput(ytPlaylistIdOrUrl);
-
-  if (parsed.error) {
-    setLoadPlaylistError(parsed.error);
-    return;
-  }
-
-  context.resetBuilderState();
-  context.vidTimestamps = parsed.timestamps;
-  context.sourcePlaylistId = parsed.playlistId;
-  context.needLastVolumeApplied = false;
-
-  if (parsed.videoOrder) {
-    context.videoOrder = parsed.videoOrder.slice();
-    pendingYoutubeOrderDiscovery = true;
-    isTransitioningToCustomOrder = false;
-  } else {
-    context.videoOrder = null;
-    pendingYoutubeOrderDiscovery = false;
-  }
-
-  showBuilderEmptyState();
-  if (context.videoOrder) {
-    renderBuilderList();
-  }
-
-  clearError();
-  clearStateForNextVideo();
-  clearPlaylistCounter();
-  setQuizReadyDisplay();
-
-  setNewYtPlayerFromPlaylistId(parsed.playlistId);
-}
-
 function playVideo() {
   if (!player) { return; }
   context.isPreviewing = false;
@@ -458,6 +448,15 @@ function stopVideo() {
 
 function previousVideo() {
   if (!player) { return; }
+  // At the first video, "previous" means the previous queued playlist;
+  // jump there (it auto-plays). Do nothing if there is no previous one.
+  var previousPlaylistIndex = (queueIndex >= 0) ? queueIndex - 1 : -1;
+  if (isFirstVideoInPlaylist() &&
+      previousPlaylistIndex >= 0 &&
+      previousPlaylistIndex < playlistQueue.length) {
+    loadPlaylistAtIndex(previousPlaylistIndex);
+    return;
+  }
   context.didVideoJustChange = true;
   clearStateForNextVideo();
   player.previousVideo();
@@ -466,6 +465,10 @@ function previousVideo() {
 function nextVideo() {
   if (!player) { return; }
   if (isEndOfPlaylist()) {
+    // At the last video, advance to the next queued playlist (auto-plays).
+    if (queueIndex >= 0 && queueIndex + 1 < playlistQueue.length) {
+      loadNextQueuedPlaylist();
+    }
     return;
   }
   context.didVideoJustChange = true;
@@ -505,17 +508,7 @@ function nextVideoAfterQuiz(milliSecondsRemaining) {
   }
 
   // Fade out music as video ends
-  var tenPercentVol = Math.trunc(getVolume() * .1);
-  if (tenPercentVol === 0) {
-    tenPercentVol = 1;
-  }
-
-  if (!document.getElementById('disable-fade-out').checked) {
-    reduceVolumeForFadeOut(tenPercentVol)
-    this.volumeFadeOutIntervalId = setInterval(
-      reduceVolumeForFadeOut, (context.fadeOutMs / 10), tenPercentVol
-    );
-  }
+  startVolumeFadeOut();
 
   // Next video timeout.
   //  While this is queued, music should start to fade out
@@ -531,6 +524,27 @@ function nextVideoAfterQuiz(milliSecondsRemaining) {
       nextVideo();
     },
     nextVideoTimeoutMs
+  );
+}
+
+// Start fading out the current (still-playing) audio over context.fadeOutMs,
+// so it is nearly silent by the time the next video/playlist is actually
+// loaded. The fade interval is torn down by clearQuizFutures (via
+// clearStateForNextVideo / loadPlaylistFromParsed) when the next
+// video/playlist is loaded. Honors the "Disable audio fade out" checkbox
+// (no-ops if it is checked).
+function startVolumeFadeOut() {
+  if (!player) { return; }
+  if (document.getElementById('disable-fade-out').checked) { return; }
+
+  var tenPercentVol = Math.trunc(getVolume() * .1);
+  if (tenPercentVol === 0) {
+    tenPercentVol = 1;
+  }
+
+  reduceVolumeForFadeOut(tenPercentVol);
+  this.volumeFadeOutIntervalId = setInterval(
+    reduceVolumeForFadeOut, (context.fadeOutMs / 10), tenPercentVol
   );
 }
 
@@ -574,6 +588,7 @@ function setGuessAsFinished(secondsRemaining) {
     context.isQuizForPlaylistDone = true;
     clearCountdownTimer();
     setQuizStatusDisplay(message + getEndOfPlaylistMessage());
+    maybeAutoAdvanceToNextPlaylist();
   } else {
     setQuizStatusDisplay(message);
     setVidTimeRemainingMessage(secondsRemaining);
@@ -628,7 +643,19 @@ function isEndOfPlaylist() {
 
   var lastIndex = player.getPlaylist().length - 1;
   var currentIndex = player.getPlaylistIndex();
-  return currentIndex === lastIndex;
+  return currentIndex === lastIndex || (lastIndex === -1 && currentIndex === 0);
+}
+
+// True when the player is on the first video of the current playlist.
+// Mirrors isEndOfPlaylist(); returns true when the playlist isn't
+// initialized so the caller treats a missing/initializing player as
+// "at the first video" (jumping to the previous playlist, if any, is the
+// only sensible move).
+function isFirstVideoInPlaylist() {
+  if (!isPlaylistInitialized()) {
+    return true;
+  }
+  return player.getPlaylistIndex() === 0;
 }
 
 function getVideoTitleWithFallback() {
@@ -645,7 +672,7 @@ function deblurVideo() {
 }
 
 function blurVideo() {
-  document.getElementById('player').style.filter = "blur(70px)";
+  document.getElementById('player').style.filter = "blur(70px) hue-rotate(180deg)";
 }
 
 function clearCountdownTimer() {

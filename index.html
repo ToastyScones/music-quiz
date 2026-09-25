@@ -5,11 +5,13 @@
   <title>Music Quiz Thingy</title>
   <link rel="stylesheet" href="styles/flex-base.css">
   <link rel="stylesheet" href="styles/styles.css">
+  <script src="scripts/config.js"></script>
   <script src="scripts/context.js"></script>
   <script src="scripts/fooni.js"></script>
   <script src="scripts/messages.js"></script>
   <script src="scripts/playlist-url.js"></script>
   <script src="scripts/index.js"></script>
+  <script src="scripts/playlist-queue.js"></script>
   <script src="scripts/playlist-builder.js"></script>
 </head>
 
@@ -26,7 +28,7 @@
       <section class="youtube-video-player content-section">
         <div id="playerParent" class="playerParent">
           <div id="preQuizText">
-            Load a <b>public</b> or <b>unlisted YouTube</b> playlist, and then click the <b>green play button</b> to start the quiz.
+            Add one or more YouTube playlists to the queue, and then click <b>Play Queue</b>!
             <br/>
             <a href="https://github.com/ToastyScones/toastyscones.github.io#usage" target="_blank">Click here for more info</a>
           </div>
@@ -56,6 +58,13 @@
         <div id="quiz-status-section">
           <div id="quiz-status-display">[Waiting for quiz to start]</div>
           <div id="quiz-countdown-display"></div>
+          <div id="next-playlist-display"></div>
+          <!-- Only visible while the auto-advance countdown is active
+               (ticking) or paused by the user; hidden by default and on
+               manual loads (see show/hideCountdownToggleButton in
+               scripts/playlist-queue.js). -->
+          <input type="button" class="button" id="countdownToggleButton" value="Pause countdown"
+            style="display: none" onclick="toggleCountdownPause()">
         </div>
       </section>
 
@@ -67,7 +76,12 @@
         <div id="errorMessage"></div>
         <label>YT Playlist URL or ID:</label>
         <input type="text" id="playlistIdText" placeholder="(e.g. PLmra5-9c6QitTCQcJ0uqibBj6MLJCEa3q)" size="53">
-        <input type="button" class="button" id="loadPlaylistButton" value="Load Playlist" onclick="loadPlaylist()">
+        <input type="button" class="button" id="addQueueButton" value="Add to Queue" onclick="addPlaylistToQueue()">
+        <div class="queue-actions">
+          <input type="button" class="button" id="playQueueButton" value="Play Queue" onclick="playQueue()">
+          <label for="queueThumbsBlur" class="queue-thumb-blur-toggle"><input type="checkbox" id="queueThumbsBlur" checked onchange="toggleQueueThumbBlur(this)"><b>Blur thumbnails</b></label>
+        </div>
+        <div id="playlistQueueList" class="playlist-queue-list"></div>
         <br>
         <a id="custom-start-time-link"
           href="https://github.com/ToastyScones/toastyscones.github.io#playlist-builder"
@@ -76,9 +90,9 @@
 
       <section class="playlist-builder content-section">
         <details id="playlist-builder-section">
-          <summary class="content-section-title playlist-builder-summary">
-            <span class="playlist-builder-chevron" aria-hidden="true"></span>
-            <span class="playlist-builder-title">
+          <summary class="content-section-title content-section-summary">
+            <span class="content-section-chevron" aria-hidden="true"></span>
+            <span class="content-section-title-text">
               Playlist Builder
               <img class="icon" src="images/emotes/POI.png" alt="">
             </span>
@@ -104,8 +118,14 @@
         </details>
       </section>
       <section class="settings content-section">
-
-        <h1 class="content-section-title">Settings</h1>
+        <details>
+          <summary class="content-section-title content-section-summary">
+            <span class="content-section-chevron" aria-hidden="true"></span>
+            <span class="content-section-title-text">
+              Settings
+              <img class="icon" src="images/emotes/COGGERS.png" alt="">
+            </span>
+          </summary>
 
         <section class="settings-subsection">
           <div>
@@ -142,6 +162,22 @@
         <section class="settings-subsection">
           <div>
             <div>
+              <label><b>Auto-advance delay between playlists (seconds)</b></label>
+            </div>
+            <div>
+              <div id="autoAdvanceDelayCurrentValue" class="settingsDisplay"></div>
+            </div>
+            <div>
+              <input type="number" id="autoAdvanceDelaySeconds" name="autoAdvanceDelaySeconds" value="15" min="1">
+              <input type="button" class="button apply-button" id="setAutoAdvanceDelayButton" value="Apply"
+                onclick="context.setAutoAdvanceDelaySeconds()">
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-subsection">
+          <div>
+            <div>
               <input type="checkbox" id="shift-quiz-status-left" name="shift-quiz-status-left"
                 onchange="toggleQuizStatusAlignment(this)">
               <label for="shift-quiz-status-left"><b>Align quiz status text to the left</b></label>
@@ -163,10 +199,19 @@
             </div>
           </div>
         </section>
+        </details>
       </section>
 
       <section class="troubleshooting content-section">
-        <h1 class="content-section-title">Troubleshooting</h1>
+        <details>
+          <summary class="content-section-title content-section-summary">
+            <span class="content-section-chevron" aria-hidden="true"></span>
+            <span class="content-section-title-text">
+              Troubleshooting
+              <img class="icon" src="images/emotes/OhISee.webp" alt="">
+            </span>
+          </summary>
+          <p>WIP, new AI slop was added, so this section needs updating!</p>
         <h2>Muted audio/audio doesn't fade out/countdown acting weird/next video kicking off early</h2>
         <p>
           For now, you will need to keep the website visible somewhere on your desktop so your browser doesn't lose
@@ -224,6 +269,7 @@
           </li>
         </ul>
         </p>
+        </details>
       </section>
 
     </section>
