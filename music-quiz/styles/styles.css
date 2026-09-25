@@ -321,7 +321,7 @@ p {
   text-align: left;
 }
 
-.playlist-builder-summary {
+.content-section-summary {
   cursor: pointer;
   padding-left: 29px;
   padding-right: 29px;
@@ -332,18 +332,18 @@ p {
   position: relative;
 }
 
-.playlist-builder-chevron {
+.content-section-chevron {
   position: absolute;
   left: 29px;
 }
 
-.playlist-builder-title {
+.content-section-title-text {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-.playlist-builder-chevron::before {
+.content-section-chevron::before {
   content: '▼';
   display: inline-block;
   font-size: 14px;
@@ -351,12 +351,12 @@ p {
   color: #586e75;
 }
 
-details[open] .playlist-builder-chevron::before {
+details[open] .content-section-chevron::before {
   content: '▲';
   font-size: 14px;
 }
 
-.playlist-builder-summary::-webkit-details-marker {
+.content-section-summary::-webkit-details-marker {
   display: none;
 }
 
