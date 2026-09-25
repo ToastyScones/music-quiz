@@ -188,14 +188,8 @@ function getVolume() {
 function onPlayerStateChange(event) {
   if (event.data === YT.PlayerState.PLAYING) {
     setVideoPlayingState();
-    // Resume the auto-advance countdown when the video resumes so it
-    // does not fire while the video is paused.
-    resumeAutoAdvanceCountdown();
   } else if (event.data === YT.PlayerState.PAUSED) {
     setPausedVideoState();
-    // Pause the auto-advance countdown so it does not auto-load the next
-    // playlist while the user is watching the paused video.
-    pauseAutoAdvanceCountdown();
   } else if (event.data === YT.PlayerState.ENDED) {
     setVideoEndedState();
   } else if (event.data === -1) {

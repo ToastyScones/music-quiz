@@ -144,9 +144,16 @@ p {
   background: #cb4b16;
 }
 
-#pause-countdown {
-  background: #b58900;
+/* The countdown pause/resume button is only shown while the auto-advance
+   countdown between playlists is active (ticking or user-paused). The
+   display: none default keeps it out of the flow until
+   showCountdownToggleButton() / hideCountdownToggleButton() in
+   playlist-queue.js toggles it. */
+#countdownToggleButton {
+  background: #859900;
   display: none;
+  margin-top: 5px;
+  align-self: center;
 }
 
 .vid-control-button {

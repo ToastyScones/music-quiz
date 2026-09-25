@@ -385,7 +385,7 @@ function openRemoveQueuePopup(index, playlistTitle) {
 
   var message = document.createElement('p');
   message.className = 'remove-popup-message';
-  message.textContent = 'Please note that this cannot be undone.';
+  message.textContent = 'This action cannot be undone.';
 
   var yesButton = document.createElement('button');
   yesButton.type = 'button';
@@ -548,6 +548,25 @@ function startAutoAdvanceCountdown() {
     }
     setNextPlaylistDisplay('Next playlist in: ' + getSecondsMessage(autoAdvanceSecondsLeft));
   }, 1000);
+  // The countdown is now active, so reveal the dedicated pause/resume
+  // button (and label it for the "pause" action since we just started).
+  showCountdownToggleButton();
+}
+
+// The #countdownToggleButton is only visible while an auto-advance
+// countdown is active (ticking) or user-paused. It is hidden by
+// clearAutoAdvanceTimers(), which fires whenever a new video or playlist
+// is loaded (the shared load path), the last queued playlist finishes, or
+// the queue is emptied.
+function showCountdownToggleButton() {
+  var btn = document.getElementById('countdownToggleButton');
+  btn.style.display = 'block';
+  btn.value = autoAdvancePaused ? 'Resume countdown' : 'Pause countdown';
+}
+
+function hideCountdownToggleButton() {
+  var btn = document.getElementById('countdownToggleButton');
+  btn.style.display = 'none';
 }
 
 function loadNextQueuedPlaylist() {
@@ -577,6 +596,10 @@ function clearAutoAdvanceTimers() {
   autoAdvancePaused = false;
   autoAdvancePausedSeconds = 0;
   clearNextPlaylistDisplay();
+  // The countdown is no longer active (neither ticking nor user-paused),
+  // so the dedicated pause/resume button is hidden until the next countdown
+  // is triggered. This is what clears/disables it on a manual load.
+  hideCountdownToggleButton();
 }
 
 function pauseAutoAdvanceCountdown() {
@@ -588,6 +611,9 @@ function pauseAutoAdvanceCountdown() {
   clearAutoAdvanceTimers();
   autoAdvancePaused = true;
   autoAdvancePausedSeconds = remaining;
+  // Keep the button visible while paused so the user can resume; the label
+  // flips to "Resume countdown" because autoAdvancePaused is now true.
+  showCountdownToggleButton();
   setNextPlaylistDisplay('(Next playlist countdown paused)')
 }
 
@@ -603,4 +629,19 @@ function resumeAutoAdvanceCountdown() {
     return;
   }
   startAutoAdvanceCountdown();
+}
+
+// User-facing toggle for the dedicated pause/resume button
+// (#countdownToggleButton). The button is only ever rendered while the
+// auto-advance countdown is active (ticking) or user-paused, so this guard
+// keeps it from misfiring if the DOM state ever drifts out of sync.
+function toggleCountdownPause() {
+  if (!isAutoAdvanceCountdownActive()) {
+    return;
+  }
+  if (autoAdvancePaused) {
+    resumeAutoAdvanceCountdown();
+  } else {
+    pauseAutoAdvanceCountdown();
+  }
 }

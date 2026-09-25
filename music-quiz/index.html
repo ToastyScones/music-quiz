@@ -59,6 +59,12 @@
           <div id="quiz-status-display">[Waiting for quiz to start]</div>
           <div id="quiz-countdown-display"></div>
           <div id="next-playlist-display"></div>
+          <!-- Only visible while the auto-advance countdown is active
+               (ticking) or paused by the user; hidden by default and on
+               manual loads (see show/hideCountdownToggleButton in
+               scripts/playlist-queue.js). -->
+          <input type="button" class="button" id="countdownToggleButton" value="Pause countdown"
+            style="display: none" onclick="toggleCountdownPause()">
         </div>
       </section>
 
