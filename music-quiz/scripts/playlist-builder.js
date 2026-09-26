@@ -1,7 +1,7 @@
 var builderTitles = {};
 
 function initPlaylistBuilder() {
-  document.getElementById('applyBuilderButton').onclick = applyBuilderToQuiz;
+  document.getElementById('addBuilderQueueButton').onclick = addBuilderToQueue;
   document.getElementById('copyBuilderUrlButton').onclick = copyBuilderUrl;
   document.getElementById('resetBuilderOrderButton').onclick = resetBuilderOrder;
   document.getElementById('randomizeBuilderOrderButton').onclick = randomizeBuilderOrder;
@@ -513,18 +513,65 @@ function previewVideoAtIndex(index) {
   player.playVideo();
 }
 
-function applyBuilderToQuiz() {
-  if (!context.videoOrder || context.videoOrder.length === 0) {
+// Adds the builder's generated URL (list + custom video order + per-video
+// start times, as shown in the "Generated URL" field) to the queue using the
+// same add pipeline as the raw "Add to Queue" button (oEmbed metadata fetch
+// plus embed validation, then the item is pushed to the queue list).
+function addBuilderToQueue() {
+  var url = updateBuilderUrlField();
+  if (!url) {
     return;
   }
 
-  context.vidTimestamps = getTimestampsFromBuilderUI();
-  context.needLastVolumeApplied = false;
-  clearStateForNextVideo();
-  clearPlaylistCounter();
-  setQuizReadyDisplay();
-  reloadPlayerWithCurrentOrder();
-  updateBuilderUrlField();
+  var addQueueButton = document.getElementById('addQueueButton');
+  addQueueButton.disabled = true;
+
+  // The builder's generated URL is always a full YouTube playlist URL, so
+  // parsePlaylistInput is safe here and yields playlistId, videoOrder, and
+  // the t* start-time params (user options).
+  var parsed = parsePlaylistInput(url);
+
+  var item = {
+    parsed: parsed,
+    title: 'Adding playlist...',
+    author: null,
+    thumbnail: null,
+    metaLoaded: false,
+    pending: true
+  };
+
+  // Capture the final-finished state before pushing the temp item, because
+  // adding an item to the queue changes playlistQueue.length and would make
+  // isFinalFinishedState() report false.
+  var wasInFinalFinishedState = isFinalFinishedState();
+  playlistQueue.push(item);
+  renderQueueList();
+
+  // The playlist is only added to the queue if its metadata can be fetched
+  // via the oEmbed REST request. On failure the temporary queue item is
+  // removed and an error is displayed instead of queuing the item.
+  fetchPlaylistMetadata(parsed.playlistId, item).then(function (metaLoaded) {
+    if (metaLoaded) {
+      item.pending = false;
+      if (wasInFinalFinishedState) {
+        // The quiz was in the final finished state (last playlist, last
+        // video, and the end-of-playlist message displayed with no upcoming
+        // playlists). Now that a new playlist has been added, automatically
+        // start the countdown to load it.
+        maybeAutoAdvanceToNextPlaylist();
+      }
+    } else {
+      // Error out: remove the temporary queue item so the queue only
+      // reflects playlists that were actually added.
+      var tempIndex = playlistQueue.indexOf(item);
+      if (tempIndex !== -1) {
+        playlistQueue.splice(tempIndex, 1);
+      }
+    }
+
+    addQueueButton.disabled = false;
+    renderQueueList();
+  });
 }
 
 function copyBuilderUrl() {
