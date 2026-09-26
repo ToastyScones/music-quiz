@@ -47,9 +47,8 @@ function createYtPlayer() {
       'controls': 0, // Show pause/play buttons in player
       'showinfo': 1, // Hide the video title
       'modestbranding': 1, // Hide the Youtube Logo'
-      'cc_load_policy': 0, // Hide closed captions
+      'cc_load_policy': 3, // Hide closed captions
       'iv_load_policy': 3 // Hide the Video Annotations
-      //'vq': 'medium'	  
     },
     events: {
       'onReady': onPlayerReady,
