@@ -17,7 +17,7 @@
 (function (globalScope) {
   'use strict';
 
-  const worker = new Worker('timer-worker.js');
+  const worker = new Worker('scripts/timer-worker.js');
   const pending = new Map();
 
   let handleSeq = 0;
