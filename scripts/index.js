@@ -8,6 +8,13 @@ var pendingYoutubeOrderDiscovery = false;
 var isTransitioningToCustomOrder = false;
 var pendingAutoPlay = false;
 
+// Next-video preloading: a hidden second YT.Player buffers the NEXT
+// video's stream while the current one plays, so advancing loads faster.
+var preloadPlayer = null;
+var preloadReady = false;
+var preloadCuedId = null; // video id currently cued in the preload player
+var preloadRequestedId = null; // video id to cue once the preload is ready
+
 function initializeMainPage() {
   toggleQuizStatusAlignment(document.getElementById('shift-quiz-status-left'));
 
@@ -33,6 +40,9 @@ function destroyPlayer() {
 
 function createYtPlayer() {
   destroyPlayer();
+  // The playlist is being replaced, so any previously preloaded "next"
+  // video is now stale. Forget it so the first PLAYING state re-cues it.
+  preloadCuedId = null;
 
   document.getElementById('quiz-status-section').style.minHeight = "150px";
 
@@ -364,6 +374,9 @@ function setVideoPlayingState() {
     return;
   }
 
+  // Warm the next video's stream so advancing to it is faster.
+  maybePreloadNextVideo();
+
   player.setVolume(getVolume());
   context.needLastVolumeApplied = false;
 
@@ -444,6 +457,100 @@ function pauseVideo() {
 
 function stopVideo() {
   player.stopVideo();
+}
+
+// ---- Next-video preloading -------------------------------------------
+// A second, hidden YT.Player exists only to buffer the NEXT video's
+// stream while the current one plays. When the real player advances
+// (player.nextVideo()), the stream is already warm in the browser's
+// HTTP cache, so the transition loads faster. The preload player is
+// muted (it loads/plays, but never audibly); it is toggled by the
+// "Preload next video"
+// checkbox in index.html. It must never drive quiz logic, so its state
+// events are no-ops.
+
+function isPreloadEnabled() {
+  var el = document.getElementById('preload-next-video');
+  return !!(el && el.checked);
+}
+
+// The video id that follows the current one, or null when the current
+// video is the last in the playlist / the player isn't initialized.
+function getNextVideoId() {
+  if (!isPlaylistInitialized()) {
+    return null;
+  }
+  var playlist = player.getPlaylist();
+  var currentIndex = player.getPlaylistIndex();
+  var nextIndex = currentIndex + 1;
+  if (!playlist || nextIndex >= playlist.length) {
+    return null;
+  }
+  var entry = playlist[nextIndex];
+  // getPlaylist() may return id strings or {videoId} objects; normalize.
+  return (entry && typeof entry === 'object') ? entry.videoId : entry;
+}
+
+function ensurePreloadPlayer(videoId) {
+  if (preloadReady && preloadPlayer && preloadPlayer.loadVideo) {
+    // Load (not just cue) so the next video's actual media stream is
+    // fetched/buffered (muted, offscreen) while the current video plays.
+    // cueVideo() only pulls metadata and leaves the stream cold, so the
+    // advance is still slow - worst when the tab has lost focus and the
+    // browser throttles the main player's own next-video fetch. A real
+    // load issues an eager, higher-priority media fetch, so by the time
+    // nextVideo() fires the stream is warm in the browser cache.
+    preloadPlayer.loadVideo({ videoId: videoId, startSeconds: 0 });
+    preloadCuedId = videoId;
+    return;
+  }
+  // Not ready yet (or not created): remember the target; onReady loads it.
+  preloadRequestedId = videoId;
+  if (!preloadPlayer) {
+    preloadPlayer = new YT.Player('preload-player', {
+      width: 1,
+      height: 1,
+      playerVars: {
+        autoplay: 0,
+        controls: 0,
+        disablekb: 1,
+        playsinline: 0,
+        modestbranding: 1,
+        iv_load_policy: 3,
+        cc_load_policy: 3
+      },
+      events: {
+        onReady: onPreloadPlayerReady,
+        onStateChange: function () {}
+      }
+    });
+  }
+}
+
+function onPreloadPlayerReady() {
+  preloadReady = true;
+  if (preloadPlayer) {
+    preloadPlayer.setVolume(0);
+    preloadPlayer.mute();
+  }
+  if (preloadRequestedId) {
+    ensurePreloadPlayer(preloadRequestedId);
+    preloadRequestedId = null;
+  }
+}
+
+// Warms the next video's stream. Called whenever the current video starts
+// playing. No-ops at the end of the playlist, when the feature is off,
+// or when the next video is already buffered.
+function maybePreloadNextVideo() {
+  if (!isPreloadEnabled()) {
+    return;
+  }
+  var nextId = getNextVideoId();
+  if (!nextId || nextId === preloadCuedId) {
+    return;
+  }
+  ensurePreloadPlayer(nextId);
 }
 
 function previousVideo() {

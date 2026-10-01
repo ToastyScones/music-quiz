@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="styles/flex-base.css">
   <link rel="stylesheet" href="styles/styles.css">
   <link rel="icon" type="image/png" href="images/favicon.ico">
+  <script src="scripts/timer.js"></script>
   <script src="scripts/config.js"></script>
   <script src="scripts/context.js"></script>
   <script src="scripts/fooni.js"></script>
@@ -34,6 +35,8 @@
             <a href="https://github.com/ToastyScones/toastyscones.github.io#usage" target="_blank">Click here for more info</a>
           </div>
           <div id="player"></div>
+          <!-- Hidden off-screen player used only to preload the next video's stream. -->
+          <div id="preload-player" class="preload-player" aria-hidden="true"></div>
         </div>
 
         <section class="video-controls">
@@ -197,6 +200,17 @@
             <div>Removes the audio fade out at the end of the quiz countdown. May fix issues with audio being muted if
               the
               tab loses focus. May also result in WAYTOODANK moments.
+            </div>
+          </div>
+        </section>
+        <section class="settings-subsection">
+          <div>
+            <div>
+              <input type="checkbox" id="preload-next-video" name="preload-next-video" checked>
+              <label for="preload-next-video"><b>Preload next video</b></label>
+            </div>
+            <div>
+              Fetches the next video's stream in a background player while the current video is finishing, to reduce load time.
             </div>
           </div>
         </section>

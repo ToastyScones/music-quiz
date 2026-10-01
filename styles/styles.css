@@ -26,6 +26,19 @@
   flex-direction: column;
 }
 
+/* Hidden container for the preload player. It only exists to buffer the
+   next video's stream and must never be visible. It is also sized 1x1 via
+   the YT.Player constructor, in case the player wrapper drops this class. */
+.preload-player {
+  position: absolute;
+  top: 0;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
 .previous-answer,
 .quiz-status {
   flex-direction: column;
