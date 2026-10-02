@@ -501,8 +501,9 @@ function ensurePreloadPlayer(videoId) {
     // off the real network fetch (ad + stream) - a load/cue alone leaves
     // the stream cold and nextVideo() stays slow. By the time the main
     // player calls nextVideo(), the stream is warm in the browser cache.
-    preloadPlayer.loadVideoById({ videoId: videoId, startSeconds: 0 });
-    preloadPlayer.playVideo();
+    var startSeconds = context.vidTimestamps[player.getPlaylistIndex() + 1];
+    preloadPlayer.loadVideoById({ videoId: videoId, startSeconds: startSeconds });
+    //preloadPlayer.playVideo();
     preloadCuedId = videoId;
     preloadRewound = false;
     return;
@@ -566,6 +567,7 @@ function onPreloadPlayerReady() {
     ensurePreloadPlayer(preloadRequestedId);
     preloadRequestedId = null;
   }
+  preloadPlayer.playVideo();
 }
 
 // Warms the next video's stream. Called whenever the current video starts
