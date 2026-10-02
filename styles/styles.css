@@ -562,7 +562,7 @@ details[open] .content-section-chevron::before {
   padding: 4px 6px;
   border: 1px solid #afc0c0;
   background: #eee8d5;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .queue-item.now-playing {
@@ -594,6 +594,8 @@ details[open] .content-section-chevron::before {
   border-radius: 2px;
   flex: 0 0 auto;
   background: #c8c8c8;
+  padding-left: 8px;
+  align-self: center;
 }
 
 .queue-thumb {
@@ -609,6 +611,7 @@ details[open] .content-section-chevron::before {
 .queue-info {
   flex: 1;
   min-width: 0;
+  text-align: center;
 }
 
 .queue-title {
@@ -618,7 +621,7 @@ details[open] .content-section-chevron::before {
 }
 
 .queue-author {
-  font-size: 11px;
+  font-size: 12px;
   color: #8aa0a8;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -660,6 +663,17 @@ details[open] .content-section-chevron::before {
 
 .queue-play:disabled {
   background-color: #6b6b6b;
+  cursor: not-allowed;
+}
+
+.queue-copy {
+  flex: 0 0 auto;
+  align-self: center;
+}
+
+.queue-copy:disabled {
+  background: #6b6b6b;
+  color: #b8b8b8;
   cursor: not-allowed;
 }
 
@@ -715,4 +729,28 @@ details[open] .content-section-chevron::before {
 
 .remove-popup-no {
   background: #6b6b6b;
+}
+
+/* Temporary toast notification (bottom of viewport) */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: #073642;
+  color: #FFF;
+  border: 2px solid #268bd2;
+  border-radius: 6px;
+  padding: 10px 18px;
+  font-size: 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  z-index: 1001;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.toast--visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
