@@ -594,7 +594,7 @@ details[open] .content-section-chevron::before {
   border-radius: 2px;
   flex: 0 0 auto;
   background: #c8c8c8;
-  padding-left: 8px;
+  margin-left: 5px;
   align-self: center;
 }
 
@@ -753,4 +753,11 @@ details[open] .content-section-chevron::before {
 .toast--visible {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+#warning-message {
+  flex-direction: column;
+  font-size: 14px;
+  color: #d33682;
+  padding: 8px 13px;
 }

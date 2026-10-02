@@ -178,12 +178,8 @@ function onPlayerReady(event) {
 
   tryCompletePlaylistInit();
   setCurrentPlaylistCounter();
-  // Note: do not clearNextPlaylistDisplay() here. onPlayerReady fires as soon
-  // as the player object exists, which is still in the middle of the playlist
-  // fetch; clearing here would blank the "Loading next playlist..." text in
-  // #next-playlist-display for the rest of the load. The text is now cleared
-  // in setVideoUnstartedState(), when the first video's -1 event fires and
-  // #quiz-status-display switches to "(Starting next video)".
+  clearNextPlaylistDisplay();
+  setQuizStatusDisplay('Loading...');
 }
 
 function getVolume() {
@@ -429,9 +425,6 @@ function setVideoUnstartedState() {
   context.isQuizManuallyStopped = false;
 
   clearStateForNextVideo();
-  // The first video has now cued, so the "Loading next playlist..." text in
-  // #next-playlist-display is done; #quiz-status-display takes over next.
-  clearNextPlaylistDisplay();
   if (context.isWaitingForQuizStart) {
     setQuizReadyDisplay();
     return;
