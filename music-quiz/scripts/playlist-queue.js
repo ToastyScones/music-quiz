@@ -309,7 +309,6 @@ function renderQueueList() {
       var copyButton = document.createElement('input');
       copyButton.type = 'button';
       copyButton.className = 'button queue-copy';
-      copyButton.value = 'Copy';
       copyButton.title = 'Copy playlist URL';
       // Disabled only while the playlist is still being added (pending),
       // matching the play/remove buttons.
@@ -506,6 +505,19 @@ function playQueue() {
 
 function loadPlaylistFromParsed(parsed, autoPlay) {
   pendingAutoPlay = autoPlay;
+
+  // Before moving to the new playlist, if a video is currently loaded, record
+  // its title in the "Previous Answer" section so the user can see what they
+  // last listened to / answered before this playlist starts (whether the load
+  // is a manual start or an auto-advance). This must happen before the player
+  // is pointed at the new playlist below, when getVideoData() would return the
+  // new playlist's video instead of the one just finished. getVideoTitle()
+  // reflects a *loaded* video (not necessarily one that is still playing), so
+  // it stays valid after a video ends during auto-advance.
+  var currentVideoTitle = getVideoTitle();
+  if (currentVideoTitle) {
+    setLastAnswerText(currentVideoTitle);
+  }
 
   context.resetBuilderState();
   context.vidTimestamps = parsed.timestamps;
