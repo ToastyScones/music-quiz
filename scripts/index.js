@@ -14,6 +14,7 @@ var preloadPlayer = null;
 var preloadReady = false;
 var preloadCuedId = null; // video id currently cued in the preload player
 var preloadRequestedId = null; // video id to cue once the preload is ready
+var preloadStartSeconds = null; // start offset the preloaded video is cued at
 var preloadRewound = false; // true once the preloaded video has been paused at its start offset
 
 function initializeMainPage() {
@@ -42,8 +43,9 @@ function destroyPlayer() {
 function createYtPlayer() {
   destroyPlayer();
   // The playlist is being replaced, so any previously preloaded "next"
-  // video is now stale. Forget it so the first PLAYING state re-cues it.
-  preloadCuedId = null;
+  // video is now stale. Stop it so it doesn't keep fetching the old
+  // playlist's stream; the first PLAYING state re-cues a fresh one.
+  destroyPreloadPlayer();
 
   document.getElementById('quiz-status-section').style.minHeight = "150px";
 
@@ -471,6 +473,25 @@ function stopVideo() {
 // index.html. It must never drive quiz logic, so its state events are
 // no-ops.
 
+// Stops and forgets the preload player. Used when the playlist is replaced
+// (createYtPlayer) so a stale "next" video doesn't keep fetching, and so
+// its state never carries into the freshly loaded playlist.
+function destroyPreloadPlayer() {
+  if (preloadPlayer && preloadPlayer.destroy) {
+    try {
+      preloadPlayer.destroy();
+    } catch (e) {
+      // The player may already be torn down; nothing else to clean up.
+    }
+  }
+  preloadPlayer = null;
+  preloadReady = false;
+  preloadCuedId = null;
+  preloadRequestedId = null;
+  preloadStartSeconds = null;
+  preloadRewound = false;
+}
+
 function isPreloadEnabled() {
   var el = document.getElementById('preload-next-video');
   return !!(el && el.checked);
@@ -501,9 +522,14 @@ function ensurePreloadPlayer(videoId) {
     // off the real network fetch (ad + stream) - a load/cue alone leaves
     // the stream cold and nextVideo() stays slow. By the time the main
     // player calls nextVideo(), the stream is warm in the browser cache.
+    // Capture the next video's start offset NOW (relative to the current
+    // main index). The preload's PLAYING state can fire late (slow ad /
+    // manifest), by which time the main player may have advanced; storing
+    // it here keeps us from seeking the preloaded video to a stale offset.
     var startSeconds = context.vidTimestamps[player.getPlaylistIndex() + 1];
+    preloadStartSeconds = startSeconds;
     preloadPlayer.loadVideoById({ videoId: videoId, startSeconds: startSeconds });
-    //preloadPlayer.playVideo();
+    preloadPlayer.playVideo();
     preloadCuedId = videoId;
     preloadRewound = false;
     return;
@@ -550,7 +576,7 @@ function onPreloadPlayerStateChange(event) {
   if (!player || !preloadPlayer) {
     return;
   }
-  var startSeconds = context.vidTimestamps[player.getPlaylistIndex() + 1];
+  var startSeconds = preloadStartSeconds;
   if (typeof startSeconds === 'number' && startSeconds > 0) {
     preloadPlayer.seekTo(startSeconds, true);
   }
@@ -567,7 +593,6 @@ function onPreloadPlayerReady() {
     ensurePreloadPlayer(preloadRequestedId);
     preloadRequestedId = null;
   }
-  preloadPlayer.playVideo();
 }
 
 // Warms the next video's stream. Called whenever the current video starts
