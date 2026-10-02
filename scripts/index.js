@@ -497,12 +497,12 @@ function ensurePreloadPlayer(videoId) {
   if (preloadReady && preloadPlayer && preloadPlayer.playVideo) {
     // Actually START playback so the ad + media stream is really fetched
     // and cached (muted, offscreen) while the current video plays.
-    // loadVideo targets the exact next video; playVideo() is what kicks
+    // loadVideoById targets the exact next video; playVideo() is what kicks
     // off the real network fetch (ad + stream) - a load/cue alone leaves
     // the stream cold and nextVideo() stays slow. By the time the main
     // player calls nextVideo(), the stream is warm in the browser cache.
-    preloadPlayer.loadVideo({ videoId: videoId, startSeconds: 0 });
-    preloadPlayer.playVideo();
+    preloadPlayer.loadVideoById({ videoId: videoId, startSeconds: 0 });
+    //preloadPlayer.playVideo();
     preloadCuedId = videoId;
     preloadRewound = false;
     return;
