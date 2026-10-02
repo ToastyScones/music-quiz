@@ -287,8 +287,6 @@ function renderQueueList() {
       if (item.author) {
         author.textContent = item.author;
         author.title = item.author;
-      } else {
-        author.style.display = 'none';
       }
 
       info.appendChild(title);
