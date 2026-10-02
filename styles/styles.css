@@ -1,5 +1,5 @@
 .main-content {
-  color: #586e75;
+  color: #073642;
   justify-content: center;
 }
 
@@ -594,7 +594,6 @@ details[open] .content-section-chevron::before {
   border-radius: 2px;
   flex: 0 0 auto;
   background: #c8c8c8;
-  margin-left: 5px;
   align-self: center;
 }
 
@@ -622,7 +621,7 @@ details[open] .content-section-chevron::before {
 
 .queue-author {
   font-size: 12px;
-  color: #8aa0a8;
+  color: #586e75;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -631,6 +630,7 @@ details[open] .content-section-chevron::before {
 .queue-remove {
   flex: 0 0 auto;
   align-self: center;
+  margin-right: 6px;
 }
 
 .queue-remove:disabled {
@@ -669,6 +669,13 @@ details[open] .content-section-chevron::before {
 .queue-copy {
   flex: 0 0 auto;
   align-self: center;
+  width: 32px;
+  padding: 0;
+  border: none;
+  height: 32px;
+  background-image: url('../images/icons/copy.png');
+  background-size: cover;
+  background-position: center;
 }
 
 .queue-copy:disabled {

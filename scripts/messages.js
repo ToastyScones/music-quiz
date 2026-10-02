@@ -42,12 +42,15 @@ function printEventData(eventData) {
   }
 }
 
-function setUnknownPreviousVideoMessage() {
-  let title = context.previousVideoTitle ?? '[I don\'t know, you\'re clicking too fast!! ＞ᨓ＜]';
-
+function setLastAnswerText(videoTitle) {
   document.getElementById('last-answer-text').innerHTML =
-    '<b-magenta>Previous Answer</b-magenta><br><b>' + title + '</b>';
+    '<b-magenta>Previous Answer</b-magenta><br><b>' + videoTitle + '</b>';
   document.getElementById('previous-answer').style.display = "flex";
+}
+
+function setUnknownPreviousVideoMessage() {
+  setLastAnswerText(context.previousVideoTitle ??
+    '[I don\'t know, you\'re clicking too fast!! ＞ᨓ＜]');
 }
 
 function getVideoDidNotLoadMessage() {
