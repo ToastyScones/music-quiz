@@ -502,7 +502,7 @@ function ensurePreloadPlayer(videoId) {
     // the stream cold and nextVideo() stays slow. By the time the main
     // player calls nextVideo(), the stream is warm in the browser cache.
     preloadPlayer.loadVideoById({ videoId: videoId, startSeconds: 0 });
-    //preloadPlayer.playVideo();
+    preloadPlayer.playVideo();
     preloadCuedId = videoId;
     preloadRewound = false;
     return;
