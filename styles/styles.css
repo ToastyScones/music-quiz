@@ -622,6 +622,13 @@ details[open] .content-section-chevron::before {
 .queue-author {
   font-size: 12px;
   color: #586e75;
+  /* Always occupy a line even when the author has not loaded yet
+     (playlist still pending), so the row height does not jump.
+     min-height is set to match the rendered line height exactly
+     (line-height 1.2 x 12px font = 14.4px = 1.2em), so the empty
+     placeholder and the filled author take up the same height. */
+  line-height: 1.2;
+  min-height: 1.2em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
