@@ -42,12 +42,15 @@ function printEventData(eventData) {
   }
 }
 
-function setUnknownPreviousVideoMessage() {
-  let title = context.previousVideoTitle ?? '[I don\'t know, you\'re clicking too fast!! ＞ᨓ＜]';
-
+function setLastAnswerText(videoTitle) {
   document.getElementById('last-answer-text').innerHTML =
-    '<b-magenta>Previous Answer</b-magenta><br><b>' + title + '</b>';
+    '<b-magenta>Previous Answer</b-magenta><br><b>' + videoTitle + '</b>';
   document.getElementById('previous-answer').style.display = "flex";
+}
+
+function setUnknownPreviousVideoMessage() {
+  setLastAnswerText(context.previousVideoTitle ??
+    '[I don\'t know, you\'re clicking too fast!! ＞ᨓ＜]');
 }
 
 function getVideoDidNotLoadMessage() {
@@ -61,7 +64,7 @@ function setQuizStartingDisplay() {
   document.getElementById('quiz-status').style.display = 'flex';
   document.getElementById('playerParent').style.background = '#FFFFFF';
   document.getElementById('preQuizText').style.position = 'absolute';
-  document.getElementById('quiz-status-display').innerHTML = '';
+  setQuizStatusDisplay('');
   setNextPlaylistDisplay('Loading next playlist...');
 }
 
@@ -127,4 +130,32 @@ function clearPlaylistCounter() {
 
 function clearNextPlaylistDisplay() {
   document.getElementById('next-playlist-display').innerHTML = '';
+}
+
+// Displays a temporary toast notification at the bottom of the viewport.
+// The toast element is created on first use and automatically hidden
+// after `duration` milliseconds (default 2500). If a toast is already
+// showing, its text is replaced and the hide timer is restarted.
+function showToast(message, duration) {
+  var toast = document.getElementById('app-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'app-toast';
+    toast.className = 'toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+
+  if (toast._hideTimer) {
+    clearTimeout(toast._hideTimer);
+  }
+  toast.classList.remove('toast--visible');
+  // Force a reflow so the show transition fires for repeated toasts.
+  void toast.offsetWidth;
+  toast.classList.add('toast--visible');
+
+  toast._hideTimer = setTimeout(function () {
+    toast.classList.remove('toast--visible');
+    toast._hideTimer = null;
+  }, duration || 2500);
 }

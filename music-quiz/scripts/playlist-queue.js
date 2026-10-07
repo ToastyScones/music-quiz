@@ -287,8 +287,6 @@ function renderQueueList() {
       if (item.author) {
         author.textContent = item.author;
         author.title = item.author;
-      } else {
-        author.style.display = 'none';
       }
 
       info.appendChild(title);
@@ -304,6 +302,17 @@ function renderQueueList() {
       playButton.disabled = item.pending;
       playButton.onclick = function () {
         loadPlaylistAtIndex(i);
+      };
+
+      var copyButton = document.createElement('input');
+      copyButton.type = 'button';
+      copyButton.className = 'button queue-copy';
+      copyButton.title = 'Copy playlist URL';
+      // Disabled only while the playlist is still being added (pending),
+      // matching the play/remove buttons.
+      copyButton.disabled = item.pending;
+      copyButton.onclick = function () {
+        copyQueueItemUrl(i);
       };
 
       var removeButton = document.createElement('input');
@@ -324,13 +333,62 @@ function renderQueueList() {
 
       row.appendChild(number);
       row.appendChild(thumbWrap);
-      row.appendChild(info);
       row.appendChild(playButton);
+      row.appendChild(info);
+      row.appendChild(copyButton);
       row.appendChild(removeButton);
       container.appendChild(row);
     })(i);
   }
   applyQueueThumbBlur();
+}
+
+// Builds a fresh playlist URL from the queued item's parsed data
+// (playlist ID plus the start-time params) and copies it to the
+// clipboard. The URL is constructed here, so the user's original input
+// text (which may have contained extra/other query params) is never
+// copied verbatim. The result has the form:
+//   https://www.youtube.com/playlist?list=[ID]&t1=[seconds]&t2=[seconds]&...
+// where each tN param sets a start time for the video at playlist
+// position N (no `order` param).
+function copyQueueItemUrl(index) {
+  var item = playlistQueue[index];
+  if (!item) {
+    return;
+  }
+
+  var playlistId = item.parsed.playlistId;
+  if (!playlistId) {
+    return;
+  }
+
+  // Build the URL manually from the item's parsed data: the playlist ID
+  // plus its start-time params (t1, t2, ...), where tN is the start time
+  // for the video at playlist position N. This is constructed fresh here,
+  // so the user's original input text is never copied verbatim.
+  var params = new URLSearchParams();
+  params.set('list', playlistId);
+
+  var timestamps = item.parsed.timestamps || {};
+  Object.keys(timestamps).forEach(function (key) {
+    var index = Number(key);
+    var seconds = timestamps[key];
+    if (!isNaN(index) && seconds > 0) {
+      params.set('t' + (index + 1), String(seconds));
+    }
+  });
+
+  var url = 'https://www.youtube.com/playlist?' + params.toString();
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).catch(function () {
+      prompt('Copy this URL:', url);
+    });
+  } else {
+    prompt('Copy this URL:', url);
+  }
+
+  showToast('Playlist URL copied to clipboard');
 }
 
 function isAutoAdvanceCountdownActive() {
@@ -445,6 +503,19 @@ function playQueue() {
 
 function loadPlaylistFromParsed(parsed, autoPlay) {
   pendingAutoPlay = autoPlay;
+
+  // Before moving to the new playlist, if a video is currently loaded, record
+  // its title in the "Previous Answer" section so the user can see what they
+  // last listened to / answered before this playlist starts (whether the load
+  // is a manual start or an auto-advance). This must happen before the player
+  // is pointed at the new playlist below, when getVideoData() would return the
+  // new playlist's video instead of the one just finished. getVideoTitle()
+  // reflects a *loaded* video (not necessarily one that is still playing), so
+  // it stays valid after a video ends during auto-advance.
+  var currentVideoTitle = getVideoTitle();
+  if (currentVideoTitle) {
+    setLastAnswerText(currentVideoTitle);
+  }
 
   context.resetBuilderState();
   context.vidTimestamps = parsed.timestamps;

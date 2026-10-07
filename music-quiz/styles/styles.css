@@ -1,5 +1,5 @@
 .main-content {
-  color: #586e75;
+  color: #073642;
   justify-content: center;
 }
 
@@ -562,7 +562,7 @@ details[open] .content-section-chevron::before {
   padding: 4px 6px;
   border: 1px solid #afc0c0;
   background: #eee8d5;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .queue-item.now-playing {
@@ -594,6 +594,7 @@ details[open] .content-section-chevron::before {
   border-radius: 2px;
   flex: 0 0 auto;
   background: #c8c8c8;
+  align-self: center;
 }
 
 .queue-thumb {
@@ -609,6 +610,7 @@ details[open] .content-section-chevron::before {
 .queue-info {
   flex: 1;
   min-width: 0;
+  text-align: center;
 }
 
 .queue-title {
@@ -618,8 +620,15 @@ details[open] .content-section-chevron::before {
 }
 
 .queue-author {
-  font-size: 11px;
-  color: #8aa0a8;
+  font-size: 12px;
+  color: #586e75;
+  /* Always occupy a line even when the author has not loaded yet
+     (playlist still pending), so the row height does not jump.
+     min-height is set to match the rendered line height exactly
+     (line-height 1.2 x 12px font = 14.4px = 1.2em), so the empty
+     placeholder and the filled author take up the same height. */
+  line-height: 1.2;
+  min-height: 1.2em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -628,6 +637,7 @@ details[open] .content-section-chevron::before {
 .queue-remove {
   flex: 0 0 auto;
   align-self: center;
+  margin-right: 6px;
 }
 
 .queue-remove:disabled {
@@ -660,6 +670,24 @@ details[open] .content-section-chevron::before {
 
 .queue-play:disabled {
   background-color: #6b6b6b;
+  cursor: not-allowed;
+}
+
+.queue-copy {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 32px;
+  padding: 0;
+  border: none;
+  height: 32px;
+  background-image: url('../images/icons/copy.png');
+  background-size: cover;
+  background-position: center;
+}
+
+.queue-copy:disabled {
+  background: #6b6b6b;
+  color: #b8b8b8;
   cursor: not-allowed;
 }
 
@@ -715,4 +743,35 @@ details[open] .content-section-chevron::before {
 
 .remove-popup-no {
   background: #6b6b6b;
+}
+
+/* Temporary toast notification (bottom of viewport) */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: #073642;
+  color: #FFF;
+  border: 2px solid #268bd2;
+  border-radius: 6px;
+  padding: 10px 18px;
+  font-size: 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+  z-index: 1001;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.toast--visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+#warning-message {
+  flex-direction: column;
+  font-size: 14px;
+  color: #d33682;
+  padding: 8px 13px;
 }
