@@ -179,6 +179,7 @@ function onPlayerReady(event) {
   tryCompletePlaylistInit();
   setCurrentPlaylistCounter();
   clearNextPlaylistDisplay();
+  setQuizStatusDisplay('Loading...');
 }
 
 function getVolume() {
@@ -459,6 +460,7 @@ function previousVideo() {
   }
   context.didVideoJustChange = true;
   clearStateForNextVideo();
+  setQuizStatusDisplay('(Loading next video...)');
   player.previousVideo();
 }
 
@@ -473,6 +475,7 @@ function nextVideo() {
   }
   context.didVideoJustChange = true;
   clearStateForNextVideo();
+  setQuizStatusDisplay('(Loading next video...)');
   setPreviousAnswerState();
   player.nextVideo();
 }
@@ -493,6 +496,7 @@ function clearStateForNextVideo() {
   context.setNextVideoState();
   blurVideo();
   clearMessagesAndFutures();
+  setQuizStatusDisplay('');
   setVolumeStateForNextVideo();
 }
 
