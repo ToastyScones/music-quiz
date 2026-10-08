@@ -1,12 +1,12 @@
 # music-quiz
-Basic GitHub page for YouTube music quizzes.
+Javascript/HTML GitHub page for YouTube music quizzes! Built for OddChat.
 
 Link: https://toastyscones.github.io/music-quiz/
 
-## Usage
-Copy a YouTube playlist URL or ID, paste into the **YT Playlist URL or ID** field, and click Load Playlist. Finally, press the green play button to start the quiz.
+## Quickstart
+Copy a YouTube playlist URL or ID, paste into the **YT Playlist URL or ID** field, and click Add to Queue. Then press Play Queue to start from the first playlist, or click any individual play button to start from that specific playlist. 
 
-YouTube playlist must be set to **public** or **unlisted**; Private playlists won't work.
+YouTube playlist must be set to **public** or **unlisted** and private playlists won't work.
 
 YT URL example:
 ```
@@ -18,7 +18,10 @@ YT Playlist ID example:
 PLfRFOBVf8C8dgruEoZR6aF1q1487QJ5iZ
 ```
 
-### Setting a start time for specific videos
+## Setting a start time for specific videos
+
+**Note**: You can also use the Playlist Builder to set the times. See below for more info.
+
 You can specify the start time for specific videos in the playlist by adding one or more of the following query params in the URL:
 
 ```
@@ -43,7 +46,7 @@ After loading a playlist, expand the **Playlist Builder** section below the load
 2. Open **Playlist Builder** and set start times per video (use `mm:ss` or seconds).
 3. Use **Preview** to check a start time in the main player (video loads paused at that timestamp).
 4. Reorder videos with drag-and-drop or the **↑** / **↓** buttons — this does not change the YouTube playlist.
-5. Click **Apply to Quiz** to reload the player with your order and start times, then press the green play button.
+5. Click **Apply to Quiz** to add a playlist with your new order to the queue.
 6. Click **Copy URL** to copy a shareable link with your configuration.
 
 ### Custom playlist order in URLs
@@ -64,15 +67,28 @@ https://www.youtube.com/playlist?list=PLxxx&order=vid2,vid1,vid3&t1=30&t3=13
 
 The builder only adds `order=` to generated URLs when the order differs from the original YouTube playlist. Plain playlist IDs still use YouTube's default order.
 
-## Troubleshooting
+## Troubleshooting (Updated October 2026)
+### Huge delay between videos 
+If you have an ad blocker, YouTube can hang if it tries to load an ad and fails. 
+
+Quick fix if you have YouTube Premium: For the quiz webpage only, enable third party cookies (Chromium), disable Enhanced Tracking Protection (Firefox), and disable ad blocking. 
+
 ### Muted audio/audio doesn't fade out/countdown acting weird/next video kicking off early
+
+#### October 08 2026 Update
+setInterval and setTimeout have been replaced with web workers, so any timer related async tasks (like the countdown timer) should work even when tabbed out.
+
+The only issue that remains is hanging when loading a playlist when tabbed out.
+
+#### Original Description
+
 For now, you will need to keep the website visible somewhere on your desktop so your browser doesn't lose focus.
 
 This app uses setInterval and setTimeout in a lot of its functionality, and both of those have degraded performance on tabs that lose focus (i.e. tabs that are tabbed out, minimized, etc.)
 
 This was only tested on Firefox and Chromium, so other browsers may have even more unexpected issues. ( • ᴖ • )
 
-For Chrome/Chromium, turning on the 'Sites can play sound' option seemed to have helped.
+**For Chrome/Chromium, turning on the 'Sites can play sound' option seemed to have helped.**
 
 ### Audio between videos is unbalanced
 

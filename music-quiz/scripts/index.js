@@ -41,7 +41,7 @@ function createYtPlayer() {
     width: '640',
     playerVars: {
       'disablekb': 1,
-      'autoplay': 0,
+      'autoplay': 1,
       'playsinline': 0,
       'loop': 0,
       'controls': 0, // Show pause/play buttons in player
@@ -189,7 +189,7 @@ function getVolume() {
 }
 
 function onPlayerStateChange(event) {
-  //console.log("event " + event.data + " - " + new Date(Date.now()));
+  //printEventData(event.data);
   if (event.data === YT.PlayerState.PLAYING) {
     setVideoPlayingState();
   } else if (event.data === YT.PlayerState.PAUSED) {
