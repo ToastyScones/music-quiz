@@ -347,7 +347,8 @@ function startQuizTimersIfPlaying() {
   }
 
   if (!isEndOfPlaylist()) {
-    var ytNextVidTimeoutMs = guessTimeLimitMs + vidTimeLimitMs - context.fadeOutMs;
+
+    var ytNextVidTimeoutMs = (context.isQuizForVideoDone ? 0 : guessTimeLimitMs) + vidTimeLimitMs - context.fadeOutMs;
     if (ytNextVidTimeoutMs <= 0) {
       ytNextVidTimeoutMs = vidTimeLimitMs;
     }
