@@ -640,6 +640,7 @@ function hideCountdownToggleButton() {
 }
 
 function loadNextQueuedPlaylist() {
+  console.log("loadNextQueuedPlaylist called - " + new Date(Date.now()));
   queueIndex++;
   renderQueueList();
   loadPlaylistFromParsed(playlistQueue[queueIndex].parsed, true);
