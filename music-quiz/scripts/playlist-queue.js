@@ -166,7 +166,7 @@ function validateYouTubePlaylist(playlistId) {
       if (isResolved) return; // Prevent double execution
       isResolved = true;
 
-      if (errorTimeout) clearTimeout(errorTimeout);
+      if (errorTimeout) workerClearTimeout(errorTimeout);
 
       try {
         if (player && typeof player.destroy === 'function') {
@@ -210,7 +210,7 @@ function validateYouTubePlaylist(playlistId) {
             }
 
             // DELAY RESOLUTION: Give onError a brief window (250ms) to intercept
-            errorTimeout = setTimeout(() => {
+            errorTimeout = workerSetTimeout(() => {
               finalize(true, "Playlist is valid.");
             }, 250);
 
@@ -604,7 +604,7 @@ function startAutoAdvanceCountdown() {
     startPlaylistFadeOut();
   }
 
-  autoAdvanceTimerId = setInterval(function () {
+  autoAdvanceTimerId = workerSetInterval(function () {
     autoAdvanceSecondsLeft--;
     if (autoAdvanceSecondsLeft <= 0) {
       // Stop the interval BEFORE loading so it cannot fire again and
@@ -657,7 +657,7 @@ function loadPlaylistAtIndex(index) {
 
 function clearAutoAdvanceTimers() {
   if (autoAdvanceTimerId !== null) {
-    clearInterval(autoAdvanceTimerId);
+    workerClearInterval(autoAdvanceTimerId);
     autoAdvanceTimerId = null;
   }
   autoAdvanceSecondsLeft = 0;

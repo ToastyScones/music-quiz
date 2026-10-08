@@ -10,8 +10,8 @@
 //   * `this` is the global object, and
 //   * any extra `arg1..arg3` arguments are forwarded to the callback.
 //
-// This is what makes the existing `this.xxxTimerId = setInterval(...)` /
-// `clearInterval(this.xxxTimerId)` call sites and the argument-forwarding
+// This is what makes the existing `this.xxxTimerId = workerSetInterval(...)` /
+// `workerClearInterval(this.xxxTimerId)` call sites and the argument-forwarding
 // call sites (e.g. `reduceVolumeForFadeOut(tenPercentVol)`,
 // `setGuessAsFinished(secondsRemaining)`) keep working unchanged.
 (function (globalScope) {
@@ -94,11 +94,11 @@
     return handle;
   }
 
-  globalScope.setTimeout = function (callback, delay, arg1, arg2, arg3) {
+  globalScope.workerSetTimeout= function (callback, delay, arg1, arg2, arg3) {
     return schedule(callback, delay, arg1, arg2, arg3, false);
   };
 
-  globalScope.setInterval = function (callback, delay, arg1, arg2, arg3) {
+  globalScope.workerSetInterval = function (callback, delay, arg1, arg2, arg3) {
     return schedule(callback, delay, arg1, arg2, arg3, true);
   };
 
@@ -111,6 +111,6 @@
     pending.delete(handle);
     worker.postMessage({ type: 'cancel', handle });
   }
-  globalScope.clearTimeout = clear;
-  globalScope.clearInterval = clear;
+  globalScope.workerClearTimeout = clear;
+  globalScope.workerClearInterval = clear;
 })(this);
