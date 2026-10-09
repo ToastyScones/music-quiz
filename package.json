@@ -1,0 +1,9 @@
+{
+  "name": "music-quiz",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static music quiz site. The Troubleshooting section of music-quiz/index.html is generated from README.md via scripts/README-sync.cjs.",
+  "scripts": {
+    "sync:readme": "node music-quiz/scripts/README-sync.cjs"
+  }
+}
