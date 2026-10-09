@@ -41,7 +41,7 @@ function createYtPlayer() {
     width: '640',
     playerVars: {
       'disablekb': 1,
-      'autoplay': 0,
+      'autoplay': 1,
       'playsinline': 0,
       'loop': 0,
       'controls': 0, // Show pause/play buttons in player
@@ -132,16 +132,18 @@ function tryCompletePlaylistInit() {
 function setVolumeStateForNextVideo() {
   if (!(player?.setVolume) || context.needLastVolumeApplied) { return; }
 
-  player.setVolume(0);
+  //setVideoVolume(1);
   context.needLastVolumeApplied = true;
 }
 
 function onPlayerReady(event) {
   this.ytVolumeSlider.value = getVolume();
   this.ytVolumeSlider.oninput = function () {
-    player.setVolume(this.value);
+    setVideoVolume(this.value);
     unMute();
   };
+
+  event.target.setVolume(getVolume());
 
   if (pendingLoadMode === 'playlistId' && pendingPlaylistId) {
     var playlistOptions = {
@@ -187,6 +189,7 @@ function getVolume() {
 }
 
 function onPlayerStateChange(event) {
+  //printEventData(event.data);
   if (event.data === YT.PlayerState.PLAYING) {
     setVideoPlayingState();
   } else if (event.data === YT.PlayerState.PAUSED) {
@@ -223,7 +226,7 @@ function onError(event) {
     return;
   }
 
-  this.onErrorNextVideoTimeoutId = setTimeout(
+  this.onErrorNextVideoTimeoutId = workerSetTimeout(
     function () {
       context.didVideoError = false;
       if (isEndOfPlaylist()) {
@@ -243,27 +246,27 @@ function setPlayerVisible() {
 
 function clearQuizFutures() {
   if (this.ytNextVidTimeoutId) {
-    clearTimeout(this.ytNextVidTimeoutId);
+    workerClearTimeout(this.ytNextVidTimeoutId);
     this.ytNextVidTimeoutId = null;
   }
   if (this.guessTimeRemainingTimeoutId) {
-    clearTimeout(this.guessTimeRemainingTimeoutId);
+    workerClearTimeout(this.guessTimeRemainingTimeoutId);
     this.guessTimeRemainingTimeoutId = null;
   }
   if (this.nextVideoTimeoutId) {
-    clearTimeout(this.nextVideoTimeoutId);
+    workerClearTimeout(this.nextVideoTimeoutId);
     this.nextVideoTimeoutId = null;
   }
   if (this.guessCountdownTimerId) {
-    clearInterval(this.guessCountdownTimerId);
+    workerClearInterval(this.guessCountdownTimerId);
     this.guessCountdownTimerId = null;
   }
   if (this.vidCountdownTimerId) {
-    clearInterval(this.vidCountdownTimerId);
+    workerClearInterval(this.vidCountdownTimerId);
     this.vidCountdownTimerId = null;
   }
   if (this.volumeFadeOutIntervalId) {
-    clearInterval(this.volumeFadeOutIntervalId);
+    workerClearInterval(this.volumeFadeOutIntervalId);
     this.volumeFadeOutIntervalId = null;
   }
   clearAutoAdvanceTimers();
@@ -325,7 +328,7 @@ function startQuizTimersIfPlaying() {
   if (!context.isQuizForVideoDone) {
     setGuessTimeRemainingMessage(guessTimeLimitMs / 1000);
 
-    this.guessTimeRemainingTimeoutId = setTimeout(
+    this.guessTimeRemainingTimeoutId = workerSetTimeout(
       setGuessAsFinished,
       guessTimeLimitMs,
       vidTimeLimitMs / 1000
@@ -344,18 +347,20 @@ function startQuizTimersIfPlaying() {
   }
 
   if (!isEndOfPlaylist()) {
-    var ytNextVidTimeoutMs = guessTimeLimitMs + vidTimeLimitMs - context.fadeOutMs;
+
+    var ytNextVidTimeoutMs = (context.isQuizForVideoDone ? 0 : guessTimeLimitMs) + vidTimeLimitMs - context.fadeOutMs;
     if (ytNextVidTimeoutMs <= 0) {
       ytNextVidTimeoutMs = vidTimeLimitMs;
     }
 
-    this.ytNextVidTimeoutId = setTimeout(
+    this.ytNextVidTimeoutId = workerSetTimeout(
       nextVideoAfterQuiz, ytNextVidTimeoutMs, vidTimeLimitMs
     );
   }
 }
 
 function setVideoPlayingState() {
+  //console.log("setVideoPlayingState() called " + new Date(Date.now()));
   if (!player) { return; }
 
   setPlayerVisible();
@@ -365,7 +370,7 @@ function setVideoPlayingState() {
     return;
   }
 
-  player.setVolume(getVolume());
+  setVideoVolume(getVolume());
   context.needLastVolumeApplied = false;
 
   context.didVideoJustChange = false;
@@ -377,7 +382,7 @@ function setVideoPlayingState() {
   if (doesVideoNeedSeekTo()) {
     context.hasSeekToBeenApplied = true;
     seekTo(context.vidTimestamps[player.getPlaylistIndex()]);
-    setTimeout(startQuizTimersIfPlaying, 300);
+    workerSetTimeout(startQuizTimersIfPlaying, 300);
     return;
   }
 
@@ -400,7 +405,7 @@ function setPausedVideoState() {
 
   context.isPaused = true;
 
-  player.setVolume(getVolume());
+  setVideoVolume(getVolume());
 
   clearMessagesAndFutures();
   setQuizStatusDisplay('(Video and quiz are paused)');
@@ -478,6 +483,18 @@ function nextVideo() {
   setQuizStatusDisplay('(Loading next video...)');
   setPreviousAnswerState();
   player.nextVideo();
+  if (context.needLastVolumeApplied) {
+    setVideoVolume(getVolume());
+    context.needLastVolumeApplied = false;
+    //console.log("nextVideo volume set to " + getVolume());
+  }
+}
+
+function setVideoVolume(volume) {
+  if (player) {
+    //console.log("volume set to " + JSON.stringify(volume));
+    player.setVolume(volume);
+  }
 }
 
 function seekTo(seconds) {
@@ -520,10 +537,11 @@ function nextVideoAfterQuiz(milliSecondsRemaining) {
   var nextVideoTimeoutMs = milliSecondsRemaining < context.fadeOutMs ?
     milliSecondsRemaining : context.fadeOutMs;
 
-  this.nextVideoTimeoutId = setTimeout(
+  this.nextVideoTimeoutId = workerSetTimeout(
     function () {
+      //console.log("nextVideoTimeoutId called " + new Date(Date.now()));
       setQuizStatusDisplay('(Starting next video)');
-      clearInterval(this.volumeFadeOutIntervalId);
+      workerClearInterval(this.volumeFadeOutIntervalId);
       clearStateForNextVideo();
       nextVideo();
     },
@@ -547,13 +565,13 @@ function startVolumeFadeOut() {
   }
 
   reduceVolumeForFadeOut(tenPercentVol);
-  this.volumeFadeOutIntervalId = setInterval(
+  this.volumeFadeOutIntervalId = workerSetInterval(
     reduceVolumeForFadeOut, (context.fadeOutMs / 10), tenPercentVol
   );
 }
 
 function reduceVolumeForFadeOut(volume) {
-  player.setVolume(player.getVolume() - volume);
+  setVideoVolume(player.getVolume() - volume);
 }
 
 function stopQuizLikeManualReveal() {
@@ -564,7 +582,7 @@ function stopQuizLikeManualReveal() {
   setQuizCountdownDisplay('[Quiz is paused until next video]');
   document.getElementById('preQuizText').innerHTML = '';
   if (player) {
-    player.setVolume(getVolume());
+    setVideoVolume(getVolume());
   }
 }
 
@@ -583,7 +601,7 @@ function endQuizForVideo() {
 
 function setGuessAsFinished(secondsRemaining) {
   context.isQuizForVideoDone = true;
-  clearTimeout(this.guessTimeRemainingTimeoutId);
+  workerClearTimeout(this.guessTimeRemainingTimeoutId);
 
   deblurVideo();
   var message = 'Time\'s up! Answer was:<br><b>' + getVideoTitleWithFallback() + '</b><br>';
@@ -605,11 +623,11 @@ function setGuessTimeRemainingMessage(secondsRemaining) {
   setSecondsRemaningMessage(message, secondsRemaining);
 
   secondsRemaining = secondsRemaining - 1;
-  clearInterval(this.guessCountdownTimerId);
-  this.guessCountdownTimerId = setInterval(
+  workerClearInterval(this.guessCountdownTimerId);
+  this.guessCountdownTimerId = workerSetInterval(
     function () {
       if (secondsRemaining <= 0) {
-        clearInterval(this.guessCountdownTimerId);
+        workerClearInterval(this.guessCountdownTimerId);
       } else {
         setSecondsRemaningMessage(message, secondsRemaining);
       }
@@ -625,11 +643,11 @@ function setVidTimeRemainingMessage(secondsRemaining) {
   setSecondsRemaningMessage(message, secondsRemaining);
 
   secondsRemaining = secondsRemaining - 1;
-  clearInterval(this.vidCountdownTimerId);
-  this.vidCountdownTimerId = setInterval(
+  workerClearInterval(this.vidCountdownTimerId);
+  this.vidCountdownTimerId = workerSetInterval(
     function () {
       if (secondsRemaining < 0) {
-        clearInterval(this.vidCountdownTimerId);
+        workerClearInterval(this.vidCountdownTimerId);
       } else {
         setSecondsRemaningMessage(message, secondsRemaining);
       }
@@ -680,7 +698,7 @@ function blurVideo() {
 }
 
 function clearCountdownTimer() {
-  if (this.countdownTimerId) { clearInterval(this.countdownTimerId); }
+  if (this.countdownTimerId) { workerClearInterval(this.countdownTimerId); }
   setQuizCountdownDisplay('');
 }
 
@@ -689,7 +707,7 @@ function clearMessagesAndFutures() {
   clearQuizFutures();
 
   if (this.onErrorNextVideoTimeoutId) {
-    clearTimeout(this.onErrorNextVideoTimeoutId);
+    workerClearTimeout(this.onErrorNextVideoTimeoutId);
     this.onErrorNextVideoTimeoutId = null;
   }
 

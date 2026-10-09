@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="styles/flex-base.css">
   <link rel="stylesheet" href="styles/styles.css">
   <link rel="icon" type="image/png" href="images/favicon.ico">
+  <script src="scripts/timer.js"></script>
   <script src="scripts/context.js"></script>
   <script src="scripts/fooni.js"></script>
   <script src="scripts/messages.js"></script>
@@ -221,65 +222,43 @@
               <img class="icon" src="images/emotes/OhISee.webp" alt="">
             </span>
           </summary>
-          <p>WIP, new AI slop was added, so this section needs updating!</p>
-        <h2>Muted audio/audio doesn't fade out/countdown acting weird/next video kicking off early</h2>
-        <p>
-          For now, you will need to keep the website visible somewhere on your desktop so your browser doesn't lose
-          focus.
-          <br><br>
-          This app uses setInterval and setTimeout in a lot of its functionality, and both of those have degraded
-          performance on tabs that lose focus (i.e. tabs that are tabbed out, minimized, etc.)
-          <br><br>
-          This was only tested on Firefox and Chromium, so other browsers may have even more unexpected issues. ( • ᴖ •
-          )
-          <br><br>
-          For Chrome/Chromium, turning on the 'Sites can play sound' option seemed to have helped.
-        </p>
-        <h2>Audio between videos is unbalanced</h2>
-        <p>
-          The issue is that the videos themselves have different audio levels.
-          <br><br>
-          Unforunately, audio compressors (within this site's JavaScript or through a browser extension/add-on) won't
-          work.
-          Due to <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS" target="_blank">CORS restrictions</a>,
-          the audio from
-          the embedded player can't be maniuplated from outside a YouTube domain.
-          <br><br>
-          You can test this out by installing a YouTube audio compressor extension/add-on. It'll work on the actual
-          YouTube site, but
-          not here. (◞‸◟；)
-          <br><br>
-          You can also enable 'Enable Loudness Equalization' in Windows for your device, but it will affect all audio
-          sources.
-        </p>
-        <h2>Video won't load</h2>
-        <p>
-          YouTube or the user has disabled embedded play, or the video got marked as private/deleted.
-          <br><br>
-          Event codes: <a href="https://developers.google.com/youtube/iframe_api_reference#Events"
-            target="_blank">https://developers.google.com/youtube/iframe_api_reference#Events</a>
-          <br><br>
-          If you're running it locally, some videos won't load if you're running from a local path or IP. See
-          <a href="https://stackoverflow.com/a/56419165" target="_blank">https://stackoverflow.com/a/56419165</a>
-        </p>
-        <h2>Autoplay doesn't work</h2>
-        <p>
-          Enable autoplay for your browser:
-        <ul>
-          <li>Firefox: <a href="https://support.mozilla.org/en-US/kb/block-autoplay"
-              target="_blank">https://support.mozilla.org/en-US/kb/block-autoplay</a></li>
-          <li>Opera: <a href="https://forums.opera.com/post/211179"
-              target="_blank">https://forums.opera.com/post/211179</a></li>
-          <li>
-            Chrome/Chromium (couldn't find an official source, so here are some copy paste instructions):
-            <br>
-            <b>Settings -> Privacy and security -> Site settings -> Additional Content Settings -> Sound -> Sites can
-              play
-              sound</b>
-          </li>
-        </ul>
-        </p>
-        </details>
+          <!-- README:BEGIN -->
+            <h3>Huge delay between videos</h3>
+            <p>If you have an ad blocker, YouTube can hang if it tries to load an ad and fails.</p>
+            <p>Quick fix if you have YouTube Premium: For the quiz webpage only, enable third party cookies (Chromium), disable Enhanced Tracking Protection (Firefox), and disable ad blocking.</p>
+            <h3>Muted audio/audio doesn't fade out/countdown acting weird/next video kicking off early</h3>
+            <h4>October 08 2026 Update</h4>
+            <p>setInterval and setTimeout have been replaced with web workers, so any timer related async tasks (like the countdown timer) should work even when tabbed out.</p>
+            <p>The only issue that remains is hanging when loading a playlist when tabbed out.</p>
+            <h4>Original Description</h4>
+            <p>For now, you will need to keep the website visible somewhere on your desktop so your browser doesn't lose focus.</p>
+            <p>This app uses setInterval and setTimeout in a lot of its functionality, and both of those have degraded performance on tabs that lose focus (i.e. tabs that are tabbed out, minimized, etc.)</p>
+            <p>This was only tested on Firefox and Chromium, so other browsers may have even more unexpected issues. ( • ᴖ • )</p>
+            <p><strong>For Chrome/Chromium, turning on the 'Sites can play sound' option seemed to have helped.</strong></p>
+            <h3>Audio between videos is unbalanced</h3>
+            <p>The issue is that the videos themselves have different audio levels.</p>
+            <p>Unforunately, audio compressors (within this site's JavaScript or through a browser extension/add-on) won't work. Due to CORS restrictions, the audio from the embedded player can't be maniuplated from outside a YouTube domain.</p>
+            <p>You can test this out by installing a YouTube audio compressor extension/add-on. It'll work on the actual YouTube site, but not here. (◞‸◟；)</p>
+            <p>You can also enable 'Enable Loudness Equalization' in Windows for your device, but it will affect all audio sources.</p>
+            <h3>Video won't load</h3>
+            <p>YouTube or the user has disabled embedded play, or the video got marked as private/deleted.</p>
+            <p>Event codes: <a href="https://developers.google.com/youtube/iframe_api_reference#Events" target="_blank" rel="noopener noreferrer">https://developers.google.com/youtube/iframe_api_reference#Events</a></p>
+            <p>If you're running it locally, some videos won't load if you're running from a local path or IP. See <a href="https://stackoverflow.com/a/56419165" target="_blank" rel="noopener noreferrer">https://stackoverflow.com/a/56419165</a></p>
+            <h3>Autoplay doesn't work</h3>
+            <p>Enable autoplay for your browser:</p>
+            <ul>
+              <li>Firefox: <a href="https://support.mozilla.org/en-US/kb/block-autoplay" target="_blank" rel="noopener noreferrer">https://support.mozilla.org/en-US/kb/block-autoplay</a>
+              </li>
+              <li>Opera: <a href="https://forums.opera.com/post/211179" target="_blank" rel="noopener noreferrer">https://forums.opera.com/post/211179</a>
+              </li>
+              <li>Chrome/Chromium (couldn't find an official source, so here are some copy paste instructions):
+                <ul>
+                  <li>Settings -> Privacy and security -> Site settings -> Additional Content Settings -> Sound -> Sites can play sound
+                  </li>
+                </ul>
+              </li>
+            </ul><!-- README:END -->
+      </details>
       </section>
 
     </section>

@@ -147,14 +147,14 @@ function showToast(message, duration) {
   toast.textContent = message;
 
   if (toast._hideTimer) {
-    clearTimeout(toast._hideTimer);
+    workerClearTimeout(toast._hideTimer);
   }
   toast.classList.remove('toast--visible');
   // Force a reflow so the show transition fires for repeated toasts.
   void toast.offsetWidth;
   toast.classList.add('toast--visible');
-
-  toast._hideTimer = setTimeout(function () {
+  
+  toast._hideTimer = workerSetTimeout(function () {
     toast.classList.remove('toast--visible');
     toast._hideTimer = null;
   }, duration || 2500);
