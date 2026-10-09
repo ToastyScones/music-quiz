@@ -189,7 +189,7 @@ function getVolume() {
 }
 
 function onPlayerStateChange(event) {
-  console.log("event " + event.data + " - " + new Date(Date.now()));
+  //printEventData(event.data);
   if (event.data === YT.PlayerState.PLAYING) {
     setVideoPlayingState();
   } else if (event.data === YT.PlayerState.PAUSED) {
@@ -360,7 +360,7 @@ function startQuizTimersIfPlaying() {
 }
 
 function setVideoPlayingState() {
-  console.log("setVideoPlayingState() called " + new Date(Date.now()));
+  //console.log("setVideoPlayingState() called " + new Date(Date.now()));
   if (!player) { return; }
 
   setPlayerVisible();
@@ -486,13 +486,13 @@ function nextVideo() {
   if (context.needLastVolumeApplied) {
     setVideoVolume(getVolume());
     context.needLastVolumeApplied = false;
-    console.log("nextVideo volume set to " + getVolume());
+    //console.log("nextVideo volume set to " + getVolume());
   }
 }
 
 function setVideoVolume(volume) {
   if (player) {
-    console.log("volume set to " + JSON.stringify(volume));
+    //console.log("volume set to " + JSON.stringify(volume));
     player.setVolume(volume);
   }
 }
@@ -539,7 +539,7 @@ function nextVideoAfterQuiz(milliSecondsRemaining) {
 
   this.nextVideoTimeoutId = workerSetTimeout(
     function () {
-      console.log("nextVideoTimeoutId called " + new Date(Date.now()));
+      //console.log("nextVideoTimeoutId called " + new Date(Date.now()));
       setQuizStatusDisplay('(Starting next video)');
       workerClearInterval(this.volumeFadeOutIntervalId);
       clearStateForNextVideo();
