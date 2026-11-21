@@ -381,7 +381,7 @@ function setVideoPlayingState() {
 
   if (doesVideoNeedSeekTo()) {
     context.hasSeekToBeenApplied = true;
-    seekTo(context.vidTimestamps[player.getPlaylistIndex()]);
+    seekTo(context.vidTimestamps[getPlaylistIndex()]);
     workerSetTimeout(startQuizTimersIfPlaying, 300);
     return;
   }
@@ -502,7 +502,7 @@ function seekTo(seconds) {
 }
 
 function doesVideoNeedSeekTo() {
-  var playerPlaylistIndex = player.getPlaylistIndex();
+  var playerPlaylistIndex = getPlaylistIndex();
   if (playerPlaylistIndex in context.vidTimestamps) {
     return !context.hasSeekToBeenApplied;
   }
@@ -664,7 +664,7 @@ function isEndOfPlaylist() {
   }
 
   var lastIndex = context.youtubePlaylistOrder.length - 1;
-  var currentIndex = player.getPlaylistIndex();
+  var currentIndex = getPlaylistIndex();
   return currentIndex === lastIndex || (lastIndex === -1 && currentIndex === 0);
 }
 
@@ -677,7 +677,7 @@ function isFirstVideoInPlaylist() {
   if (!isPlaylistInitialized()) {
     return true;
   }
-  return player.getPlaylistIndex() === 0;
+  return getPlaylistIndex() === 0;
 }
 
 function getVideoTitleWithFallback() {
@@ -717,7 +717,7 @@ function clearMessagesAndFutures() {
 function setPreviousAnswer() {
   if (!player) { return; }
 
-  var currentVideoIndex = player.getPlaylistIndex();
+  var currentVideoIndex = getPlaylistIndex();
 
   if (currentVideoIndex > context.previousVideoIndex) {
     setUnknownPreviousVideoMessage();
@@ -726,7 +726,7 @@ function setPreviousAnswer() {
 }
 
 function setPreviousAnswerState() {
-  context.setPreviousAnswerState(player.getPlaylistIndex(), getVideoTitle());
+  context.setPreviousAnswerState(getPlaylistIndex(), getVideoTitle());
 }
 
 function toggleMute() {
@@ -748,7 +748,7 @@ function unMute() {
 function setCurrentPlaylistCounter() {
   if (!isPlaylistInitialized()) { return; }
   var lastId = context.youtubePlaylistOrder.length;
-  var currentId = player.getPlaylistIndex() + 1;
+  var currentId = getPlaylistIndex() + 1;
   setPlaylistOrderDisplay(currentId, lastId);
   updateBuilderPlayingHighlight();
 }
@@ -758,4 +758,23 @@ function isPlaylistInitialized() {
     return false;
   }
   return true;
+}
+
+function getPlaylistIndex() {
+  if (!player) {
+    return -1;
+  }
+
+  var index = player.getPlaylistIndex();
+
+  if (index !== -1) {
+    return index;
+  }
+
+  if (player.getVideoData && context.youtubePlaylistOrder) {
+    var videoId = player.getVideoData().video_id;
+    return context.youtubePlaylistOrder.indexOf(videoId);
+  }
+
+  return -1;
 }
