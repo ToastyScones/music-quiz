@@ -447,7 +447,7 @@ function getCurrentPlayerVideoId() {
     return null;
   }
 
-  var playlist = player.getPlaylist();
+  var playlist = context.youtubePlaylistOrder ?? player.getPlaylist();
   var currentIndex = player.getPlaylistIndex();
   if (!playlist || currentIndex < 0 || currentIndex >= playlist.length) {
     return null;

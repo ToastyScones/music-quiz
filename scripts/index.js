@@ -663,7 +663,7 @@ function isEndOfPlaylist() {
     return true;
   }
 
-  var lastIndex = player.getPlaylist().length - 1;
+  var lastIndex = context.youtubePlaylistOrder.length - 1;
   var currentIndex = player.getPlaylistIndex();
   return currentIndex === lastIndex || (lastIndex === -1 && currentIndex === 0);
 }
@@ -747,14 +747,14 @@ function unMute() {
 
 function setCurrentPlaylistCounter() {
   if (!isPlaylistInitialized()) { return; }
-  var lastId = player.getPlaylist().length;
+  var lastId = context.youtubePlaylistOrder.length;
   var currentId = player.getPlaylistIndex() + 1;
   setPlaylistOrderDisplay(currentId, lastId);
   updateBuilderPlayingHighlight();
 }
 
 function isPlaylistInitialized() {
-  if (!player?.getPlaylist || !player.getPlaylist()) {
+  if (!player?.getPlaylist || !context.youtubePlaylistOrder) {
     return false;
   }
   return true;
