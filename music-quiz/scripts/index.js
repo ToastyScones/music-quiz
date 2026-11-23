@@ -154,7 +154,7 @@ function onPlayerReady(event) {
     pendingStartIndex = 0;
   }
 
-  tryCompletePlaylistInit();
+  //tryCompletePlaylistInit();
   setCurrentPlaylistCounter();
   clearNextPlaylistDisplay();
   setQuizStatusDisplay('Loading...');
@@ -176,7 +176,7 @@ function onPlayerStateChange(event) {
     setVideoUnstartedState();
   }
 
-  tryCompletePlaylistInit();
+  //tryCompletePlaylistInit();
   setCurrentPlaylistCounter();
   setPreviousAnswer();
 }
@@ -730,7 +730,7 @@ function setCurrentPlaylistCounter() {
 }
 
 function isPlaylistInitialized() {
-  if (!player?.getPlaylist || !player.getPlaylist()) {
+  if (!player?.doesGetPlaylistExist() || !player.getPlaylist()) {
     return false;
   }
   return true;

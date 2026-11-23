@@ -32,8 +32,8 @@ class YTPlayerWrapper {
   }
 
   playVideoAt(index) {
-    this.ytPlayer.playVideoAt(index);
-    return;
+    //this.ytPlayer.playVideoAt(index);
+    //return;
 
     // TODO might need a race condition check here
     var videoId = this.currentPlaylist.getVideoIdAt(index);
@@ -50,8 +50,8 @@ class YTPlayerWrapper {
   }
 
   previousVideo() {
-    this.ytPlayer.previousVideo();
-    return;
+    //this.ytPlayer.previousVideo();
+    //return;
 
     // TODO might need a race condition check here
     var previousVideoId = this.currentPlaylist.getPreviousVideoId();
@@ -60,8 +60,8 @@ class YTPlayerWrapper {
   }
 
   nextVideo() {
-    this.ytPlayer.nextVideo();
-    return;
+    //this.ytPlayer.nextVideo();
+    //return;
 
     // TODO might need a race condition check here
     var nextVideoId = this.currentPlaylist.getNextVideoId();
@@ -81,34 +81,35 @@ class YTPlayerWrapper {
     this.ytPlayer.seekTo(seconds);
   }
 
-  cuePlaylist(playlist, index) {
+  cuePlaylist(videoIds, index) {
     // has an optional startSeconds param
-    this.ytPlayer.cuePlaylist(playlist, index);
-    return;
+    //this.ytPlayer.cuePlaylist(playlist, index);
+    //return;
     
     //playlist will be changed to videoIds
     this.currentPlaylist = new Playlist(videoIds);
-    this.ytPlayer.cueVideoById(this.currentPlaylist.getVideoIdAt(0));
+    this.currentPlaylist.setIndex(index);
+    this.ytPlayer.cueVideoById(this.currentPlaylist.getVideoIdAt(index));
   }
 
-  loadPlaylist(playlist, index) {
+  loadPlaylist(videoIds, index) {
     // has an optional startSeconds param
-    this.ytPlayer.loadPlaylist(playlist, index);
-
-    return;
+    //this.ytPlayer.loadPlaylist(playlist, index);
+    //return;
 
     //playlist will be changed to videoIds
     this.currentPlaylist = new Playlist(videoIds);
-    this.ytPlayer.loadVideoById(this.currentPlaylist.getVideoIdAt(0));
+    this.currentPlaylist.setIndex(index);
+    this.ytPlayer.loadVideoById(this.currentPlaylist.getVideoIdAt(index));
   }
 
   getPlaylist() {
-    return this.ytPlayer.getPlaylist();
+    //return this.ytPlayer.getPlaylist();
     return this.currentPlaylist.getVideoIds();
   }
 
   getPlaylistIndex() {
-    return this.ytPlayer.getPlaylistIndex();
+    //return this.ytPlayer.getPlaylistIndex();
     return this.currentPlaylist.getCurrentIndex();
   }
 
