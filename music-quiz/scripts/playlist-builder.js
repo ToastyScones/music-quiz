@@ -436,14 +436,14 @@ function getCurrentPlayerVideoId() {
     return null;
   }
 
-  if (player.getVideoData) {
+  if (player.doesGetVideoDataExist()) {
     var videoData = player.getVideoData();
     if (videoData && videoData.video_id) {
       return videoData.video_id;
     }
   }
 
-  if (!player.getPlaylist) {
+  if (!player.doesGetPlaylistExist()) {
     return null;
   }
 

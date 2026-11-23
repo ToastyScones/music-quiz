@@ -36,6 +36,8 @@ function createYtPlayer() {
 
   document.getElementById('quiz-status-section').style.minHeight = "150px";
 
+  player = new YTPlayerWrapper(onPlayerReady, onPlayerStateChange, onError);
+  /*
   player = new YT.Player('player', {
     height: '390',
     width: '640',
@@ -56,6 +58,7 @@ function createYtPlayer() {
       'onError': onError
     }
   });
+  */
   document.getElementById('player').style.opacity = "50%";
 }
 
@@ -81,9 +84,9 @@ function reloadPlayerWithCurrentOrder() {
 
   context.pendingPlaylistInit = true;
 
-  if (player && player.cuePlaylist) {
+  if (player && player.doesCuePlaylistExist()) {
     player.cuePlaylist(context.videoOrder, 0);
-  } else if (player && player.loadPlaylist) {
+  } else if (player && player.doesLoadPlaylistExist()) {
     player.loadPlaylist(context.videoOrder, 0);
   } else {
     setNewYtPlayerFromOrder(context.videoOrder);
@@ -151,12 +154,12 @@ function onPlayerReady(event) {
       list: pendingPlaylistId,
       index: 0
     };
-    if (pendingAutoPlay && player.loadPlaylist) {
+    if (pendingAutoPlay && player.doesLoadPlaylistExist()) {
       player.loadPlaylist(playlistOptions);
       if (!pendingYoutubeOrderDiscovery) {
         pendingAutoPlay = false;
       }
-    } else if (player.cuePlaylist) {
+    } else if (player.doesCuePlaylistExist()) {
       player.cuePlaylist(playlistOptions);
       pendingAutoPlay = false;
     } else {
@@ -165,7 +168,7 @@ function onPlayerReady(event) {
     pendingLoadMode = null;
     pendingPlaylistId = null;
   } else if (pendingLoadMode === 'videoIds' && pendingVideoIds) {
-    if (pendingAutoPlay && player.loadPlaylist) {
+    if (pendingAutoPlay && player.doesLoadPlaylistExist()) {
       player.loadPlaylist(pendingVideoIds, pendingStartIndex);
     } else if (player.cuePlaylist) {
       player.cuePlaylist(pendingVideoIds, pendingStartIndex);
