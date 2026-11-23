@@ -65,9 +65,9 @@ function reloadPlayerWithCurrentOrder() {
   }
 }
 
-// TODO: this can be removed and the playlist can be initalized on the metadata fetch
+// TODO: simplify this to only render the playlist builder
 function tryCompletePlaylistInit() {
-  if (!context.pendingPlaylistInit || !player?.getPlaylist) {
+  if (!context.pendingPlaylistInit || !player?.doesGetPlaylistExist()) {
     return;
   }
 
@@ -154,7 +154,7 @@ function onPlayerReady(event) {
     pendingStartIndex = 0;
   }
 
-  //tryCompletePlaylistInit();
+  tryCompletePlaylistInit();
   setCurrentPlaylistCounter();
   clearNextPlaylistDisplay();
   setQuizStatusDisplay('Loading...');
@@ -176,7 +176,7 @@ function onPlayerStateChange(event) {
     setVideoUnstartedState();
   }
 
-  //tryCompletePlaylistInit();
+  tryCompletePlaylistInit();
   setCurrentPlaylistCounter();
   setPreviousAnswer();
 }
