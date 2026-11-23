@@ -1,5 +1,9 @@
 
 class YTPlayerWrapper {
+  currentPlaylist; 
+  player1;
+  player2;
+
   constructor(onPlayerReady, onPlayerStateChange, onError) {
     this.ytPlayer = new YT.Player('player', {
       height: '390',
@@ -29,6 +33,12 @@ class YTPlayerWrapper {
 
   playVideoAt(index) {
     this.ytPlayer.playVideoAt(index);
+    return;
+
+    // TODO might need a race condition check here
+    var videoId = this.currentPlaylist.getVideoIdAt(index);
+    this.currentPlaylist.setIndex(index);
+    this.ytPlayer.loadVideoById(videoId);
   }
 
   pauseVideo() {
@@ -41,10 +51,22 @@ class YTPlayerWrapper {
 
   previousVideo() {
     this.ytPlayer.previousVideo();
+    return;
+
+    // TODO might need a race condition check here
+    var previousVideoId = this.currentPlaylist.getPreviousVideoId();
+    this.currentPlaylist.decrementIndex();
+    this.ytPlayer.loadVideoById(previousVideoId);
   }
 
   nextVideo() {
     this.ytPlayer.nextVideo();
+    return;
+
+    // TODO might need a race condition check here
+    var nextVideoId = this.currentPlaylist.getNextVideoId();
+    this.currentPlaylist.incrementIndex();
+    this.ytPlayer.loadVideoById(nextVideoId);
   }
 
   setVolume(volume) {
@@ -62,19 +84,32 @@ class YTPlayerWrapper {
   cuePlaylist(playlist, index) {
     // has an optional startSeconds param
     this.ytPlayer.cuePlaylist(playlist, index);
+    return;
+    
+    //playlist will be changed to videoIds
+    this.currentPlaylist = new Playlist(videoIds);
+    this.ytPlayer.cueVideoById(this.currentPlaylist.getVideoIdAt(0));
   }
 
   loadPlaylist(playlist, index) {
     // has an optional startSeconds param
     this.ytPlayer.loadPlaylist(playlist, index);
+
+    return;
+
+    //playlist will be changed to videoIds
+    this.currentPlaylist = new Playlist(videoIds);
+    this.ytPlayer.loadVideoById(this.currentPlaylist.getVideoIdAt(0));
   }
 
   getPlaylist() {
     return this.ytPlayer.getPlaylist();
+    return this.currentPlaylist.getVideoIds();
   }
 
   getPlaylistIndex() {
     return this.ytPlayer.getPlaylistIndex();
+    return this.currentPlaylist.getCurrentIndex();
   }
 
   getPlayerState() {
@@ -126,5 +161,66 @@ class YTPlayerWrapper {
 
   destroy() {
     this.ytPlayer.destroy();
+  }
+}
+
+
+
+class Playlist {
+  videoIds;
+  currentIndex;
+
+  constructor(videoIds) {
+    this.videoIds = videoIds;
+    this.currentIndex = 0;
+  }
+
+  getVideoIdAt(index) {
+    return this.videoIds[index];
+  }
+
+  getVideoIds() {
+    return this.videoIds;
+  }
+
+  getNextVideoId() {
+    //TODO add index check
+    return this.videoIds[this.currentIndex + 1];
+  }
+
+  getPreviousVideoId() {
+    //TODO add index check
+    return this.videoIds[this.currentIndex - 1];
+  }
+
+  getCurrentIndex() {
+    return this.currentIndex;
+  }
+
+  setIndex(index) {
+    if (index < 0 || index >= this.videoIds.length) {
+      throw 'index out of range';
+    }
+
+    this.currentIndex = index;
+  }
+
+  incrementIndex() {
+    if (this.currentIndex < this.videoIds.length - 1){
+      this.currentIndex = this.currentIndex + 1;
+    }
+  }
+
+  decrementIndex() {
+    if (this.currentIndex > 0){
+      this.currentIndex = this.currentIndex - 1;
+    }
+  }
+
+  length() {
+    if (!this.videoIds || typeof this.videoIds !== 'array') {
+      return -1;
+    }
+    return this.videoIds.length;
   }
 }

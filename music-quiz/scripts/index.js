@@ -37,36 +37,8 @@ function createYtPlayer() {
   document.getElementById('quiz-status-section').style.minHeight = "150px";
 
   player = new YTPlayerWrapper(onPlayerReady, onPlayerStateChange, onError);
-  /*
-  player = new YT.Player('player', {
-    height: '390',
-    width: '640',
-    playerVars: {
-      'disablekb': 1,
-      'autoplay': 1,
-      'playsinline': 0,
-      'loop': 0,
-      'controls': 0, // Show pause/play buttons in player
-      'showinfo': 1, // Hide the video title
-      'modestbranding': 1, // Hide the Youtube Logo'
-      'cc_load_policy': 3, // Hide closed captions
-      'iv_load_policy': 3 // Hide the Video Annotations
-    },
-    events: {
-      'onReady': onPlayerReady,
-      'onStateChange': onPlayerStateChange,
-      'onError': onError
-    }
-  });
-  */
-  document.getElementById('player').style.opacity = "50%";
-}
 
-function setNewYtPlayerFromPlaylistId(playlistId) {
-  context.pendingPlaylistInit = true;
-  pendingLoadMode = 'playlistId';
-  pendingPlaylistId = playlistId;
-  createYtPlayer();
+  document.getElementById('player').style.opacity = "50%";
 }
 
 function setNewYtPlayerFromOrder(videoIds, startIndex) {
@@ -93,6 +65,7 @@ function reloadPlayerWithCurrentOrder() {
   }
 }
 
+// TODO: this can be removed and the playlist can be initalized on the metadata fetch
 function tryCompletePlaylistInit() {
   if (!context.pendingPlaylistInit || !player?.getPlaylist) {
     return;
@@ -555,7 +528,7 @@ function nextVideoAfterQuiz(milliSecondsRemaining) {
 // Start fading out the current (still-playing) audio over context.fadeOutMs,
 // so it is nearly silent by the time the next video/playlist is actually
 // loaded. The fade interval is torn down by clearQuizFutures (via
-// clearStateForNextVideo / loadPlaylistFromParsed) when the next
+// clearStateForNextVideo / loadPlaylistFromQueue) when the next
 // video/playlist is loaded. Honors the "Disable audio fade out" checkbox
 // (no-ops if it is checked).
 function startVolumeFadeOut() {
