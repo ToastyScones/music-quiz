@@ -36,34 +36,9 @@ function createYtPlayer() {
 
   document.getElementById('quiz-status-section').style.minHeight = "150px";
 
-  player = new YT.Player('player', {
-    height: '390',
-    width: '640',
-    playerVars: {
-      'disablekb': 1,
-      'autoplay': 1,
-      'playsinline': 0,
-      'loop': 0,
-      'controls': 0, // Show pause/play buttons in player
-      'showinfo': 1, // Hide the video title
-      'modestbranding': 1, // Hide the Youtube Logo'
-      'cc_load_policy': 3, // Hide closed captions
-      'iv_load_policy': 3 // Hide the Video Annotations
-    },
-    events: {
-      'onReady': onPlayerReady,
-      'onStateChange': onPlayerStateChange,
-      'onError': onError
-    }
-  });
-  document.getElementById('player').style.opacity = "50%";
-}
+  player = new YTPlayerWrapper(onPlayerReady, onPlayerStateChange, onError);
 
-function setNewYtPlayerFromPlaylistId(playlistId) {
-  context.pendingPlaylistInit = true;
-  pendingLoadMode = 'playlistId';
-  pendingPlaylistId = playlistId;
-  createYtPlayer();
+  document.getElementById('player').style.opacity = "50%";
 }
 
 function setNewYtPlayerFromOrder(videoIds, startIndex) {
@@ -81,15 +56,16 @@ function reloadPlayerWithCurrentOrder() {
 
   context.pendingPlaylistInit = true;
 
-  if (player && player.cuePlaylist) {
+  if (player && player.doesCuePlaylistExist()) {
     player.cuePlaylist(context.videoOrder, 0);
-  } else if (player && player.loadPlaylist) {
+  } else if (player && player.doesLoadPlaylistExist()) {
     player.loadPlaylist(context.videoOrder, 0);
   } else {
     setNewYtPlayerFromOrder(context.videoOrder);
   }
 }
 
+// TODO: this can be removed and the playlist can be initalized on the metadata fetch
 function tryCompletePlaylistInit() {
   if (!context.pendingPlaylistInit || !player?.getPlaylist) {
     return;
@@ -151,12 +127,12 @@ function onPlayerReady(event) {
       list: pendingPlaylistId,
       index: 0
     };
-    if (pendingAutoPlay && player.loadPlaylist) {
+    if (pendingAutoPlay && player.doesLoadPlaylistExist()) {
       player.loadPlaylist(playlistOptions);
       if (!pendingYoutubeOrderDiscovery) {
         pendingAutoPlay = false;
       }
-    } else if (player.cuePlaylist) {
+    } else if (player.doesCuePlaylistExist()) {
       player.cuePlaylist(playlistOptions);
       pendingAutoPlay = false;
     } else {
@@ -165,7 +141,7 @@ function onPlayerReady(event) {
     pendingLoadMode = null;
     pendingPlaylistId = null;
   } else if (pendingLoadMode === 'videoIds' && pendingVideoIds) {
-    if (pendingAutoPlay && player.loadPlaylist) {
+    if (pendingAutoPlay && player.doesLoadPlaylistExist()) {
       player.loadPlaylist(pendingVideoIds, pendingStartIndex);
     } else if (player.cuePlaylist) {
       player.cuePlaylist(pendingVideoIds, pendingStartIndex);
@@ -178,7 +154,7 @@ function onPlayerReady(event) {
     pendingStartIndex = 0;
   }
 
-  tryCompletePlaylistInit();
+  //tryCompletePlaylistInit();
   setCurrentPlaylistCounter();
   clearNextPlaylistDisplay();
   setQuizStatusDisplay('Loading...');
@@ -200,7 +176,7 @@ function onPlayerStateChange(event) {
     setVideoUnstartedState();
   }
 
-  tryCompletePlaylistInit();
+  //tryCompletePlaylistInit();
   setCurrentPlaylistCounter();
   setPreviousAnswer();
 }
@@ -381,7 +357,7 @@ function setVideoPlayingState() {
 
   if (doesVideoNeedSeekTo()) {
     context.hasSeekToBeenApplied = true;
-    seekTo(context.vidTimestamps[getPlaylistIndex()]);
+    seekTo(context.vidTimestamps[player.getPlaylistIndex()]);
     workerSetTimeout(startQuizTimersIfPlaying, 300);
     return;
   }
@@ -502,7 +478,7 @@ function seekTo(seconds) {
 }
 
 function doesVideoNeedSeekTo() {
-  var playerPlaylistIndex = getPlaylistIndex();
+  var playerPlaylistIndex = player.getPlaylistIndex();
   if (playerPlaylistIndex in context.vidTimestamps) {
     return !context.hasSeekToBeenApplied;
   }
@@ -552,7 +528,7 @@ function nextVideoAfterQuiz(milliSecondsRemaining) {
 // Start fading out the current (still-playing) audio over context.fadeOutMs,
 // so it is nearly silent by the time the next video/playlist is actually
 // loaded. The fade interval is torn down by clearQuizFutures (via
-// clearStateForNextVideo / loadPlaylistFromParsed) when the next
+// clearStateForNextVideo / loadPlaylistFromQueue) when the next
 // video/playlist is loaded. Honors the "Disable audio fade out" checkbox
 // (no-ops if it is checked).
 function startVolumeFadeOut() {
@@ -663,8 +639,8 @@ function isEndOfPlaylist() {
     return true;
   }
 
-  var lastIndex = context.youtubePlaylistOrder.length - 1;
-  var currentIndex = getPlaylistIndex();
+  var lastIndex = player.getPlaylist().length - 1;
+  var currentIndex = player.getPlaylistIndex();
   return currentIndex === lastIndex || (lastIndex === -1 && currentIndex === 0);
 }
 
@@ -677,7 +653,7 @@ function isFirstVideoInPlaylist() {
   if (!isPlaylistInitialized()) {
     return true;
   }
-  return getPlaylistIndex() === 0;
+  return player.getPlaylistIndex() === 0;
 }
 
 function getVideoTitleWithFallback() {
@@ -717,7 +693,7 @@ function clearMessagesAndFutures() {
 function setPreviousAnswer() {
   if (!player) { return; }
 
-  var currentVideoIndex = getPlaylistIndex();
+  var currentVideoIndex = player.getPlaylistIndex();
 
   if (currentVideoIndex > context.previousVideoIndex) {
     setUnknownPreviousVideoMessage();
@@ -726,7 +702,7 @@ function setPreviousAnswer() {
 }
 
 function setPreviousAnswerState() {
-  context.setPreviousAnswerState(getPlaylistIndex(), getVideoTitle());
+  context.setPreviousAnswerState(player.getPlaylistIndex(), getVideoTitle());
 }
 
 function toggleMute() {
@@ -747,34 +723,15 @@ function unMute() {
 
 function setCurrentPlaylistCounter() {
   if (!isPlaylistInitialized()) { return; }
-  var lastId = context.youtubePlaylistOrder.length;
-  var currentId = getPlaylistIndex() + 1;
+  var lastId = player.getPlaylist().length;
+  var currentId = player.getPlaylistIndex() + 1;
   setPlaylistOrderDisplay(currentId, lastId);
   updateBuilderPlayingHighlight();
 }
 
 function isPlaylistInitialized() {
-  if (!player?.getPlaylist || !context.youtubePlaylistOrder) {
+  if (!player?.doesGetPlaylistExist() || !player.getPlaylist()) {
     return false;
   }
   return true;
-}
-
-function getPlaylistIndex() {
-  if (!player) {
-    return -1;
-  }
-
-  var index = player.getPlaylistIndex();
-
-  if (index !== -1) {
-    return index;
-  }
-
-  if (player.getVideoData && context.youtubePlaylistOrder) {
-    var videoId = player.getVideoData().video_id;
-    return context.youtubePlaylistOrder.indexOf(videoId);
-  }
-
-  return -1;
 }
