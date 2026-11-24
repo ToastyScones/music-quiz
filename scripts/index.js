@@ -388,14 +388,12 @@ function setPausedVideoState() {
 }
 
 function setVideoEndedState() {
-  context.isQuizManuallyStopped = true;
-
   if (isEndOfPlaylist()) {
     context.isQuizForPlaylistDone = true;
-    return;
+  } else if (!context.isQuizManuallyStopped) {
+    clearStateForNextVideo();
+    player.nextVideo();
   }
-
-  clearStateForNextVideo();
 }
 
 function setVideoUnstartedState() {
@@ -492,7 +490,6 @@ function clearStateForNextVideo() {
   setQuizStatusDisplay('');
   setVolumeStateForNextVideo();
 }
-
 
 // This function gets called in the last couple seconds as the 
 //  music fades out and the next video is queued to play.
