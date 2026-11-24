@@ -500,7 +500,6 @@ function previewVideoAtIndex(index) {
 
   context.isQuizManuallyStopped = false;
   context.isQuizForPlaylistDone = false;
-  context.hasSeekToBeenApplied = false;
   context.didVideoJustChange = true;
   context.needLastVolumeApplied = false;
   context.vidTimestamps = getTimestampsFromBuilderUI();
