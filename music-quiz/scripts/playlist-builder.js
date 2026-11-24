@@ -436,14 +436,14 @@ function getCurrentPlayerVideoId() {
     return null;
   }
 
-  if (player.getVideoData) {
+  if (player.doesGetVideoDataExist()) {
     var videoData = player.getVideoData();
     if (videoData && videoData.video_id) {
       return videoData.video_id;
     }
   }
 
-  if (!player.getPlaylist) {
+  if (!player.doesGetPlaylistExist()) {
     return null;
   }
 
@@ -500,7 +500,6 @@ function previewVideoAtIndex(index) {
 
   context.isQuizManuallyStopped = false;
   context.isQuizForPlaylistDone = false;
-  context.hasSeekToBeenApplied = false;
   context.didVideoJustChange = true;
   context.needLastVolumeApplied = false;
   context.vidTimestamps = getTimestampsFromBuilderUI();
@@ -509,8 +508,9 @@ function previewVideoAtIndex(index) {
   setPlayerVisible();
 
   context.isPreviewStarting = true;
+
+  setQuizStatusDisplay('(Loading next video...)');
   player.playVideoAt(index);
-  player.playVideo();
 }
 
 // Adds the builder's generated URL (list + custom video order + per-video
@@ -531,28 +531,32 @@ function addBuilderToQueue() {
   // the t* start-time params (user options).
   var parsed = parsePlaylistInput(url);
 
-  var item = {
-    parsed: parsed,
+  var playlistMetadata = {
     title: 'Adding playlist...',
     author: null,
     thumbnail: null,
     metaLoaded: false,
-    pending: true
+    pending: true,
+    playlistId: parsed.playlistId,
+    playlistVideoIds: null,
+    customPlaylistVideoIds: parsed.videoOrder,
+    timestamps: parsed.timestamps,
+    error: parsed.error
   };
 
   // Capture the final-finished state before pushing the temp item, because
   // adding an item to the queue changes playlistQueue.length and would make
   // isFinalFinishedState() report false.
   var wasInFinalFinishedState = isFinalFinishedState();
-  playlistQueue.push(item);
+  playlistQueue.push(playlistMetadata);
   renderQueueList();
 
   // The playlist is only added to the queue if its metadata can be fetched
   // via the oEmbed REST request. On failure the temporary queue item is
   // removed and an error is displayed instead of queuing the item.
-  fetchPlaylistMetadata(parsed.playlistId, item).then(function (metaLoaded) {
+  fetchPlaylistMetadata(parsed.playlistId, playlistMetadata).then(function (metaLoaded) {
     if (metaLoaded) {
-      item.pending = false;
+      playlistMetadata.pending = false;
       if (wasInFinalFinishedState) {
         // The quiz was in the final finished state (last playlist, last
         // video, and the end-of-playlist message displayed with no upcoming
@@ -563,7 +567,7 @@ function addBuilderToQueue() {
     } else {
       // Error out: remove the temporary queue item so the queue only
       // reflects playlists that were actually added.
-      var tempIndex = playlistQueue.indexOf(item);
+      var tempIndex = playlistQueue.indexOf(playlistMetadata);
       if (tempIndex !== -1) {
         playlistQueue.splice(tempIndex, 1);
       }

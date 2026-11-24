@@ -91,7 +91,7 @@ Added an inline, collapsible **Playlist Builder** section to the music quiz site
 
 ### First video error (code 2) on Load with custom order
 - **Cause:** `cuePlaylist` on custom IDs while the YouTube playlist was still loading on the same player instance.
-- **Fix:** After YouTube order discovery, **recreate the player** via `setNewYtPlayerFromOrder()` (clean load of custom IDs only). Suppress errors during transition with `isTransitioningToCustomOrder`.
+- **Fix:** After YouTube order discovery, **recreate the player** via `setNewYtPlayer()` (clean load of custom IDs only). Suppress errors during transition with `isTransitioningToCustomOrder`.
 
 ### Load Playlist status message overwritten
 - **Cause:** YouTube player `UNSTARTED` state called `setVideoUnstartedState()`, replacing `[Waiting for quiz to start]` with `(Starting next video)` after load.
@@ -118,7 +118,7 @@ Added an inline, collapsible **Playlist Builder** section to the music quiz site
 | `parsePlaylistInput()` / `buildPlaylistUrl()` | URL parse/serialize |
 | `tryCompletePlaylistInit()` | Playlist ready handshake |
 | `reloadPlayerWithCurrentOrder()` | Apply custom order to existing player |
-| `setNewYtPlayerFromOrder()` | New player with video-ID array |
+| `setNewYtPlayer()` | New player with video-ID array |
 | `startQuizTimersIfPlaying()` | Start guess/post-quiz timers |
 | `resetQuizCountdownToSettings()` | Full timer reset (preview, etc.) |
 | `stopQuizLikeManualReveal()` | Shared manual-stop behavior |

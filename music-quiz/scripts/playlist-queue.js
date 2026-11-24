@@ -4,7 +4,7 @@
 //
 // UI: "Add to Queue" / "Play Queue" buttons in index.html (controls section).
 // All functions here are global and cooperate with scripts/index.js:
-//   - loadPlaylistFromParsed(parsed, autoPlay) is the shared load path used by
+//   - loadPlaylistFromQueue(parsed, autoPlay) is the shared load path used by
 //     both a manual "Load Playlist" and an auto-advance.
 //   - maybeAutoAdvanceToNextPlaylist() is called when "End of playlist" is
 //     displayed (setGuessAsFinished in index.js), not when the video ends.
@@ -56,13 +56,18 @@ async function addPlaylistToQueue() {
     return;
   }
 
-  var item = {
-    parsed: parsed,
+  // TODO: refactor this  and the one in playlist-builder into one
+  var playlistMetadata = {
     title: 'Adding playlist...',
     author: null,
     thumbnail: null,
     metaLoaded: false,
-    pending: true
+    pending: true,
+    playlistId: parsed.playlistId,
+    playlistVideoIds: null,
+    customPlaylistVideoIds: parsed.videoOrder,
+    timestamps: parsed.timestamps,
+    error: parsed.error
   };
 
   // The Add to Queue button is disabled and a temporary queue item is shown
@@ -74,17 +79,17 @@ async function addPlaylistToQueue() {
   // adding an item to the queue changes playlistQueue.length and would make
   // isFinalFinishedState() report false.
   var wasInFinalFinishedState = isFinalFinishedState();
-  playlistQueue.push(item);
+  playlistQueue.push(playlistMetadata);
   renderQueueList();
 
   // The playlist is only added to the queue if its metadata can be fetched
   // via the oEmbed REST request. On failure the temporary queue item is
   // removed and the input is left intact so the user can retry, and an error
   // is displayed instead of queuing the item.
-  var metaLoaded = await fetchPlaylistMetadata(parsed.playlistId, item);
+  var metaLoaded = await fetchPlaylistMetadata(parsed.playlistId, playlistMetadata);
 
   if (metaLoaded) {
-    item.pending = false;
+    playlistMetadata.pending = false;
     document.getElementById('playlistIdText').value = '';
 
     if (wasInFinalFinishedState) {
@@ -97,7 +102,7 @@ async function addPlaylistToQueue() {
   } else {
     // Error out: remove the temporary queue item so the queue only reflects
     // playlists that were actually added.
-    var tempIndex = playlistQueue.indexOf(item);
+    var tempIndex = playlistQueue.indexOf(playlistMetadata);
     if (tempIndex !== -1) {
       playlistQueue.splice(tempIndex, 1);
     }
@@ -119,7 +124,7 @@ function isFinalFinishedState() {
     queueIndex + 1 >= playlistQueue.length;
 }
 
-async function fetchPlaylistMetadata(playlistId, item) {
+async function fetchPlaylistMetadata(playlistId, playlistMetadata) {
   var url = 'https://www.youtube.com/oembed?url=https://www.youtube.com/playlist?list=' +
     encodeURIComponent(playlistId) + '&format=json';
 
@@ -129,11 +134,13 @@ async function fetchPlaylistMetadata(playlistId, item) {
       throw new Error('oEmbed failed');
     }
     const data = await response.json();
-    item.title = data.title;
-    item.author = data.author_name;
-    item.thumbnail = data.thumbnail_url;
-    item.metaLoaded = true;
-    const result = await validateYouTubePlaylist(playlistId);
+    playlistMetadata.title = data.title;
+    playlistMetadata.author = data.author_name;
+    playlistMetadata.thumbnail = data.thumbnail_url;
+
+    const result = await validateYTPlaylistAndSetVideoIDs(playlistId, playlistMetadata);
+
+    // TODO: double check if this works with loadByVideoId
     // For some reason, loadPlaylist and cuePlaylist won't return an error if embed is disabled
     //  in the first video or the playlist as a whole. We need to do one last check and validate
     //  here before inserting into the queue. 
@@ -141,6 +148,10 @@ async function fetchPlaylistMetadata(playlistId, item) {
       setLoadPlaylistError('Could not add YouTube playlist. ' + result.message);
       return false;
     }
+
+    playlistMetadata.videoTitles = await getYouTubeVideoTitles(playlistMetadata.playlistVideoIds);
+
+    playlistMetadata.metaLoaded = true;
     return true;
   } catch {
     setLoadPlaylistError('Could not add YouTube playlist. ' +
@@ -149,7 +160,32 @@ async function fetchPlaylistMetadata(playlistId, item) {
   }
 }
 
-function validateYouTubePlaylist(playlistId) {
+async function getYouTubeVideoTitles(videoIds) {
+  const fetchPromises = videoIds.map(async (videoId) => {
+    var url = 'https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=' +
+    encodeURIComponent(videoId) + '&format=json';
+
+    try {  
+      const response = await fetch(url);
+
+      if (response.ok) {
+        const data = await response.json();
+        return [videoId, data.title];
+      } else {
+        // TODO: try to set the title again in yt-player if null
+        return [videoId, null];
+      }
+    } catch (error) {
+      // TODO: try to set the title again in yt-player if null
+      return [videoId, null];
+    }
+  });
+
+  // Resolve all API requests concurrently
+  return new Map(await Promise.all(fetchPromises));
+}
+
+function validateYTPlaylistAndSetVideoIDs(playlistId, playlistMetadata) {
   return new Promise((resolve) => {
     const containerId = `yt-val-${Math.random().toString(36).substr(2, 9)}`;
     const div = document.createElement('div');
@@ -201,12 +237,19 @@ function validateYouTubePlaylist(playlistId) {
               event.target.setPlaybackQuality('small'); 
             }
 
-            const playlistData = event.target.getPlaylist();
+            const playlistVideoIds = event.target.getPlaylist();
             
             // Check structural layout arrays
-            if (!playlistData || playlistData.length === 0) {
+            if (!playlistVideoIds || playlistVideoIds.length === 0) {
               finalize(false, "Playlist is empty or the video owner does not allow it to be embedded.");
               return;
+            }
+
+            // Save video IDs for playlist management
+            if (playlistMetadata.customPlaylistVideoIds) {
+              playlistMetadata.playlistVideoIds = playlistMetadata.customPlaylistVideoIds;
+            } else {
+              playlistMetadata.playlistVideoIds = playlistVideoIds;
             }
 
             // DELAY RESOLUTION: Give onError a brief window (250ms) to intercept
@@ -352,12 +395,12 @@ function renderQueueList() {
 // where each tN param sets a start time for the video at playlist
 // position N (no `order` param).
 function copyQueueItemUrl(index) {
-  var item = playlistQueue[index];
-  if (!item) {
+  var playlistMetadata = playlistQueue[index];
+  if (!playlistMetadata) {
     return;
   }
 
-  var playlistId = item.parsed.playlistId;
+  var playlistId = playlistMetadata.playlistId;
   if (!playlistId) {
     return;
   }
@@ -369,7 +412,7 @@ function copyQueueItemUrl(index) {
   var params = new URLSearchParams();
   params.set('list', playlistId);
 
-  var timestamps = item.parsed.timestamps || {};
+  var timestamps = playlistMetadata.timestamps || {};
   Object.keys(timestamps).forEach(function (key) {
     var index = Number(key);
     var seconds = timestamps[key];
@@ -498,10 +541,10 @@ function playQueue() {
   // having to click the green play button. The auto-advance countdown is
   // NOT started here; it only begins when "End of playlist" is displayed
   // (setGuessAsFinished in index.js).
-  loadPlaylistFromParsed(playlistQueue[0].parsed, true);
+  loadPlaylistFromQueue(playlistQueue[0], true);
 }
 
-function loadPlaylistFromParsed(parsed, autoPlay) {
+function loadPlaylistFromQueue(playlistMetadata, autoPlay) {
   pendingAutoPlay = autoPlay;
 
   // Before moving to the new playlist, if a video is currently loaded, record
@@ -518,15 +561,17 @@ function loadPlaylistFromParsed(parsed, autoPlay) {
   }
 
   context.resetBuilderState();
-  context.vidTimestamps = parsed.timestamps;
-  context.sourcePlaylistId = parsed.playlistId;
+  context.vidTimestamps = playlistMetadata.timestamps;
+  context.sourcePlaylistId = playlistMetadata.playlistId;
+  context.youtubePlaylistOrder = playlistMetadata.playlistVideoIds;
+  context.videoTitles = playlistMetadata.videoTitles;
   // A freshly loaded playlist is attached to the queue again, so a
   // previously-detached state never carries over into the next playlist.
   context.detachedFromPlaylist = false;
   context.needLastVolumeApplied = false;
 
-  if (parsed.videoOrder) {
-    context.videoOrder = parsed.videoOrder.slice();
+  if (playlistMetadata.videoOrder) {
+    context.videoOrder = playlistMetadata.videoOrder.slice();
     pendingYoutubeOrderDiscovery = true;
     isTransitioningToCustomOrder = false;
   } else {
@@ -556,7 +601,14 @@ function loadPlaylistFromParsed(parsed, autoPlay) {
     setQuizReadyDisplay();
   }
 
-  setNewYtPlayerFromPlaylistId(parsed.playlistId);
+  // TODO: consolidate videoOrder and youtubePlaylistOrder
+  // TODO: Change youtubePlaylistOrder so it's an object of metadata that contains video
+  //  ids, titles, and maybe other things like starting seconds
+  if (context.videoOrder) {
+    setNewYtPlayer(context.videoOrder);
+  } else {
+    setNewYtPlayer(context.youtubePlaylistOrder);
+  }  
 }
 
 function maybeAutoAdvanceToNextPlaylist() {
@@ -643,7 +695,7 @@ function loadNextQueuedPlaylist() {
   //console.log("loadNextQueuedPlaylist called - " + new Date(Date.now()));
   queueIndex++;
   renderQueueList();
-  loadPlaylistFromParsed(playlistQueue[queueIndex].parsed, true);
+  loadPlaylistFromQueue(playlistQueue[queueIndex], true);
 }
 
 function loadPlaylistAtIndex(index) {
@@ -653,7 +705,7 @@ function loadPlaylistAtIndex(index) {
   clearAutoAdvanceTimers();
   queueIndex = index;
   renderQueueList();
-  loadPlaylistFromParsed(playlistQueue[index].parsed, true);
+  loadPlaylistFromQueue(playlistQueue[index], true);
 }
 
 function clearAutoAdvanceTimers() {

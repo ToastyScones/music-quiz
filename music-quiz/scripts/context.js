@@ -11,10 +11,8 @@ class QuizContext {
   lastVidTimeLeftSeconds;
   didVideoJustChange;
   vidTimestamps;
-  hasSeekToBeenApplied;
   needLastVolumeApplied;
   previousVideoIndex;
-  previousVideoTitle;
   sourcePlaylistId;
   youtubePlaylistOrder;
   videoOrder;
@@ -38,10 +36,8 @@ class QuizContext {
     this.didVideoError = false;
     this.didVideoJustChange = false;
     this.vidTimestamps = {};
-    this.hasSeekToBeenApplied = false;
     this.needLastVolumeApplied = false;
     this.previousVideoIndex = 0;
-    this.previousVideoTitle = '';
     this.sourcePlaylistId = null;
     this.youtubePlaylistOrder = null;
     this.videoOrder = null;
@@ -68,7 +64,6 @@ class QuizContext {
     this.isQuizManuallyStopped = false;
     this.isQuizForVideoDone = false;
     this.isQuizForPlaylistDone = false;
-    this.hasSeekToBeenApplied = false;
     this.lastVidTimeLeftSeconds = undefined;
     this.lastGuessTimeLimitSeconds = undefined;
   }
@@ -101,10 +96,5 @@ class QuizContext {
       seconds = 1;
     }
     return seconds;
-  }
-
-  setPreviousAnswerState(playlistIndex, videoTitle) {
-    this.previousVideoIndex = playlistIndex;
-    this.previousVideoTitle = videoTitle;
   }
 }

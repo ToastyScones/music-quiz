@@ -78,7 +78,6 @@ function parsePlaylistInput(text) {
     playlistId: null,
     videoOrder: null,
     timestamps: {},
-    firstVideoId: null,
     error: null
   };
 
@@ -100,7 +99,6 @@ function parsePlaylistInput(text) {
 
     var params = url.searchParams;
     result.playlistId = params.get('list');
-    result.firstVideoId = params.get('v');
     result.videoOrder = parseOrderParam(params.get('order'));
     result.timestamps = parseTimestampParams(params);
 
