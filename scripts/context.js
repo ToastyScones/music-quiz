@@ -11,7 +11,6 @@ class QuizContext {
   lastVidTimeLeftSeconds;
   didVideoJustChange;
   vidTimestamps;
-  hasSeekToBeenApplied;
   needLastVolumeApplied;
   previousVideoIndex;
   previousVideoTitle;
@@ -38,7 +37,6 @@ class QuizContext {
     this.didVideoError = false;
     this.didVideoJustChange = false;
     this.vidTimestamps = {};
-    this.hasSeekToBeenApplied = false;
     this.needLastVolumeApplied = false;
     this.previousVideoIndex = 0;
     this.previousVideoTitle = '';
@@ -68,7 +66,6 @@ class QuizContext {
     this.isQuizManuallyStopped = false;
     this.isQuizForVideoDone = false;
     this.isQuizForPlaylistDone = false;
-    this.hasSeekToBeenApplied = false;
     this.lastVidTimeLeftSeconds = undefined;
     this.lastGuessTimeLimitSeconds = undefined;
   }

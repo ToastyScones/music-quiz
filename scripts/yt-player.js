@@ -36,7 +36,7 @@ class YTPlayerWrapper {
     // TODO might need a race condition check here
     var videoId = this.currentPlaylist.getVideoIdAt(index);
     this.currentPlaylist.setIndex(index);
-    this.ytPlayer.loadVideoById(videoId);
+    this.ytPlayer.loadVideoById(videoId, this.getStartingSeconds());
   }
 
   pauseVideo() {
@@ -51,7 +51,7 @@ class YTPlayerWrapper {
     // TODO might need a race condition check here
     var previousVideoId = this.currentPlaylist.getPreviousVideoId();
     this.currentPlaylist.decrementIndex();
-    this.ytPlayer.loadVideoById(previousVideoId);
+    this.ytPlayer.loadVideoById(previousVideoId, this.getStartingSeconds());
   }
 
   nextVideo() {
@@ -59,7 +59,7 @@ class YTPlayerWrapper {
     // TODO load video at seconds if applicable
     var nextVideoId = this.currentPlaylist.getNextVideoId();
     this.currentPlaylist.incrementIndex();
-    this.ytPlayer.loadVideoById(nextVideoId);
+    this.ytPlayer.loadVideoById(nextVideoId, this.getStartingSeconds());
   }
 
   setVolume(volume) {
@@ -79,7 +79,7 @@ class YTPlayerWrapper {
     this.currentPlaylist.setIndex(index);
 
     // TODO: has an optional startSeconds paramb
-    this.ytPlayer.cueVideoById(this.currentPlaylist.getVideoIdAt(index));
+    this.ytPlayer.cueVideoById(this.currentPlaylist.getVideoIdAt(index), this.getStartingSeconds());
   }
 
   loadPlaylist(videoIds, index) {
@@ -87,16 +87,14 @@ class YTPlayerWrapper {
     this.currentPlaylist.setIndex(index);
 
     // TODO: has an optional startSeconds param
-    this.ytPlayer.loadVideoById(this.currentPlaylist.getVideoIdAt(index));
+    this.ytPlayer.loadVideoById(this.currentPlaylist.getVideoIdAt(index), this.getStartingSeconds());
   }
 
   getPlaylist() {
-    //return this.ytPlayer.getPlaylist();
     return this.currentPlaylist.getVideoIds();
   }
 
   getPlaylistIndex() {
-    //return this.ytPlayer.getPlaylistIndex();
     return this.currentPlaylist.getCurrentIndex();
   }
 
@@ -145,6 +143,13 @@ class YTPlayerWrapper {
       return true;
     }
     return false;
+  }
+
+  getStartingSeconds() {
+    if (!context?.vidTimestamps) {
+      return 0;
+    }
+    return context.vidTimestamps[this.getPlaylistIndex()]
   }
 
   destroy() {

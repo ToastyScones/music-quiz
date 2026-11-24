@@ -354,14 +354,7 @@ function setVideoPlayingState() {
   if (context.isQuizManuallyStopped || context.isQuizForPlaylistDone) {
     return;
   }
-
-  if (doesVideoNeedSeekTo()) {
-    context.hasSeekToBeenApplied = true;
-    seekTo(context.vidTimestamps[player.getPlaylistIndex()]);
-    workerSetTimeout(startQuizTimersIfPlaying, 300);
-    return;
-  }
-
+  
   startQuizTimersIfPlaying();
 }
 
@@ -473,14 +466,6 @@ function setVideoVolume(volume) {
 
 function seekTo(seconds) {
   player.seekTo(seconds);
-}
-
-function doesVideoNeedSeekTo() {
-  var playerPlaylistIndex = player.getPlaylistIndex();
-  if (playerPlaylistIndex in context.vidTimestamps) {
-    return !context.hasSeekToBeenApplied;
-  }
-  return false;
 }
 
 function clearStateForNextVideo() {
