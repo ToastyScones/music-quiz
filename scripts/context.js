@@ -13,7 +13,6 @@ class QuizContext {
   vidTimestamps;
   needLastVolumeApplied;
   previousVideoIndex;
-  previousVideoTitle;
   sourcePlaylistId;
   youtubePlaylistOrder;
   videoOrder;
@@ -39,7 +38,6 @@ class QuizContext {
     this.vidTimestamps = {};
     this.needLastVolumeApplied = false;
     this.previousVideoIndex = 0;
-    this.previousVideoTitle = '';
     this.sourcePlaylistId = null;
     this.youtubePlaylistOrder = null;
     this.videoOrder = null;
@@ -98,10 +96,5 @@ class QuizContext {
       seconds = 1;
     }
     return seconds;
-  }
-
-  setPreviousAnswerState(playlistIndex, videoTitle) {
-    this.previousVideoIndex = playlistIndex;
-    this.previousVideoTitle = videoTitle;
   }
 }

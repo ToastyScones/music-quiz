@@ -48,11 +48,6 @@ function setLastAnswerText(videoTitle) {
   document.getElementById('previous-answer').style.display = "flex";
 }
 
-function setUnknownPreviousVideoMessage() {
-  setLastAnswerText(context.previousVideoTitle ??
-    '[I don\'t know, you\'re clicking too fast!! ＞ᨓ＜]');
-}
-
 function getVideoDidNotLoadMessage() {
   return 'I don\'t know!! ＞ᨓ＜ <br>[The YouTube API doesn\'t instantly load, ' +
     'so clicking Reveal Answer causes issues before loading is complete. ' +
