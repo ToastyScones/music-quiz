@@ -1,6 +1,5 @@
 var player;
 var context = new QuizContext();
-var pendingLoadMode = null;
 var pendingPlaylistId = null;
 var pendingVideoIds = null;
 var pendingStartIndex = 0;
@@ -41,9 +40,8 @@ function createYtPlayer() {
   document.getElementById('player').style.opacity = "50%";
 }
 
-function setNewYtPlayerFromOrder(videoIds, startIndex) {
+function setNewYtPlayer(videoIds, startIndex) {
   context.pendingPlaylistInit = true;
-  pendingLoadMode = 'videoIds';
   pendingVideoIds = videoIds;
   pendingStartIndex = startIndex || 0;
   createYtPlayer();
@@ -61,7 +59,7 @@ function reloadPlayerWithCurrentOrder() {
   } else if (player && player.doesLoadPlaylistExist()) {
     player.loadPlaylist(context.videoOrder, 0);
   } else {
-    setNewYtPlayerFromOrder(context.videoOrder);
+    setNewYtPlayer(context.videoOrder);
   }
 }
 
@@ -82,7 +80,7 @@ function tryCompletePlaylistInit() {
     context.youtubePlaylistOrder = playlistOrder.slice();
     pendingYoutubeOrderDiscovery = false;
     isTransitioningToCustomOrder = true;
-    setNewYtPlayerFromOrder(context.videoOrder, 0);
+    setNewYtPlayer(context.videoOrder, 0);
     return;
   }
 
@@ -106,7 +104,7 @@ function tryCompletePlaylistInit() {
 }
 
 function setVolumeStateForNextVideo() {
-  if (!(player?.setVolume) || context.needLastVolumeApplied) { return; }
+  if (!(player?.doesSetVolumeExist()) || context.needLastVolumeApplied) { return; }
 
   //setVideoVolume(1);
   context.needLastVolumeApplied = true;
@@ -121,26 +119,7 @@ function onPlayerReady(event) {
 
   event.target.setVolume(getVolume());
 
-  if (pendingLoadMode === 'playlistId' && pendingPlaylistId) {
-    var playlistOptions = {
-      listType: 'playlist',
-      list: pendingPlaylistId,
-      index: 0
-    };
-    if (pendingAutoPlay && player.doesLoadPlaylistExist()) {
-      player.loadPlaylist(playlistOptions);
-      if (!pendingYoutubeOrderDiscovery) {
-        pendingAutoPlay = false;
-      }
-    } else if (player.doesCuePlaylistExist()) {
-      player.cuePlaylist(playlistOptions);
-      pendingAutoPlay = false;
-    } else {
-      player.loadPlaylist(playlistOptions);
-    }
-    pendingLoadMode = null;
-    pendingPlaylistId = null;
-  } else if (pendingLoadMode === 'videoIds' && pendingVideoIds) {
+ if (pendingVideoIds) {
     if (pendingAutoPlay && player.doesLoadPlaylistExist()) {
       player.loadPlaylist(pendingVideoIds, pendingStartIndex);
     } else if (player.cuePlaylist) {
@@ -149,7 +128,6 @@ function onPlayerReady(event) {
       player.loadPlaylist(pendingVideoIds, pendingStartIndex);
     }
     pendingAutoPlay = false;
-    pendingLoadMode = null;
     pendingVideoIds = null;
     pendingStartIndex = 0;
   }
@@ -354,7 +332,7 @@ function setVideoPlayingState() {
   if (context.isQuizManuallyStopped || context.isQuizForPlaylistDone) {
     return;
   }
-  
+
   startQuizTimersIfPlaying();
 }
 
@@ -429,6 +407,10 @@ function previousVideo() {
       previousPlaylistIndex < playlistQueue.length) {
     loadPlaylistAtIndex(previousPlaylistIndex);
     return;
+  } else if (isFirstVideoInPlaylist() && previousPlaylistIndex === -1) {
+    // no previous playlist, but also the first video. do nothing
+    // TODO: maybe change yt-player so that previous video just goes back to 0 seconds instead
+    return;
   }
   context.didVideoJustChange = true;
   clearStateForNextVideo();
@@ -448,7 +430,6 @@ function nextVideo() {
   context.didVideoJustChange = true;
   clearStateForNextVideo();
   setQuizStatusDisplay('(Loading next video...)');
-  setPreviousAnswerState();
   player.nextVideo();
   if (context.needLastVolumeApplied) {
     setVideoVolume(getVolume());
@@ -675,16 +656,12 @@ function clearMessagesAndFutures() {
 function setPreviousAnswer() {
   if (!player) { return; }
 
-  var currentVideoIndex = player.getPlaylistIndex();
-
-  if (currentVideoIndex > context.previousVideoIndex) {
-    setUnknownPreviousVideoMessage();
+  var prevAnswer = player.getPreviousAnswer();
+  if (prevAnswer !== undefined) {
+    // TODO: make a less hacky check to see if it's the first video and no other
+    //  video has played yet.
+    setLastAnswerText(player.getPreviousAnswer());
   }
-  setPreviousAnswerState();
-}
-
-function setPreviousAnswerState() {
-  context.setPreviousAnswerState(player.getPlaylistIndex(), getVideoTitle());
 }
 
 function toggleMute() {

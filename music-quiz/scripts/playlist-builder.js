@@ -510,7 +510,6 @@ function previewVideoAtIndex(index) {
   context.isPreviewStarting = true;
 
   setQuizStatusDisplay('(Loading next video...)');
-  setPreviousAnswerState();
   player.playVideoAt(index);
 }
 

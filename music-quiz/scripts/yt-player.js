@@ -4,6 +4,7 @@ class YTPlayerWrapper {
   currentPlaylist; 
   player1;
   player2;
+  previousVideoTitle;
 
   constructor(onPlayerReady, onPlayerStateChange, onError) {
     this.ytPlayer = new YT.Player('player', {
@@ -34,6 +35,8 @@ class YTPlayerWrapper {
 
   playVideoAt(index) {
     // TODO might need a race condition check here
+    this.setPrevVideoTitleToCurrentTitle();
+
     var videoId = this.currentPlaylist.getVideoIdAt(index);
     this.currentPlaylist.setIndex(index);
     this.ytPlayer.loadVideoById(videoId, this.getStartingSeconds());
@@ -49,6 +52,8 @@ class YTPlayerWrapper {
 
   previousVideo() {
     // TODO might need a race condition check here
+    this.setPrevVideoTitleToCurrentTitle();
+    
     var previousVideoId = this.currentPlaylist.getPreviousVideoId();
     this.currentPlaylist.decrementIndex();
     this.ytPlayer.loadVideoById(previousVideoId, this.getStartingSeconds());
@@ -57,6 +62,8 @@ class YTPlayerWrapper {
   nextVideo() {
     // TODO might need a race condition check here
     // TODO load video at seconds if applicable
+    this.setPrevVideoTitleToCurrentTitle();
+
     var nextVideoId = this.currentPlaylist.getNextVideoId();
     this.currentPlaylist.incrementIndex();
     this.ytPlayer.loadVideoById(nextVideoId, this.getStartingSeconds());
@@ -78,7 +85,6 @@ class YTPlayerWrapper {
     this.currentPlaylist = new Playlist(videoIds);
     this.currentPlaylist.setIndex(index);
 
-    // TODO: has an optional startSeconds paramb
     this.ytPlayer.cueVideoById(this.currentPlaylist.getVideoIdAt(index), this.getStartingSeconds());
   }
 
@@ -86,7 +92,6 @@ class YTPlayerWrapper {
     this.currentPlaylist = new Playlist(videoIds);
     this.currentPlaylist.setIndex(index);
 
-    // TODO: has an optional startSeconds param
     this.ytPlayer.loadVideoById(this.currentPlaylist.getVideoIdAt(index), this.getStartingSeconds());
   }
 
@@ -106,6 +111,10 @@ class YTPlayerWrapper {
     return this.ytPlayer.getVideoData();
   }
 
+  getCurrentVideoId() {
+    return this.currentPlaylist.getCurrentVideoId();
+  }
+
   mute() {
     return this.ytPlayer.mute();
   }
@@ -122,6 +131,23 @@ class YTPlayerWrapper {
     return this.doesFuncExist(this.ytPlayer.cuePlaylist);
   }
 
+  setPrevVideoTitleToCurrentTitle() {
+    try{
+      this.previousVideoTitle = context.videoTitles.get(this.currentPlaylist.getCurrentVideoId()) 
+        ?? this.getVideoData().title;
+    } catch {
+      try {
+        this.previousVideoTitle = this.getVideoData().title;
+      } catch {
+        this.previousVideoTitle = "Could not fetch title for video id " + this.currentPlaylist.getCurrentVideoId();
+      }
+    }
+  }
+
+  getPreviousAnswer() {
+    return this.previousVideoTitle;
+  }
+
   doesLoadPlaylistExist() {
     return this.doesFuncExist(this.ytPlayer.loadPlaylist);
   }
@@ -136,6 +162,10 @@ class YTPlayerWrapper {
 
   doesGetVideoDataExist() {
     return this.doesFuncExist(this.ytPlayer.getVideoData);
+  }
+
+  doesSetVolumeExist() {
+    return this.doesFuncExist(this.ytPlayer.setVolume);
   }
 
   doesFuncExist(func) {
@@ -157,6 +187,7 @@ class YTPlayerWrapper {
   }
 }
 
+// TODO move to own file
 class Playlist {
   videoIds;
   currentIndex;
@@ -172,6 +203,11 @@ class Playlist {
 
   getVideoIds() {
     return this.videoIds;
+  }
+
+  getCurrentVideoId() {
+    //TODO add index check
+    return this.videoIds[this.currentIndex];
   }
 
   getNextVideoId() {

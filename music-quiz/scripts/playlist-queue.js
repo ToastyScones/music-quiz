@@ -138,7 +138,7 @@ async function fetchPlaylistMetadata(playlistId, playlistMetadata) {
     playlistMetadata.author = data.author_name;
     playlistMetadata.thumbnail = data.thumbnail_url;
 
-    const result = await validateYouTubePlaylist(playlistId, playlistMetadata);
+    const result = await validateYTPlaylistAndSetVideoIDs(playlistId, playlistMetadata);
 
     // TODO: double check if this works with loadByVideoId
     // For some reason, loadPlaylist and cuePlaylist won't return an error if embed is disabled
@@ -149,6 +149,8 @@ async function fetchPlaylistMetadata(playlistId, playlistMetadata) {
       return false;
     }
 
+    playlistMetadata.videoTitles = await getYouTubeVideoTitles(playlistMetadata.playlistVideoIds);
+
     playlistMetadata.metaLoaded = true;
     return true;
   } catch {
@@ -158,7 +160,32 @@ async function fetchPlaylistMetadata(playlistId, playlistMetadata) {
   }
 }
 
-function validateYouTubePlaylist(playlistId, playlistMetadata) {
+async function getYouTubeVideoTitles(videoIds) {
+  const fetchPromises = videoIds.map(async (videoId) => {
+    var url = 'https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=' +
+    encodeURIComponent(videoId) + '&format=json';
+
+    try {  
+      const response = await fetch(url);
+
+      if (response.ok) {
+        const data = await response.json();
+        return [videoId, data.title];
+      } else {
+        // TODO: try to set the title again in yt-player if null
+        return [videoId, null];
+      }
+    } catch (error) {
+      // TODO: try to set the title again in yt-player if null
+      return [videoId, null];
+    }
+  });
+
+  // Resolve all API requests concurrently
+  return new Map(await Promise.all(fetchPromises));
+}
+
+function validateYTPlaylistAndSetVideoIDs(playlistId, playlistMetadata) {
   return new Promise((resolve) => {
     const containerId = `yt-val-${Math.random().toString(36).substr(2, 9)}`;
     const div = document.createElement('div');
@@ -537,6 +564,7 @@ function loadPlaylistFromQueue(playlistMetadata, autoPlay) {
   context.vidTimestamps = playlistMetadata.timestamps;
   context.sourcePlaylistId = playlistMetadata.playlistId;
   context.youtubePlaylistOrder = playlistMetadata.playlistVideoIds;
+  context.videoTitles = playlistMetadata.videoTitles;
   // A freshly loaded playlist is attached to the queue again, so a
   // previously-detached state never carries over into the next playlist.
   context.detachedFromPlaylist = false;
@@ -574,10 +602,12 @@ function loadPlaylistFromQueue(playlistMetadata, autoPlay) {
   }
 
   // TODO: consolidate videoOrder and youtubePlaylistOrder
+  // TODO: Change youtubePlaylistOrder so it's an object of metadata that contains video
+  //  ids, titles, and maybe other things like starting seconds
   if (context.videoOrder) {
-    setNewYtPlayerFromOrder(context.videoOrder);
+    setNewYtPlayer(context.videoOrder);
   } else {
-    setNewYtPlayerFromOrder(context.youtubePlaylistOrder);
+    setNewYtPlayer(context.youtubePlaylistOrder);
   }  
 }
 
