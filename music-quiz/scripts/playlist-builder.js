@@ -509,8 +509,10 @@ function previewVideoAtIndex(index) {
   setPlayerVisible();
 
   context.isPreviewStarting = true;
+
+  setQuizStatusDisplay('(Loading next video...)');
+  setPreviousAnswerState();
   player.playVideoAt(index);
-  player.playVideo();
 }
 
 // Adds the builder's generated URL (list + custom video order + per-video
@@ -532,7 +534,6 @@ function addBuilderToQueue() {
   var parsed = parsePlaylistInput(url);
 
   var playlistMetadata = {
-    parsed: parsed,
     title: 'Adding playlist...',
     author: null,
     thumbnail: null,

@@ -1,5 +1,6 @@
 
 class YTPlayerWrapper {
+  ytPlayer;
   currentPlaylist; 
   player1;
   player2;
@@ -32,9 +33,6 @@ class YTPlayerWrapper {
   }
 
   playVideoAt(index) {
-    //this.ytPlayer.playVideoAt(index);
-    //return;
-
     // TODO might need a race condition check here
     var videoId = this.currentPlaylist.getVideoIdAt(index);
     this.currentPlaylist.setIndex(index);
@@ -50,9 +48,6 @@ class YTPlayerWrapper {
   }
 
   previousVideo() {
-    //this.ytPlayer.previousVideo();
-    //return;
-
     // TODO might need a race condition check here
     var previousVideoId = this.currentPlaylist.getPreviousVideoId();
     this.currentPlaylist.decrementIndex();
@@ -60,10 +55,8 @@ class YTPlayerWrapper {
   }
 
   nextVideo() {
-    //this.ytPlayer.nextVideo();
-    //return;
-
     // TODO might need a race condition check here
+    // TODO load video at seconds if applicable
     var nextVideoId = this.currentPlaylist.getNextVideoId();
     this.currentPlaylist.incrementIndex();
     this.ytPlayer.loadVideoById(nextVideoId);
@@ -82,24 +75,18 @@ class YTPlayerWrapper {
   }
 
   cuePlaylist(videoIds, index) {
-    // has an optional startSeconds param
-    //this.ytPlayer.cuePlaylist(playlist, index);
-    //return;
-    
-    //playlist will be changed to videoIds
     this.currentPlaylist = new Playlist(videoIds);
     this.currentPlaylist.setIndex(index);
+
+    // TODO: has an optional startSeconds paramb
     this.ytPlayer.cueVideoById(this.currentPlaylist.getVideoIdAt(index));
   }
 
   loadPlaylist(videoIds, index) {
-    // has an optional startSeconds param
-    //this.ytPlayer.loadPlaylist(playlist, index);
-    //return;
-
-    //playlist will be changed to videoIds
     this.currentPlaylist = new Playlist(videoIds);
     this.currentPlaylist.setIndex(index);
+
+    // TODO: has an optional startSeconds param
     this.ytPlayer.loadVideoById(this.currentPlaylist.getVideoIdAt(index));
   }
 
@@ -164,8 +151,6 @@ class YTPlayerWrapper {
     this.ytPlayer.destroy();
   }
 }
-
-
 
 class Playlist {
   videoIds;

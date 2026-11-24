@@ -58,7 +58,6 @@ async function addPlaylistToQueue() {
 
   // TODO: refactor this  and the one in playlist-builder into one
   var playlistMetadata = {
-    parsed: parsed,
     title: 'Adding playlist...',
     author: null,
     thumbnail: null,
@@ -220,7 +219,11 @@ function validateYouTubePlaylist(playlistId, playlistMetadata) {
             }
 
             // Save video IDs for playlist management
-            playlistMetadata.playlistVideoIds = playlistVideoIds;
+            if (playlistMetadata.customPlaylistVideoIds) {
+              playlistMetadata.playlistVideoIds = playlistMetadata.customPlaylistVideoIds;
+            } else {
+              playlistMetadata.playlistVideoIds = playlistVideoIds;
+            }
 
             // DELAY RESOLUTION: Give onError a brief window (250ms) to intercept
             errorTimeout = workerSetTimeout(() => {
@@ -365,12 +368,12 @@ function renderQueueList() {
 // where each tN param sets a start time for the video at playlist
 // position N (no `order` param).
 function copyQueueItemUrl(index) {
-  var item = playlistQueue[index];
-  if (!item) {
+  var playlistMetadata = playlistQueue[index];
+  if (!playlistMetadata) {
     return;
   }
 
-  var playlistId = item.playlistId;
+  var playlistId = playlistMetadata.playlistId;
   if (!playlistId) {
     return;
   }
@@ -382,7 +385,7 @@ function copyQueueItemUrl(index) {
   var params = new URLSearchParams();
   params.set('list', playlistId);
 
-  var timestamps = item.parsed.timestamps || {};
+  var timestamps = playlistMetadata.timestamps || {};
   Object.keys(timestamps).forEach(function (key) {
     var index = Number(key);
     var seconds = timestamps[key];
